@@ -1,4 +1,4 @@
-name: geo_deep_env
+name: floodProbAbd
 channels:
   - anaconda
   - conda-forge
