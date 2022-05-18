@@ -1,5 +1,4 @@
-'''
-'''
+
 import os
 import tempfile
 from torch.utils.data import DataLoader
@@ -9,16 +8,14 @@ from torchgeo.datasets.utils import download_url
 from torchgeo.samplers import RandomGeoSampler
 
 class tailImporter():
-    def init(mainDownloadPath, tailNamesList):
+    def init(self, mainDownloadPath, tailNamesList):
         self.data_root = mainDownloadPath
         self.tailNameList = tailNamesList
-    
-    def impotToDirectory(destiniPath):
 
+    def impotToDirectory(self,destiniPath):
         for tile in self.tailNameList:
-            download_url(naip_url + tile, destiniPath)
+            download_url(self.data_root + tile, destiniPath)
 
-    def set_mainDownloadPath(new_mainDownloadPath):
+    def set_mainDownloadPath(self,new_mainDownloadPath):
        self.data_root = new_mainDownloadPath
-# 
 
