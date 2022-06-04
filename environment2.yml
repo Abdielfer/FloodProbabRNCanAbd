@@ -1,8 +1,5 @@
-name: geo_deep_env
-channels:
   - pytorch
   - conda-forge
-dependencies:
   - boto3>=1.19.2
   - coverage>=6.3.1
   - cudatoolkit>=11.3.0
