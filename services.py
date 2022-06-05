@@ -67,12 +67,14 @@ class dtmTransformer():
     Functions are mostly based on Whitebox libraries. For optimal functionality DTM’s most be high resolution, 
     ideally Lidar 1 m or < 2m. 
     '''
-    def __init__(self,workingDir = None):
-        if os.path.isfile(workingDir)!= True: # Creates output dir if it does not already exist 
+    def __init__(self, workingDir = None):
+        if os.path.isdir(workingDir): # Creates output dir if it does not already exist 
             self.workingDir = workingDir
+            wbt.set_working_dir(workingDir)
         else:
-            self.workingDir = input('Enter working')
-            os.mkdir('C:/Users/abfernan/Desktop/raste_output')  
+            self.workingDir = input('Enter working directory')
+            checkIfDirectoryExistOrCreate(self.workingDir)
+            wbt.set_working_dir(self.workingDir)
         return None
 
     def computeSlope(self,inDTMName):
@@ -122,8 +124,6 @@ def checkIfDirectoryExistOrCreate(pathToCheck):
         return True
     print("Invalid path")
     return False       
-
-
 
 def importListFromExelCol(excell_file_location,Shet_id, col_id):  
     '''
