@@ -48,7 +48,7 @@ class dtmTailImporter():
         else:
             outputPath = input('Enter a destiny path to download:')
             print(outputPath)
-            if checkIfDirectoryExistOrCreate(outputPath):
+            if ensureDirectory(outputPath):
                 for path in self.tail_URL_NamesList:
                     download_url(path, outputPath)
                 print(f"Tails dawnloaded to: {outputPath}")      
@@ -73,7 +73,7 @@ class dtmTransformer():
             wbt.set_working_dir(workingDir)
         else:
             self.workingDir = input('Enter working directory')
-            if checkIfDirectoryExistOrCreate(self.workingDir):
+            if ensureDirectory(self.workingDir):
                 wbt.set_working_dir(self.workingDir)
         
 
@@ -92,30 +92,30 @@ class dtmTransformer():
                 zfactor=None, 
                 callback=default_callback)
 
-    def computeMosaic(self, outpouFileName = None):
+    def computeMosaic(self, outpouFileName = "None"):
         ''' 
-        @return: A mosaic opperation's result, creates a single tile containing all imputs tails.
+        @return: Return True if mosaic succeed, False otherwise. Result is saved to wbt.work_dir. 
         Argument
         @outpouFileName: The output file name. IMPORTANT: include the extention (e.i. .tif ) 
         '''
-        if checkIfDirectoryExistOrCreate(outpouFileName)!= True: # Creates output dir if it does not already exist 
-            os.mkdir('C:/Users/abfernan/Desktop/raste_output')      
-
-        outfile = os.path.join(outpouFileName,outpouFileName)
-        
+        if ".tif" not in outpouFileName:
+            outpouFileName = input("enter a valid file name with the '.tif' extention")
+        outFilePathAndName = os.path.join(wbt.work_dir,outpouFileName)
         if wbt.mosaic(
-            output=outfile, 
+            output=outFilePathAndName, 
             method = "nn"  # Calls mosaic tool with nearest neighbour as the resampling method ("nn")
             ) != 0:
             print('ERROR running mosaic')  # Non-zero returns indicate an error.
-    
+            return False
+        return True
+
 
 
 ###  Helper functions  ###
 def setWBTWorkingDir(workingDir):
     wbt.set_working_dir(workingDir)
 
-def checkIfDirectoryExistOrCreate(pathToCheck):
+def ensureDirectory(pathToCheck):
     if os.path.isdir(pathToCheck): 
         return True
     elif os.path.exists(pathToCheck):
