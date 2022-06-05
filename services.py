@@ -47,6 +47,7 @@ class dtmTailImporter():
             print(f"Tails dawnloaded to: {self.localPath}")  
         else:
             outputPath = input('Enter a destiny path to download:')
+            print(outputPath)
             if checkIfDirectoryExistOrCreate(outputPath):
                 for path in self.tail_URL_NamesList:
                     download_url(path, outputPath)
@@ -113,11 +114,11 @@ def setWBTWorkingDir(workingDir):
     wbt.set_working_dir(workingDir)
 
 def checkIfDirectoryExistOrCreate(pathToCheck):
-    if os.path.isfile(pathToCheck): 
+    if os.path.isdir(pathToCheck): 
         return True
     elif os.path.exists(pathToCheck):
         os.mkdir(pathToCheck)
-        print(f"Created path: {pathToCheck} ")
+        print(f"Created directory at path: {pathToCheck} ")
         return True
     print("Invalid path")
     return False       
