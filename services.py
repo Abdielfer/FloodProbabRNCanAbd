@@ -76,22 +76,6 @@ class dtmTransformer():
             if ensureDirectory(self.workingDir):
                 wbt.set_working_dir(self.workingDir)
         
-
-    def computeSlope(self,inDTMName):
-        outSlope = 'slope_'+ inDTMName
-        wbt.slope(inDTMName,
-                outSlope, 
-                zfactor=None, 
-                units="degrees", 
-                callback=default_callback)
-    
-    def computeAspect(self,inDTMName):
-        outAspect = 'aspect_'+ inDTMName
-        wbt.aspect(inDTMName, 
-                outAspect, 
-                zfactor=None, 
-                callback=default_callback)
-
     def computeMosaic(self, outpouFileName = "None"):
         ''' 
         @return: Return True if mosaic succeed, False otherwise. Result is saved to wbt.work_dir. 
@@ -108,6 +92,63 @@ class dtmTransformer():
             print('ERROR running mosaic')  # Non-zero returns indicate an error.
             return False
         return True
+    
+
+    #####  TODO ####
+    def fillDemMethod(self, dtmName, method = 1):
+        '''
+        @argument: the method to fill with:
+            1 - Breach Depression tool( Recomede by whitebox authors)
+            2 - fill depression(Wang & Liu) 
+            3 - fill depression(Planchon & Darboux)
+        @return a filled dtm 
+        '''
+        # case to chose method  3 default. 
+
+        return False
+
+
+    def rd8FlowPointerCalculation(self, filledDTMName, pointer = 1):
+        '''
+        @argument: the method to run pointer:
+            1 - Dinf 
+            2 - D8 
+            3 - Rho8
+        '''
+          # case to chose method  3 default. 
+
+           # implement wbt pointer
+        filledDTMName ==0
+        return False
+
+    def DInfFlowCalculation(self, pointer):
+        ''' 
+        Compute D infinity frlo accumulation algorithm 
+
+        '''
+        return False
+
+
+
+
+    ### Ready  ####
+
+    def computeSlope(self,inDTMName):
+        outSlope = 'slope_'+ inDTMName
+        wbt.slope(inDTMName,
+                outSlope, 
+                zfactor=None, 
+                units="degrees", 
+                callback=default_callback)
+    
+    def computeAspect(self,inDTMName):
+        outAspect = 'aspect_'+ inDTMName
+        wbt.aspect(inDTMName, 
+                outAspect, 
+                zfactor=None, 
+                callback=default_callback)
+
+    
 
 
 
