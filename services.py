@@ -107,12 +107,12 @@ class dtmTransformer():
         output = "fille_" + dtmName
         
         dtmNoDataValueSetted = "noDataOK_"+dtmName
-        wbt.wbt.set_nodata_value(
+        wbt.set_nodata_value(
             dtmName, 
             dtmNoDataValueSetted, 
             back_value=0.0, 
             callback=default_callback
-        )
+            )
         dtmMissingDataFilled = "correctedNoData_"+dtmName
         wbt.fill_missing_data(
                 dtmNoDataValueSetted, 
@@ -131,13 +131,13 @@ class dtmTransformer():
             max_depth=None, 
             callback=default_callback
             )
-
+     # Remove intermediate results
         if keepNoDataRasters:
             try:
                 os.rmdir(dtmNoDataValueSetted)
                 os.rmdir(dtmMissingDataFilled)
             except OSError as error:
-                print("There was an error .")
+                print("There was an error removing intermediate results.")
 
         return True
 
