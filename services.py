@@ -95,17 +95,51 @@ class dtmTransformer():
     
 
     #####  TODO ####
-    def fillDemMethod(self, dtmName, method = 1):
+    def fixNoDataAndfillDTM(self, dtmName, keepNoDataRasters = False):
         '''
-        @argument: the method to fill with:
-            1 - Breach Depression tool( Recomede by whitebox authors)
-            2 - fill depression(Wang & Liu) 
-            3 - fill depression(Planchon & Darboux)
-        @return a filled dtm 
-        '''
-        # case to chose method  3 default. 
+        Ref: https://www.whiteboxgeo.com/manual/wbt_book/available_tools/hydrological_analysis.html#filldepressions
+        To ensure the quality of this process, this method 
+       
+        @argument: 
+        @return a filled dtm. 
+            optionally with <keepNoDataRasters = False>: a dtm with corected no value data after filling
+        ''' 
+        output = "fille_" + dtmName
+        
+        dtmNoDataValueSetted = "noDataOK_"+dtmName
+        wbt.wbt.set_nodata_value(
+            dtmName, 
+            dtmNoDataValueSetted, 
+            back_value=0.0, 
+            callback=default_callback
+        )
+        dtmMissingDataFilled = "correctedNoData_"+dtmName
+        wbt.fill_missing_data(
+                dtmNoDataValueSetted, 
+                dtmMissingDataFilled, 
+                filter=11, 
+                weight=2.0, 
+                no_edges=True, 
+                callback=default_callback
+            )
 
-        return False
+        wbt.fill_depressions(
+            dtmMissingDataFilled, 
+            output, 
+            fix_flats=True, 
+            flat_increment=None, 
+            max_depth=None, 
+            callback=default_callback
+            )
+
+        if keepNoDataRasters:
+            try:
+                os.rmdir(dtmNoDataValueSetted)
+                os.rmdir(dtmMissingDataFilled)
+            except OSError as error:
+                print("There was an error .")
+
+        return True
 
 
     def rd8FlowPointerCalculation(self, filledDTMName, pointer = 1):
