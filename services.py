@@ -57,10 +57,7 @@ class dtmTailImporter():
                     download_url(path, currentDirectory)
                 print(f"Tails dawnloaded to: {currentDirectory}") 
                
-        
-
 ## Pretraitment #
-
 class dtmTransformer():
     '''
      This class contain some functions to generate geomorphological and hydrological features from DTM.
@@ -93,7 +90,6 @@ class dtmTransformer():
             return False
         return True
     
-
     #####  TODO ####
     def fixNoDataAndfillDTM(self, dtmName, keepNoDataRasters = False):
         '''
@@ -105,7 +101,6 @@ class dtmTransformer():
             optionally with <keepNoDataRasters = False>: a dtm with corected no value data after filling
         ''' 
         output = "fille_" + dtmName
-        
         dtmNoDataValueSetted = "noDataOK_"+dtmName
         wbt.set_nodata_value(
             dtmName, 
@@ -122,7 +117,6 @@ class dtmTransformer():
                 no_edges=True, 
                 callback=default_callback
             )
-
         wbt.fill_depressions(
             dtmMissingDataFilled, 
             output, 
@@ -130,17 +124,15 @@ class dtmTransformer():
             flat_increment=None, 
             max_depth=None, 
             callback=default_callback
-            )
-     # Remove intermediate results
+            )  
+        # Remove intermediate results
         if keepNoDataRasters:
             try:
-                os.rmdir(dtmNoDataValueSetted)
-                os.rmdir(dtmMissingDataFilled)
+                os.remove(os.path.join(wbt.work_dir,dtmNoDataValueSetted))
+                os.remove(os.path.join(wbt.work_dir,dtmMissingDataFilled))
             except OSError as error:
                 print("There was an error removing intermediate results.")
-
         return True
-
 
     def rd8FlowPointerCalculation(self, filledDTMName, pointer = 1):
         '''
@@ -149,24 +141,18 @@ class dtmTransformer():
             2 - D8 
             3 - Rho8
         '''
-          # case to chose method  3 default. 
-
-           # implement wbt pointer
-        filledDTMName ==0
+        # case to chose method  3 default. 
+        # implement wbt pointer
+        filledDTMName == 0
         return False
 
     def DInfFlowCalculation(self, pointer):
         ''' 
-        Compute D infinity frlo accumulation algorithm 
-
+        Compute DInfinity flow accumulation algorithm 
         '''
         return False
 
-
-
-
     ### Ready  ####
-
     def computeSlope(self,inDTMName):
         outSlope = 'slope_'+ inDTMName
         wbt.slope(inDTMName,
@@ -181,10 +167,6 @@ class dtmTransformer():
                 outAspect, 
                 zfactor=None, 
                 callback=default_callback)
-
-    
-
-
 
 ###  Helper functions  ###
 def setWBTWorkingDir(workingDir):
