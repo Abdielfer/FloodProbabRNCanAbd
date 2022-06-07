@@ -90,10 +90,12 @@ class dtmTransformer():
             return False
         return True
     
-    
     def fixNoDataAndfillDTM(self, dtmName, eraseIntermediateRasters = True):
         '''
+        ###################################
         #####  TODO  Rewrite the header ####
+        ###################################
+        
         Ref: https://www.whiteboxgeo.com/manual/wbt_book/available_tools/hydrological_analysis.html#filldepressions
         To ensure the quality of this process, this method 
        
@@ -134,6 +136,9 @@ class dtmTransformer():
                 print("There was an error removing intermediate results.")
         return True
 
+                ###########################
+                #### TODO Restart HERE ####
+                ###########################
     def rd8FlowPointerCalculation(self, filledDTMName, pointer = 1):
         '''
         @argument: the method to run pointer:
@@ -145,6 +150,7 @@ class dtmTransformer():
         # implement wbt pointer
         filledDTMName == 0
         return False
+
 
     def DInfFlowCalculation(self, pointer):
         ''' 
