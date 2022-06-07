@@ -163,11 +163,29 @@ class dtmTransformer():
             callback=default_callback
             )
 
-    def DInfFlowCalculation(self, pointer):
+    def DInfFlowCalculation(self, inD8Pointer, log = False):
         ''' 
-        Compute DInfinity flow accumulation algorithm 
+        Compute DInfinity flow accumulation algorithm.
+        Ref: https://www.whiteboxgeo.com/manual/wbt_book/available_tools/hydrological_analysis.html#dinfflowaccumulation  
+        We keep the DEFAULT SETTING  from source, which compute "Specific Contributing Area". 
+        See ref for the description of more output’s options. 
+        @Argument: 
+            @inD8Pointer: D8-Pointer raster
+            @log (Boolean): Apply Log-transformation on the output raster
+        @Output: 
+            DInfFlowAcculation map. 
         '''
-        return False
+        output = "dInf_" + inD8Pointer
+        wbt.d_inf_flow_accumulation(
+            inD8Pointer, 
+            output, 
+            out_type="Specific Contributing Area", 
+            threshold=None, 
+            log=log, 
+            clip=False, 
+            pntr=True, 
+            callback=default_callback
+            )
 
     ### Ready  ####
     def computeSlope(self,inDTMName):
