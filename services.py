@@ -65,6 +65,7 @@ class dtmTransformer():
     ideally Lidar 1 m or < 2m. 
     '''
     def __init__(self, workingDir = "None"):
+        self.mainFileName = " "
         if os.path.isdir(workingDir): # Creates output dir if it does not already exist 
             self.workingDir = workingDir
             wbt.set_working_dir(workingDir)
@@ -81,6 +82,7 @@ class dtmTransformer():
         '''
         if ".tif" not in outpouFileName:
             outpouFileName = input("enter a valid file name with the '.tif' extention")
+        self.mainFileName = outpouFileName
         outFilePathAndName = os.path.join(wbt.work_dir,outpouFileName)
         if wbt.mosaic(
             output=outFilePathAndName, 
@@ -152,7 +154,14 @@ class dtmTransformer():
             callback=default_callback
             )
     
-
+    def bassinsDeliniation(self,inD8Pointer):
+        output = "bassins_"+inD8Pointer
+        wbt.basins(
+        inD8Pointer, 
+        output, 
+        esri_pntr=False, 
+        callback=default_callback
+        )
 
     def DInfFlowCalculation(self, pointer):
         ''' 
