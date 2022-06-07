@@ -91,7 +91,7 @@ class dtmTransformer():
         return True
     
     #####  TODO ####
-    def fixNoDataAndfillDTM(self, dtmName, keepNoDataRasters = False):
+    def fixNoDataAndfillDTM(self, dtmName, eraseIntermediateRasters = True):
         '''
         Ref: https://www.whiteboxgeo.com/manual/wbt_book/available_tools/hydrological_analysis.html#filldepressions
         To ensure the quality of this process, this method 
@@ -126,7 +126,7 @@ class dtmTransformer():
             callback=default_callback
             )  
         # Remove intermediate results
-        if keepNoDataRasters:
+        if eraseIntermediateRasters:
             try:
                 os.remove(os.path.join(wbt.work_dir,dtmNoDataValueSetted))
                 os.remove(os.path.join(wbt.work_dir,dtmMissingDataFilled))
