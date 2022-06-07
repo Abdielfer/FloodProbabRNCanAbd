@@ -138,20 +138,20 @@ class dtmTransformer():
                 print("There was an error removing intermediate results.")
         return True
 
-                ###########################
-                #### TODO Restart HERE ####
-                ###########################
-    def rd8FlowPointerCalculation(self, filledDTMName, pointer = 1):
+    def d8FPointerRasterCalculation(self, inFilledDTMName):
         '''
-        @argument: the method to run pointer:
-            1 - Dinf 
-            2 - D8 
-            3 - Rho8
+        @argument:
+         @inFilledDTMName: DTM without spurious point ar depression.  
+        @UOTPUT: D8_pioter: Raster tu use as input for flow direction and flow accumulation calculations. 
         '''
-        # case to chose method  3 default. 
-        # implement wbt pointer
-        filledDTMName == 0
-        return False
+        output = "d8Pointer_" + inFilledDTMName
+        wbt.d8_pointer(
+            inFilledDTMName, 
+            output, 
+            esri_pntr=False, 
+            callback=default_callback
+            )
+    
 
 
     def DInfFlowCalculation(self, pointer):
