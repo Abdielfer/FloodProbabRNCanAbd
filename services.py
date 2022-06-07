@@ -92,17 +92,19 @@ class dtmTransformer():
     
     def fixNoDataAndfillDTM(self, inDTMName, eraseIntermediateRasters = True):
         '''
-        ###################################
-        #####  TODO  Rewrite the header ####
-        ###################################
-
-        Ref: https://www.whiteboxgeo.com/manual/wbt_book/available_tools/hydrological_analysis.html#filldepressions
-        To ensure the quality of this process, this method 
-       
-        @argument: 
-        @return a filled dtm. 
-            optionally with <keepNoDataRasters = False>: a dtm with corected no value data after filling
-        ''' 
+        Ref:   https://www.whiteboxgeo.com/manual/wbt_book/available_tools/hydrological_analysis.html#filldepressions
+        To ensure the quality of this process, this method execute several steep in sequence, following the Whitebox’s authors recommendation (For mor info see the above reference).
+        Steps:
+        1-	Correct no data values to be accepted for all operation. 
+        2-	Fill gaps of no data.
+        3-	Fill depressions.
+        4-	Remove intermediary results to save storage space (Optionally you can keep it. See @Arguments).  
+        @Argument: 
+        -inDTMName: Input DTM name
+        -eraseIntermediateRasters(default = False): Erase intermediate results to save storage space. 
+        @Return: True if all process happened successfully, EROR messages otherwise. 
+        @OUTPUT: DTM <filled_ inDTMName> Corrected DTM without depressions. 
+        '''
         dtmNoDataValueSetted = "noDataOK_"+inDTMName
         wbt.set_nodata_value(
             inDTMName, 
