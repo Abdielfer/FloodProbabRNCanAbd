@@ -116,12 +116,12 @@ class dtmTransformer():
             )
         dtmMissingDataFilled = "correctedNoData_"+inDTMName
         wbt.fill_missing_data(
-                dtmNoDataValueSetted, 
-                dtmMissingDataFilled, 
-                filter=11, 
-                weight=2.0, 
-                no_edges=True, 
-                callback=default_callback
+            dtmNoDataValueSetted, 
+            dtmMissingDataFilled, 
+            filter=11, 
+            weight=2.0, 
+            no_edges=True, 
+            callback=default_callback
             )
         output = "filled_" + inDTMName
         wbt.fill_depressions(
@@ -154,14 +154,14 @@ class dtmTransformer():
             callback=default_callback
             )
     
-    def bassinsDeliniation(self,inD8Pointer):
-        output = "bassins_"+inD8Pointer
+    def basinsDelineation (self,inD8Pointer):
+        output = "basins_"+inD8Pointer
         wbt.basins(
-        inD8Pointer, 
-        output, 
-        esri_pntr=False, 
-        callback=default_callback
-        )
+            inD8Pointer, 
+            output, 
+            esri_pntr=False, 
+            callback=default_callback
+            )
 
     def DInfFlowCalculation(self, pointer):
         ''' 
@@ -176,14 +176,16 @@ class dtmTransformer():
                 outSlope, 
                 zfactor=None, 
                 units="degrees", 
-                callback=default_callback)
+                callback=default_callback
+                )
     
     def computeAspect(self,inDTMName):
         outAspect = 'aspect_'+ inDTMName
         wbt.aspect(inDTMName, 
                 outAspect, 
                 zfactor=None, 
-                callback=default_callback)
+                callback=default_callback
+                )
 
 ###  Helper functions  ###
 def setWBTWorkingDir(workingDir):
