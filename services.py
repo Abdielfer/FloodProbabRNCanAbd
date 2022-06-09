@@ -154,14 +154,40 @@ class dtmTransformer():
             callback=default_callback
             )
     
-    def basinsDelineation (self,inD8Pointer):
-        output = "basins_"+inD8Pointer
-        wbt.basins(
-            inD8Pointer, 
-            output, 
+    def watershedsExtraction(self, inDTMFilled, ind8point,inOutlest):
+        outputName = "watersheds_"+inDTMFilled
+        wbt.d8_flow_accumulation(
+            inDTMFilled, 
+            outputName, 
+            out_type="cells", 
+            log=False, 
+            clip=False, 
+            pntr=False, 
             esri_pntr=False, 
             callback=default_callback
             )
+        
+        jensenOutput = "correctedSnapPoints.shp"
+        wbt.jenson_snap_pour_points(
+            inOutlest, 
+            outputName, 
+            jensenOutput, 
+            snap_dist = 15.0, 
+            callback=default_callback
+            )
+        
+        output = "watersheds_" + inDTMFilled
+        wbt.watershed(
+            ind8point, 
+            jensenOutput, 
+            output, 
+            esri_pntr=False, 
+            callback=default_callback
+        )
+
+
+
+
 
     def DInfFlowCalculation(self, inD8Pointer, log = False):
         ''' 
