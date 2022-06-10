@@ -14,9 +14,9 @@ from torch.utils.data import DataLoader
 import whitebox as WTB
 from whitebox.whitebox_tools import WhiteboxTools, default_callback
 
-from torchgeo.datasets import NAIP, ChesapeakeDE, stack_samples
-from torchgeo.datasets.utils import download_url
-from torchgeo.samplers import RandomGeoSampler
+# from torchgeo.datasets import NAIP, ChesapeakeDE, stack_samples
+# from torchgeo.datasets.utils import download_url
+# from torchgeo.samplers import RandomGeoSampler
 
 ## LocalPaths and global variables: to be adapted to your needs ##
 #to get the current working directory
@@ -154,11 +154,11 @@ class dtmTransformer():
             callback=default_callback
             )
     
-    def watershedsExtraction(self, inDTMFilled, ind8point,inOutlest):
-        outputName = "watersheds_"+inDTMFilled
+    def d8_flow_accumulation(self, inFilledDTMName):
+        d8FAccOutputName = "d8fllowAcc"+inFilledDTMName
         wbt.d8_flow_accumulation(
-            inDTMFilled, 
-            outputName, 
+            inFilledDTMName, 
+            d8FAccOutputName, 
             out_type="cells", 
             log=False, 
             clip=False, 
@@ -166,25 +166,29 @@ class dtmTransformer():
             esri_pntr=False, 
             callback=default_callback
             )
-        
+        print("d8 Done")
+
+    def jensePourPoint(self, inOutlest,d8FAccOutputName):    
         jensenOutput = "correctedSnapPoints.shp"
         wbt.jenson_snap_pour_points(
             inOutlest, 
-            outputName, 
+            d8FAccOutputName, 
             jensenOutput, 
             snap_dist = 15.0, 
             callback=default_callback
             )
-        
-        output = "watersheds_" + inDTMFilled
+        print("jensePourPoint Done")
+
+    def watershedConputing(self,inFillDTM, jensenOutput):  
+        output = "watersheds_" + inFillDTM
         wbt.watershed(
-            ind8point, 
+            inFillDTM, 
             jensenOutput, 
             output, 
             esri_pntr=False, 
             callback=default_callback
         )
-
+        print("watershedConputing Done")
 
 
 
