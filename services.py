@@ -168,7 +168,7 @@ class dtmTransformer():
             )
         print("d8 Done")
 
-    def jensePourPoint(self, inOutlest,d8FAccOutputName):    
+    def jensePourPoint(self,inOutlest,d8FAccOutputName):
         jensenOutput = "correctedSnapPoints.shp"
         wbt.jenson_snap_pour_points(
             inOutlest, 
@@ -179,10 +179,10 @@ class dtmTransformer():
             )
         print("jensePourPoint Done")
 
-    def watershedConputing(self,inFillDTM, jensenOutput):  
-        output = "watersheds_" + inFillDTM
+    def watershedConputing(self,d8Pointer, jensenOutput):  
+        output = "watersheds_" + d8Pointer
         wbt.watershed(
-            inFillDTM, 
+            d8Pointer, 
             jensenOutput, 
             output, 
             esri_pntr=False, 
