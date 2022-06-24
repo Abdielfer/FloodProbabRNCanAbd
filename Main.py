@@ -5,7 +5,7 @@ import services as svs
 excell_file = '/Users/abdielfer/DESS/Internship2022/RNCanWork/FloodProbabRNCanAbd/saint_john_NFL_DTM.xlsx'
 listTails = svs.importListFromExelCol(excell_file,'Feuil1','ftp_dtm')
 importer = svs.dtmTailImporter(listTails)
-importer.impotTailToLocalDir()
+# importer.impotTailToLocalDir()
 
 # ## my work directory: /Users/abdielfer/DESS/Internship2022/RNCanWork/FloodMaps/testZone
 # transformer = svs.dtmTransformer('/Users/abdielfer/DESS/Internship2022/RNCanWork/FloodMaps/testZone')
