@@ -14,9 +14,9 @@ from torch.utils.data import DataLoader
 import whitebox as WTB
 from whitebox.whitebox_tools import WhiteboxTools, default_callback
 
-# from torchgeo.datasets import NAIP, ChesapeakeDE, stack_samples
-# from torchgeo.datasets.utils import download_url
-# from torchgeo.samplers import RandomGeoSampler
+from torchgeo.datasets import NAIP, ChesapeakeDE, stack_samples
+from torchgeo.datasets.utils import download_url
+from torchgeo.samplers import RandomGeoSampler
 
 ## LocalPaths and global variables: to be adapted to your needs ##
 #to get the current working directory
