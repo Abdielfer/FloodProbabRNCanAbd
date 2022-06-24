@@ -10,7 +10,6 @@ import pandas as pd
 from torch.utils.data import DataLoader
 import whitebox as WTB
 from whitebox.whitebox_tools import WhiteboxTools, default_callback
-
 from torchgeo.datasets import NAIP, ChesapeakeDE, stack_samples
 from torchgeo.datasets.utils import download_url
 from torchgeo.samplers import RandomGeoSampler
@@ -186,9 +185,6 @@ class dtmTransformer():
             callback=default_callback
         )
         print("watershedConputing Done")
-
-
-
 
     def DInfFlowCalculation(self, inD8Pointer, log = False):
         ''' 
