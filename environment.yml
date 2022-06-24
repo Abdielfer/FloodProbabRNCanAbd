@@ -26,7 +26,7 @@ dependencies:
   - torchvision>=0.11.1
   - tqdm>=4.59.0
   - yaml>=0.2.5
-  - pip:
+  - pip3:
     - affine==2.3.0
     - attrs==20.3.0
     - click-plugins==1.1.1
