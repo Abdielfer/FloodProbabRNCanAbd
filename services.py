@@ -1,10 +1,3 @@
-'''
-All classes needed to perfom:
-- DTM extraction from remote(url needed)
-- Generate DTM product for hydrological pruposes. 
-- Resampling tools 
-'''
-
 import os
 import pandas as pd
 from torch.utils.data import DataLoader
