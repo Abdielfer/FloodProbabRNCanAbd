@@ -4,12 +4,12 @@ todo lo necesario para hacer fincionet RF a ppartir de competition 2
 '''
 import numpy as np
 import pandas as pd
-import sklearn as sk
-from sklearn import metrics
-from sklearn.model_selection import train_test_split, RandomizedSearchCV,GridSearchCV 
+import joblib
+from sklearn.metrics import accuracy_score
+from sklearn.model_selection import train_test_split, GridSearchCV 
 from sklearn.ensemble import RandomForestRegressor
-from sklearn.metrics import accuracy_score,roc_curve, auc, roc_auc_score, f1_score
-from sklearn.calibration import calibration_curve, CalibrationDisplay
+from sklearn.metrics import make_scorer,accuracy_score,roc_curve, auc, roc_auc_score, f1_score
+from sklearn.calibration import CalibrationDisplay
 
 def importDataSet(dataSetName):
     '''
@@ -25,7 +25,7 @@ def importDataSet(dataSetName):
     x = x.fillna(xMean)
     return x, y
 
-def split(x,y,TestPercent):
+def split(x,y,TestPercent = 0.2):
     x_train, x_validation, y_train, y_validation = train_test_split( x,y, test_size=TestPercent)
     return x_train, x_validation, y_train, y_validation
 
@@ -61,6 +61,61 @@ def investigateFeatureImportance(x_train, classifier, printed = True):
             print(featuresInModel)
     return featuresInModel
 
+def createsearshGreed():
+    param_grid = {
+    'n_estimators': np.linspace(90, 120,2).astype(int), #default 100
+    'max_depth': [None],  # + list(np.linspace(3, 20).astype(int)),
+    'max_features': ['auto', 'sqrt', None], # + list(np.arange(0.5, 1, 0.1)),
+    'max_leaf_nodes': [None], # + list(np.linspace(10, 50, 500).astype(int)),
+    # 'min_samples_split': [2, 5, 10],
+    'bootstrap': [True, False]
+    }
+    return param_grid
+
+
+def executeRandomForestRegression():
+    def __init__(self, dataSet, saveModelPath, splitProportion = 0.2):
+        self.paramGrid = createsearshGreed()
+        self.dataSet = dataSet
+        self.seedRF = 50
+        
+
+        rfr_WithGridSearch = createModelRFRegressorWithGridSearsh()
+
+        bestRegressor = fitModelRFRegressor(rfr_WithGridSearch)
+        return bestRegressor
+    
+    def createModelRFRegressorWithGridSearsh(self):
+        estimator = RandomForestRegressor(random_state = self.seedRF)
+        scoring = {"AUC": "roc_auc", "Accuracy": accuracy_score, 
+                    "roc_auc_Score":roc_auc_score, "F1":f1_score}
+        rs = GridSearchCV(estimator, 
+                        param_grid = self.paramGrid,
+                        n_jobs = -1, 
+                        scoring = scoring,
+                        refit="AUC",
+                        cv = 3, 
+                        n_iter = 10,
+                        verbose = 1, 
+                        random_state=self.seedRF,
+                        return_train_score = True
+                        )
+        return rs
+  
+    def fitModelRFRegressor(self, rfr_WithGridSearch, x_train, y_train, saveModel = True):
+        y_train = np.array(y_train)
+        rfr_WithGridSearch.fit(x_train, y_train).ravel()
+        print(rfr_WithGridSearch.best_params_, "\n")
+        ### Working with best estimator from RandomizedSearch 
+        best_model = rs.best_estimator_
+        if saveModel:
+            joblib.dump(best_model, "rf_RandomSearch.pkl")
+        ## Evaluating ROC Curve and extracting features priority
+        fi_model = evaluate_model(x_train, y_train, x_validation, y_validation, test_nolabels_prediction)
+        
+        return bestEstimator
+
+     
 
 
 ## Trash ...
@@ -83,16 +138,3 @@ def metric_RocAuc(y_probability, y_validation, estimator_name):
     return fpr, tpr, roc_auc
 
 
-def evaluate_model(x_train, y_train, x_validation, y_validation, classifier):
-    features = x_train.columns
-    validation_Prediction = classifier.predict(x_validation)
-    validation_PredictedProb = classifier.predict_proba(x_validation)[:, 1]
-    ### ROC metric and curve #####
-    clasifierName = type(classifier).__name__
-    metric_RocAuc(validation_PredictedProb, y_validation,clasifierName)
-    fi_model = pd.DataFrame({'feature': features,
-                   'importance': classifier.feature_importances_}).\
-                    sort_values('importance', ascending = False)
-    clasifierNameExtended = clasifierName + "_info_fi.csv"     
-    fi_model.to_csv(clasifierNameExtended, index = None)
-    return fi_model
