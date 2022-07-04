@@ -3,14 +3,55 @@ Aqui vamos a poner
 todo lo necesario para hacer fincionet RF a ppartir de competition 2
 '''
 import time
+import myServices
 import numpy as np
 import pandas as pd
 import joblib
 from sklearn.metrics import accuracy_score
 from sklearn.model_selection import train_test_split, GridSearchCV 
 from sklearn.ensemble import RandomForestRegressor
-from sklearn.metrics import make_scorer,accuracy_score,roc_curve, auc, roc_auc_score, f1_score
-from sklearn.calibration import CalibrationDisplay
+from sklearn.metrics import accuracy_score, roc_auc_score, f1_score
+from sklearn.calibration import CalibrationDisplay  ## TODO ##
+
+def RandomForestRegression():
+    def __init__(self, dataSet, splitProportion = 0.2):
+        self.seedRF = 50
+        self.paramGrid = createSearshGrid()
+        X,Y = importDataSet(dataSet)
+        self.x_train,self.x_validation,self.y_train, self.y_validation = train_test_split(X,Y, test_size = splitProportion) 
+        self.rfr_WithGridSearch = createModelRFRegressorWithGridSearsh()
+    
+    def createModelRFRegressorWithGridSearsh(self):
+        estimator = RandomForestRegressor(random_state = self.seedRF)
+        scoring = {"AUC": "roc_auc", 
+                    "Accuracy": accuracy_score, 
+                    "roc_auc_Score":roc_auc_score, 
+                    "F1":f1_score}
+        modelRFRegressorWithGridSearsh = GridSearchCV(estimator, 
+                                                    param_grid = self.paramGrid,
+                                                    n_jobs = -1, 
+                                                    scoring = scoring,
+                                                    refit="AUC",
+                                                    cv = 3, 
+                                                    n_iter = 10,
+                                                    verbose = 1, 
+                                                    random_state=self.seedRF,
+                                                    return_train_score = True
+                                                    )
+        return modelRFRegressorWithGridSearsh
+
+    def fitRFRegressor(self, saveTheModel = True):
+        y_train = np.array(self.y_train)
+        self.rfr_WithGridSearch.fit(self.x_train, y_train).ravel()
+        print(self.rfr_WithGridSearch.best_params_, "\n")
+        best_estimator = self.rfr_WithGridSearch.best_estimator_
+        if saveTheModel:
+            saveModel(best_estimator)
+        investigateFeatureImportance(best_estimator, self.x_train)
+        return best_estimator
+    
+    def getSplitedDataset(self):
+        return self.x_train,self.x_validation,self.y_train, self.y_validation 
 
 def importDataSet(dataSetName):
     '''
@@ -73,67 +114,10 @@ def createSearshGrid():
     }
     return param_grid
 
-
-def executeRandomForestRegression():
-    def __init__(self, dataSet, saveModelPath, splitProportion = 0.2):
-        self.saveModelPath = saveModelPath
-        self.paramGrid = createSearshGrid()
-        self.dataSet = dataSet
-        self.seedRF = 50
-        rfr_WithGridSearch = createModelRFRegressorWithGridSearsh()
-        bestRegressor = fitModelRFRegressor(rfr_WithGridSearch)
-        return bestRegressor
-    
-    def createModelRFRegressorWithGridSearsh(self):
-        estimator = RandomForestRegressor(random_state = self.seedRF)
-        scoring = {"AUC": "roc_auc", "Accuracy": accuracy_score, 
-                    "roc_auc_Score":roc_auc_score, "F1":f1_score}
-        gs = GridSearchCV(estimator, 
-                        param_grid = self.paramGrid,
-                        n_jobs = -1, 
-                        scoring = scoring,
-                        refit="AUC",
-                        cv = 3, 
-                        n_iter = 10,
-                        verbose = 1, 
-                        random_state=self.seedRF,
-                        return_train_score = True
-                        )
-        return gs
-  
-    def fitModelRFRegressor(self, rfr_WithGridSearch, x_train, y_train, saveModel = True):
-        y_train = np.array(y_train)
-        rfr_WithGridSearch.fit(x_train, y_train).ravel()
-        print(rfr_WithGridSearch.best_params_, "\n")
-        ### Working with best estimator from RandomizedSearch 
-        best_estimator = rfr_WithGridSearch.best_estimator_
-        
-        if saveModel:
-            joblib.dump(best_estimator, "rf_RandomSearch.pkl")
-        ## Evaluating ROC Curve and extracting features priority
-        fi_model = investigateFeatureImportance(x_train, )
-        return best_estimator
+def saveModel(best_estimator):
+    path = myServices.getLocalPath
+    myServices.ensureDirectory(path+'/models')
+    joblib.dump(best_estimator, "./models/rf_RandomSearch.pkl")
 
      
-
-
-## Trash ...
-def metric_RocAuc(y_probability, y_validation, estimator_name):
-    '''
-    Calculate and plt ROC metric
-    @argument: y_probability : the probability class=1.
-    @argument: y_validation: True labels.
-    fpr, tpr = false_positive, true_positive.
-    Return: "false_positive" and "true_positive", ROC_auc metric.
-    '''
-    fpr, tpr, _ = roc_curve(y_validation, y_probability) 
-    roc_auc = auc(fpr, tpr)
-    fig, axes = plt.subplots(constrained_layout=True,figsize=(5,3), dpi=150)
-    fig.suptitle(estimator_name)
-    axes.plot([0, 1], [0, 1], color= 'k',linestyle="--") # perfect fit 
-    display = metrics.RocCurveDisplay(fpr=fpr, tpr=tpr, roc_auc=roc_auc,
-                                       estimator_name=estimator_name)
-    display.plot(ax=axes)
-    return fpr, tpr, roc_auc
-
 
