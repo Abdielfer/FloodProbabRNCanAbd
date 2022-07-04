@@ -1,6 +1,9 @@
 import os
 import pandas as pd
 
+def getLocalPath():
+    return os.getcwd()
+
 def ensureDirectory(pathToCheck):
     if os.path.isdir(pathToCheck): 
         return True

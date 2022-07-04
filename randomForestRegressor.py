@@ -2,6 +2,7 @@
 Aqui vamos a poner 
 todo lo necesario para hacer fincionet RF a ppartir de competition 2
 '''
+import time
 import numpy as np
 import pandas as pd
 import joblib
@@ -39,7 +40,7 @@ def predictOnFeaturesSet(model, featuresSet):
     y_hat = model.predict(featuresSet)
     return y_hat
 
-def investigateFeatureImportance(x_train, classifier, printed = True):
+def investigateFeatureImportance(classifier, x_train, printed = True):
     '''
     @input: feature matrix
             classifier trained
@@ -61,7 +62,7 @@ def investigateFeatureImportance(x_train, classifier, printed = True):
             print(featuresInModel)
     return featuresInModel
 
-def createsearshGreed():
+def createSearshGrid():
     param_grid = {
     'n_estimators': np.linspace(90, 120,2).astype(int), #default 100
     'max_depth': [None],  # + list(np.linspace(3, 20).astype(int)),
@@ -75,13 +76,11 @@ def createsearshGreed():
 
 def executeRandomForestRegression():
     def __init__(self, dataSet, saveModelPath, splitProportion = 0.2):
-        self.paramGrid = createsearshGreed()
+        self.saveModelPath = saveModelPath
+        self.paramGrid = createSearshGrid()
         self.dataSet = dataSet
         self.seedRF = 50
-        
-
         rfr_WithGridSearch = createModelRFRegressorWithGridSearsh()
-
         bestRegressor = fitModelRFRegressor(rfr_WithGridSearch)
         return bestRegressor
     
@@ -89,7 +88,7 @@ def executeRandomForestRegression():
         estimator = RandomForestRegressor(random_state = self.seedRF)
         scoring = {"AUC": "roc_auc", "Accuracy": accuracy_score, 
                     "roc_auc_Score":roc_auc_score, "F1":f1_score}
-        rs = GridSearchCV(estimator, 
+        gs = GridSearchCV(estimator, 
                         param_grid = self.paramGrid,
                         n_jobs = -1, 
                         scoring = scoring,
@@ -100,20 +99,20 @@ def executeRandomForestRegression():
                         random_state=self.seedRF,
                         return_train_score = True
                         )
-        return rs
+        return gs
   
     def fitModelRFRegressor(self, rfr_WithGridSearch, x_train, y_train, saveModel = True):
         y_train = np.array(y_train)
         rfr_WithGridSearch.fit(x_train, y_train).ravel()
         print(rfr_WithGridSearch.best_params_, "\n")
         ### Working with best estimator from RandomizedSearch 
-        best_model = rs.best_estimator_
-        if saveModel:
-            joblib.dump(best_model, "rf_RandomSearch.pkl")
-        ## Evaluating ROC Curve and extracting features priority
-        fi_model = evaluate_model(x_train, y_train, x_validation, y_validation, test_nolabels_prediction)
+        best_estimator = rfr_WithGridSearch.best_estimator_
         
-        return bestEstimator
+        if saveModel:
+            joblib.dump(best_estimator, "rf_RandomSearch.pkl")
+        ## Evaluating ROC Curve and extracting features priority
+        fi_model = investigateFeatureImportance(x_train, )
+        return best_estimator
 
      
 
