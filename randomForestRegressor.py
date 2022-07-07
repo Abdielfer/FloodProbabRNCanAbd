@@ -2,6 +2,7 @@
 Aqui vamos a poner 
 todo lo necesario para hacer fincionet RF a ppartir de competition 2
 '''
+from sqlite3 import Date
 import time
 import myServices
 import numpy as np
@@ -115,9 +116,11 @@ def createSearshGrid():
     return param_grid
 
 def saveModel(best_estimator):
+    date = time.strftime("%Y%M%D_%H%M%S")
     path = myServices.getLocalPath
     myServices.ensureDirectory(path+'/models')
-    joblib.dump(best_estimator, "./models/rf_RandomSearch.pkl")
+    destiny = "./models/rfwgs_"+"date.pkl"
+    joblib.dump(best_estimator, destiny)
 
      
 

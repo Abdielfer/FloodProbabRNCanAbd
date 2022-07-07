@@ -1,11 +1,13 @@
+dask
 geopandas
 geopy
 h5py
 hydra-core
 notebook
 numpy
+openpyxl
 pandas
-Pillow
+pillow
 pytorch-lightning
 rasterio
 requests
@@ -17,4 +19,3 @@ torchmetrics
 torchvision
 tqdm
 whitebox
-openpyxl
