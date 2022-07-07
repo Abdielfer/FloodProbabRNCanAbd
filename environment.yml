@@ -1,0 +1,23 @@
+name: venvFP
+dask
+geopandas
+geopy
+h5py
+hydra-core
+notebook
+numpy
+openpyxl
+pandas
+pillow
+pytorch-lightning
+rasterio
+requests
+scikit-learn
+segmentation-models-pytorch
+torch
+torchgeo
+torchmetrics
+torchvision
+tqdm
+whitebox
+
