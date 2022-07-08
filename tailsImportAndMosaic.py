@@ -1,5 +1,5 @@
 import os
-import services
+import myServices
 from whitebox.whitebox_tools import WhiteboxTools, default_callback
 from torchgeo.datasets.utils import download_url
 
