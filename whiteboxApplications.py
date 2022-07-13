@@ -1,5 +1,5 @@
 import os
-import services
+import myServices
 from whitebox.whitebox_tools import WhiteboxTools, default_callback
 
 ## LocalPaths and global variables: to be adapted to your needs ##
@@ -23,7 +23,7 @@ class dtmTransformer():
             wbt.set_working_dir(workingDir)
         else:
             self.workingDir = input('Enter working directory')
-            if services.ensureDirectory(self.workingDir):
+            if myServices.ensureDirectory(self.workingDir):
                 wbt.set_working_dir(self.workingDir)
         
     def computeMosaic(self, outpouFileName = "None"):

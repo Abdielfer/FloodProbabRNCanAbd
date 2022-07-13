@@ -34,7 +34,7 @@ class dtmTailImporter():
         else:
             outputPath = input('Enter a destiny path to download:')
             print(outputPath)
-            if services.ensureDirectory(outputPath):
+            if myServices.ensureDirectory(outputPath):
                 for path in self.tail_URL_NamesList:
                     download_url(path, outputPath)
                 print(f"Tails dawnloaded to: {outputPath}")      
