@@ -3,6 +3,7 @@ geopandas
 geopy
 h5py
 hydra-core
+ipykernel
 notebook
 numpy
 openpyxl
