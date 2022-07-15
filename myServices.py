@@ -36,14 +36,21 @@ def clipRasterWithPoligon(rastPath, polygonPath,outputPath):
     os.system("gdalwarp -datnodata -9999 -q -cutline" + polygonPath + " crop_to_cutline" + " -of GTiff" + rastPath + " " + outputPath)
    
    
-def separateClippingPolygonss(inPath,field):
+def separateClippingPolygonss(inPath,field, outPath = "None"):
     '''
     Crete individial *.shp for each Clip in individual directories. 
     @input: 
        @field: Flield in the input *.shp to chose.
        @inPath: The path to the original *.shp.
     '''
-    ensureDirectory(getLocalPath() +"/clipingPolygons")
+    if outPath != "None":
+        ensureDirectory(outPath)
+        os.mkdir(os.path.join(outPath,"/clipingPolygons"))
+        saveingPath = os.path.join(outPath,"/clipingPolygons") 
+    else: 
+        ensureDirectory(os.path.join(getLocalPath(),"/clipingPolygons"))
+        saveingPath = os.path.join(outPath,"/clipingPolygons")
+
     driverSHP = ogr.GetDriverByName("ESRI Shapefile")
     ds = driverSHP.Open(inPath)
     if ds in None:
@@ -53,7 +60,7 @@ def separateClippingPolygonss(inPath,field):
     spatialRef = lyr.GetSpatialRef()
     for feautre in lyr:
         fieldValue = feautre.GetField(field)
-        os.mkdir("clipingPolygons/" + str(fieldValue))
+        os.mkdir(os.path.join(saveingPath,str(fieldValue)))
         outName = str(fieldValue)+"Clip.shp"
         outds = driverSHP.CreateDataSorce("clipingPolygons/" + str(fieldValue) + "/" + outName)
         outLayer = outds.CreateLayer(outName, srs=spatialRef,geo_type = ogr.wkbPolygon)
