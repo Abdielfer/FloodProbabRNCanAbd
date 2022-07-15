@@ -29,23 +29,26 @@ def importListFromExelCol(excell_file_location,Shet_id, col_id):
         x.append(i)
     return x
 
-def clipRasterFromPoligons(rastPath, polygonPath,outputPath):
-    
-    return
+def clipRasterWithPoligon(rastPath, polygonPath,outputPath):
+    '''
+    Clip a raster (*.GTiff) with a single polygon feature 
+    '''
+    os.system("gdalwarp -datnodata -9999 -q -cutline" + polygonPath + " crop_to_cutline" + " -of GTiff" + rastPath + " " + outputPath)
    
-
-
+   
 def separateClippingPolygonss(inPath,field):
     '''
-    Crete individial *.shp for each Clip in separeted directories. 
+    Crete individial *.shp for each Clip in individual directories. 
     @input: 
-       @field: Flield in the input *.shp to chose to build tha Clip. 
+       @field: Flield in the input *.shp to chose.
        @inPath: The path to the original *.shp.
     '''
+    ensureDirectory(getLocalPath() +"/clipingPolygons")
     driverSHP = ogr.GetDriverByName("ESRI Shapefile")
     ds = driverSHP.Open(inPath)
     if ds in None:
         print("Layer not found")
+        return False
     lyr = ds.GetLayer()
     spatialRef = lyr.GetSpatialRef()
     for feautre in lyr:
@@ -59,8 +62,23 @@ def separateClippingPolygonss(inPath,field):
         outFeature = ogr.Feature(outDfn)
         outFeature.SetGeometry(inGeom)
         outLayer.CreateFeature(outFeature)
+    
+    return True
 
+def clipRatse(rasterPath,polygonPath,field, outputPath):
+    ''' 
+    '''
+    driverSHP = ogr.GetDriverByName("ESRI Shapefile")
+    ds = driverSHP.Open(polygonPath)
+    if ds in None:
+        print("Layer not found")
+        return False
+    lyr = ds.GetLayer()
+    spatialRef = lyr.GetSpatialRef()
+    for feautre in lyr:
+        fieldValue = feautre.GetField(field)
+        clipRasterWithPoligon(rasterPath, polygonPath, outputPath)
 
-
-    return
+    return True
+    
 
