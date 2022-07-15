@@ -65,7 +65,7 @@ def separateClippingPolygonss(inPath,field):
     
     return True
 
-def clipRatse(rasterPath,polygonPath,field, outputPath):
+def clipRaster(rasterPath,polygonPath,field, outputPath):
     ''' 
     '''
     driverSHP = ogr.GetDriverByName("ESRI Shapefile")
@@ -78,7 +78,7 @@ def clipRatse(rasterPath,polygonPath,field, outputPath):
     for feautre in lyr:
         fieldValue = feautre.GetField(field)
         clipRasterWithPoligon(rasterPath, polygonPath, outputPath)
-
+ 
     return True
     
 
