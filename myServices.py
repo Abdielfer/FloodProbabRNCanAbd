@@ -1,5 +1,7 @@
+from http.client import UnknownTransferEncoding
 import os
 import pandas as pd
+from osgeo import gdal, ogr
 
 def getLocalPath():
     return os.getcwd()
@@ -27,4 +29,38 @@ def importListFromExelCol(excell_file_location,Shet_id, col_id):
         x.append(i)
     return x
 
+def clipRasterFromPoligons(rastPath, polygonPath,outputPath):
+    
+    return
+   
+
+
+def separateClippingPolygonss(inPath,field):
+    '''
+    Crete individial *.shp for each Clip in separeted directories. 
+    @input: 
+       @field: Flield in the input *.shp to chose to build tha Clip. 
+       @inPath: The path to the original *.shp.
+    '''
+    driverSHP = ogr.GetDriverByName("ESRI Shapefile")
+    ds = driverSHP.Open(inPath)
+    if ds in None:
+        print("Layer not found")
+    lyr = ds.GetLayer()
+    spatialRef = lyr.GetSpatialRef()
+    for feautre in lyr:
+        fieldValue = feautre.GetField(field)
+        os.mkdir("clipingPolygons/" + str(fieldValue))
+        outName = str(fieldValue)+"Clip.shp"
+        outds = driverSHP.CreateDataSorce("clipingPolygons/" + str(fieldValue) + "/" + outName)
+        outLayer = outds.CreateLayer(outName, srs=spatialRef,geo_type = ogr.wkbPolygon)
+        outDfn = outLayer.GetLayerDef()
+        inGeom = feautre.GetGeometryRef()
+        outFeature = ogr.Feature(outDfn)
+        outFeature.SetGeometry(inGeom)
+        outLayer.CreateFeature(outFeature)
+
+
+
+    return
 
