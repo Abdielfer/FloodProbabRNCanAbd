@@ -1,4 +1,5 @@
 dask
+cuml
 geopandas
 geopy
 h5py

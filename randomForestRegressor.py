@@ -15,10 +15,10 @@ from sklearn.metrics import accuracy_score, roc_auc_score, f1_score
 from sklearn.calibration import CalibrationDisplay  ## TODO ##
 
 def RandomForestRegression():
-    def __init__(self, dataSet, splitProportion = 0.2):
+    def __init__(self, dataSet, targetCol, splitProportion = 0.2):
         self.seedRF = 50
         self.paramGrid = createSearshGrid()
-        X,Y = importDataSet(dataSet)
+        X,Y = importDataSet(dataSet, targetCol)
         self.x_train,self.x_validation,self.y_train, self.y_validation = train_test_split(X,Y, test_size = splitProportion) 
         self.rfr_WithGridSearch = createModelRFRegressorWithGridSearsh()
     
@@ -54,16 +54,16 @@ def RandomForestRegression():
     def getSplitedDataset(self):
         return self.x_train,self.x_validation,self.y_train, self.y_validation 
 
-def importDataSet(dataSetName):
+def importDataSet(dataSetName, targetCol: str):
     '''
     Import datasets and filling NaN values          
     @input: DataSetName => The dataset path. 
     @Output: Features(x) and tragets(y)    
     ''' 
     train = pd.read_csv(dataSetName, index_col = None)
-    y = train[['LABELS']]
+    y = train[[targetCol]]
     y = y.fillna(0)
-    x = train.drop('LABELS', axis=1)
+    x = train.drop(targetCol, axis=1)
     xMean = x.mean()
     x = x.fillna(xMean)
     return x, y
@@ -72,11 +72,11 @@ def split(x,y,TestPercent = 0.2):
     x_train, x_validation, y_train, y_validation = train_test_split( x,y, test_size=TestPercent)
     return x_train, x_validation, y_train, y_validation
 
-def printDataBalace(x_train, x_validation, y_train, y_validation):
+def printDataBalace(x_train, x_validation, y_train, y_validation, targetCol: str):
     ## Data shape exploration
     print("",np.shape(x_train),"  :",np.shape(x_validation) )
-    print("Label balance on Training set: ", "\n", y_train['LABELS'].value_counts())
-    print("Label balance on Validation set: ", "\n", y_validation['LABELS'].value_counts())
+    print("Label balance on Training set: ", "\n", y_train[targetCol].value_counts())
+    print("Label balance on Validation set: ", "\n", y_validation[targetCol].value_counts())
 
 def predictOnFeaturesSet(model, featuresSet):
     y_hat = model.predict(featuresSet)
@@ -122,5 +122,4 @@ def saveModel(best_estimator):
     destiny = "./models/rfwgs_"+"date.pkl"
     joblib.dump(best_estimator, destiny)
 
-     
 
