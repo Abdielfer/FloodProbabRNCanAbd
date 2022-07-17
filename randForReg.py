@@ -15,6 +15,14 @@ from sklearn.metrics import accuracy_score, roc_auc_score, f1_score
 from sklearn.calibration import CalibrationDisplay  ## TODO ##
 
 def RandomForestRegression():
+    '''
+    Class implementing all necessary steps for a ranom Forest 
+    regression with sklearn
+    @imput:
+      @ dataset: The full path to a *.csv file containing the dataSet.
+      @ targetCol: The name of the column in the dataSet containig the target values.
+      @ splitProportion: The proportion for the testing set creation.
+    '''
     def __init__(self, dataSet, targetCol, splitProportion = 0.2):
         self.seedRF = 50
         self.paramGrid = createSearshGrid()
