@@ -6,6 +6,9 @@ import pandas as pd
 def getLocalPath():
     return os.getcwd()
 
+def makePath(str1,str2):
+    return os.path.join(str1,str2)
+
 def ensureDirectory(pathToCheck):
     if os.path.isdir(pathToCheck): 
         return True

@@ -46,7 +46,7 @@ class implementRandomForestRegressor():
         return modelRFRegressorWithGridSearsh
 
     def fitRFRegressor(self, saveTheModel = True):
-        y_train = np.array(self.y_train)
+        y_train = np.array(self.y_train).ravel()
         self.rfr_WithGridSearch.fit(self.x_train, y_train)
         print(self.rfr_WithGridSearch.best_params_, "\n")
         best_estimator = self.rfr_WithGridSearch.best_estimator_
@@ -114,8 +114,8 @@ def investigateFeatureImportance(classifier, x_train, printed = True):
 def createSearshGrid():
     param_grid = {
     'n_estimators': np.linspace(90, 120,2).astype(int), #default 100
-    'max_depth': [None],  # + list(np.linspace(3, 20).astype(int)),
-    'max_features': ['auto', 'sqrt', None], # + list(np.arange(0.5, 1, 0.1)),
+    'max_depth': [None] + list(np.linspace(3, 20).astype(int)),
+    'max_features': list(np.arange(0.2, 1, 0.1)),
     'max_leaf_nodes': [None], # + list(np.linspace(10, 50, 500).astype(int)),
     # 'min_samples_split': [2, 5, 10],
     'bootstrap': [True, False]
@@ -124,8 +124,7 @@ def createSearshGrid():
 
 def saveModel(best_estimator):
     date = time.strftime("%Y%M%D_%H%M%S")
-    path = myServices.getLocalPath
-    myServices.ensureDirectory(path+'/models')
+    myServices.ensureDirectory('./models')
     destiny = "./models/rfwgs_"+"date.pkl"
     joblib.dump(best_estimator, destiny)
 
