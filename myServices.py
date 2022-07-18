@@ -50,6 +50,7 @@ def separateClippingPolygonss(inPath,field, outPath = "None"):
     else: 
         ensureDirectory(os.path.join(getLocalPath(),"/clipingPolygons"))
         saveingPath = os.path.join(outPath,"/clipingPolygons")
+
     driverSHP = ogr.GetDriverByName("ESRI Shapefile")
     ds = driverSHP.Open(inPath)
     if ds in None:
@@ -71,7 +72,7 @@ def separateClippingPolygonss(inPath,field, outPath = "None"):
     
     return True
 
-def clipRaster(rasterPath,polygonPath,field,outputPath):
+def clipRaster(rasterPath,polygonPath,field, outputPath):
     ''' 
     '''
     driverSHP = ogr.GetDriverByName("ESRI Shapefile")

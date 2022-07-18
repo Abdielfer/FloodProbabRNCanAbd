@@ -1,5 +1,6 @@
 dask
 cuml
+gdal
 geopandas
 geopy
 h5py
@@ -7,6 +8,7 @@ hydra-core
 ipykernel
 notebook
 numpy
+ogr
 openpyxl
 pandas
 pillow
