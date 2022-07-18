@@ -47,7 +47,7 @@ class implementRandomForestRegressor():
 
     def fitRFRegressor(self, saveTheModel = True):
         y_train = np.array(self.y_train)
-        self.rfr_WithGridSearch.fit(self.x_train, y_train).ravel()
+        self.rfr_WithGridSearch.fit(self.x_train, y_train)
         print(self.rfr_WithGridSearch.best_params_, "\n")
         best_estimator = self.rfr_WithGridSearch.best_estimator_
         if saveTheModel:
@@ -120,7 +120,7 @@ def createSearshGrid():
     # 'min_samples_split': [2, 5, 10],
     'bootstrap': [True, False]
     }
-    return param_grid
+    return param_grid   
 
 def saveModel(best_estimator):
     date = time.strftime("%Y%M%D_%H%M%S")

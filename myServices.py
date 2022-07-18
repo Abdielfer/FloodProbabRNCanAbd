@@ -89,5 +89,3 @@ def clipRaster(rasterPath,polygonPath,field, outputPath):
     
 
 
-print(getLocalPath())
-
