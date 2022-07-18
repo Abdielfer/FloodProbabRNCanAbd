@@ -14,7 +14,7 @@ from sklearn.ensemble import RandomForestRegressor
 from sklearn.metrics import accuracy_score, roc_auc_score, f1_score
 from sklearn.calibration import CalibrationDisplay  ## TODO ##
 
-def RandomForestRegression():
+class randomForestRegressor():
     '''
     Class implementing all necessary steps for a ranom Forest 
     regression with sklearn
@@ -23,13 +23,13 @@ def RandomForestRegression():
       @ targetCol: The name of the column in the dataSet containig the target values.
       @ splitProportion: The proportion for the testing set creation.
     '''
-    def __init__(self, dataSet, targetCol, splitProportion = 0.2):
+    def __init__(self, dataSet, targetCol, splitProportion =0.2):
         self.seedRF = 50
         self.paramGrid = createSearshGrid()
         X,Y = importDataSet(dataSet, targetCol)
         self.x_train,self.x_validation,self.y_train, self.y_validation = train_test_split(X,Y, test_size = splitProportion) 
-        self.rfr_WithGridSearch = createModelRFRegressorWithGridSearsh()
-    
+        self.rfr_WithGridSearch = randomForestRegressor.createModelRFRegressorWithGridSearsh()
+
     def createModelRFRegressorWithGridSearsh(self):
         estimator = RandomForestRegressor(random_state = self.seedRF)
         scoring = {"AUC": "roc_auc", 
@@ -50,6 +50,7 @@ def RandomForestRegression():
         return modelRFRegressorWithGridSearsh
 
     def fitRFRegressor(self, saveTheModel = True):
+        
         y_train = np.array(self.y_train)
         self.rfr_WithGridSearch.fit(self.x_train, y_train).ravel()
         print(self.rfr_WithGridSearch.best_params_, "\n")
@@ -58,10 +59,13 @@ def RandomForestRegression():
             saveModel(best_estimator)
         investigateFeatureImportance(best_estimator, self.x_train)
         return best_estimator
-    
-    def getSplitedDataset(self):
-        return self.x_train,self.x_validation,self.y_train, self.y_validation 
 
+    def getSplitedDataset(self):
+        '''
+        just a comment to chech something
+        '''
+        return self.x_train,self.x_validation,self.y_train, self.y_validation
+    
 def importDataSet(dataSetName, targetCol: str):
     '''
     Import datasets and filling NaN values          
