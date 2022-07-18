@@ -4,53 +4,48 @@ todo lo necesario para hacer fincionet RF a ppartir de competition 2
 '''
 from sqlite3 import Date
 import time
+
+from torchmetrics import Precision
 import myServices
 import numpy as np
 import pandas as pd
 import joblib
-from sklearn.metrics import accuracy_score
 from sklearn.model_selection import train_test_split, GridSearchCV 
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.metrics import accuracy_score, roc_auc_score, f1_score
 from sklearn.calibration import CalibrationDisplay  ## TODO ##
 
-class randomForestRegressor():
+class implementRandomForestRegressor():
     '''
     Class implementing all necessary steps for a ranom Forest 
-    regression with sklearn
+    regression with sklearnpare
     @imput:
       @ dataset: The full path to a *.csv file containing the dataSet.
       @ targetCol: The name of the column in the dataSet containig the target values.
       @ splitProportion: The proportion for the testing set creation.
     '''
-    def __init__(self, dataSet, targetCol, splitProportion =0.2):
+    def __init__(self, dataSet, targetCol, splitProportion ):
         self.seedRF = 50
         self.paramGrid = createSearshGrid()
         X,Y = importDataSet(dataSet, targetCol)
         self.x_train,self.x_validation,self.y_train, self.y_validation = train_test_split(X,Y, test_size = splitProportion) 
-        self.rfr_WithGridSearch = randomForestRegressor.createModelRFRegressorWithGridSearsh()
+        self.rfr_WithGridSearch = implementRandomForestRegressor.createModelRFRegressorWithGridSearsh(self)
 
     def createModelRFRegressorWithGridSearsh(self):
         estimator = RandomForestRegressor(random_state = self.seedRF)
-        scoring = {"AUC": "roc_auc", 
-                    "Accuracy": accuracy_score, 
-                    "roc_auc_Score":roc_auc_score, 
-                    "F1":f1_score}
+        scoring = ['accuracy','balanced_accuracy','roc_auc','precision','f1']
         modelRFRegressorWithGridSearsh = GridSearchCV(estimator, 
                                                     param_grid = self.paramGrid,
                                                     n_jobs = -1, 
                                                     scoring = scoring,
-                                                    refit="AUC",
+                                                    refit="balanced_accuracy",
                                                     cv = 3, 
-                                                    n_iter = 10,
                                                     verbose = 1, 
-                                                    random_state=self.seedRF,
                                                     return_train_score = True
                                                     )
         return modelRFRegressorWithGridSearsh
 
     def fitRFRegressor(self, saveTheModel = True):
-        
         y_train = np.array(self.y_train)
         self.rfr_WithGridSearch.fit(self.x_train, y_train).ravel()
         print(self.rfr_WithGridSearch.best_params_, "\n")
