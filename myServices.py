@@ -1,7 +1,7 @@
-from http.client import UnknownTransferEncoding
 import os
 import pandas as pd
-from osgeo import gdal, ogr
+# import gdal
+# import ogr
 
 def getLocalPath():
     return os.getcwd()
@@ -87,4 +87,7 @@ def clipRaster(rasterPath,polygonPath,field, outputPath):
         clipRasterWithPoligon(rasterPath, polygonPath, outputPath)
     return True
     
+
+
+print(getLocalPath())
 
