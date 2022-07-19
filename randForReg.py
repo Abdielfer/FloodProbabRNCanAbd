@@ -166,9 +166,9 @@ def createWeightVector(y_vector, dominantClassPenalty):
     weightVec = [dominantClassPenalty if y_vector[j] == 0 else 1 for j in range(len(y_vector))]
     return weightVec
 
-def saveModel(best_estimator, name):
+def saveModel(best_estimator, id):
     myServices.ensureDirectory('./models/rwReg')
-    name = "rfwgs_"+ name + ".pkl" 
+    name = "rfwgs_"+ id + ".pkl" 
     destiny = "./models/rwReg/" + name
     print(destiny)
     _ = joblib.dump(best_estimator, destiny, compress=9)
