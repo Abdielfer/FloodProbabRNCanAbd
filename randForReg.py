@@ -43,13 +43,14 @@ class implementRandomForestRegressor():
         return modelRFRegressorWithGridSearsh
 
     def fitRFRegressor(self, saveTheModel = True, enhanceClassDiff = True):
+        name = makeNameByTime()
         if enhanceClassDiff:
             implementRandomForestRegressor.enhanceClassDifferences(10)    
         y_train= (np.array(self.y_train).astype('int')).ravel()
         self.rfr_WithGridSearch.fit(self.x_train, y_train)
         best_estimator = self.rfr_WithGridSearch.best_estimator_
         if saveTheModel:
-            saveModel(best_estimator)
+            saveModel(best_estimator,name)
         investigateFeatureImportance(best_estimator, self.x_train)
         print(f"The best parameters: {self.rfr_WithGridSearch.best_params_}")
         reportErrors(best_estimator, self.x_validation, self.y_validation)
@@ -64,7 +65,7 @@ class implementRandomForestRegressor():
         self.rfr_WithGridSearch.fit(self.x_train, y_train,sample_weight = weights)
         best_estimator = self.rfr_WithGridSearch.best_estimator_
         if saveTheModel:
-            saveModel(best_estimator)
+            saveModel(best_estimator,name)
         investigateFeatureImportance(best_estimator,name,self.x_train)
         print(f"The best parameters: {self.rfr_WithGridSearch.best_params_}")
         reportErrors(best_estimator, self.x_validation, self.y_validation)
