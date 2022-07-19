@@ -2,17 +2,14 @@
 Aqui vamos a poner 
 todo lo necesario para hacer fincionet RF a ppartir de competition 2
 '''
-from sqlite3 import Date
 import time
-
-from torchmetrics import Precision
 import myServices
 import numpy as np
 import pandas as pd
 import joblib
 from sklearn.model_selection import train_test_split, GridSearchCV 
+from sklearn import metrics
 from sklearn.ensemble import RandomForestRegressor
-from sklearn.metrics import accuracy_score, roc_auc_score, f1_score
 from sklearn.calibration import CalibrationDisplay  ## TODO ##
 
 class implementRandomForestRegressor():
@@ -29,16 +26,19 @@ class implementRandomForestRegressor():
         self.paramGrid = createSearshGrid()
         X,Y = importDataSet(dataSet, targetCol)
         self.x_train,self.x_validation,self.y_train, self.y_validation = train_test_split(X,Y, test_size = splitProportion) 
+        ## reshape in column vector
+        self.y_train= (np.array(self.y_train).astype('int')).ravel()
+        self.y_validation  = (np.array(self.y_validation).astype('int')).ravel()
         self.rfr_WithGridSearch = implementRandomForestRegressor.createModelRFRegressorWithGridSearsh(self)
 
     def createModelRFRegressorWithGridSearsh(self):
         estimator = RandomForestRegressor(random_state = self.seedRF)
-        scoring = ['accuracy','balanced_accuracy','roc_auc','precision','f1']
+        scoring = ['neg_mean_squared_error', 'neg_mean_absolute_error','roc_auc','f1']
         modelRFRegressorWithGridSearsh = GridSearchCV(estimator, 
                                                     param_grid = self.paramGrid,
                                                     n_jobs = -1, 
                                                     scoring = scoring,
-                                                    refit="balanced_accuracy",
+                                                    refit="roc_auc",
                                                     cv = 3, 
                                                     verbose = 1, 
                                                     return_train_score = True
@@ -46,13 +46,12 @@ class implementRandomForestRegressor():
         return modelRFRegressorWithGridSearsh
 
     def fitRFRegressor(self, saveTheModel = True):
-        y_train = np.array(self.y_train).ravel()
-        self.rfr_WithGridSearch.fit(self.x_train, y_train)
-        print(self.rfr_WithGridSearch.best_params_, "\n")
+        self.rfr_WithGridSearch.fit(self.x_train, self.y_train)
         best_estimator = self.rfr_WithGridSearch.best_estimator_
         if saveTheModel:
             saveModel(best_estimator)
         investigateFeatureImportance(best_estimator, self.x_train)
+        print(f"The best parameters: {self.rfr_WithGridSearch.best_params_}")
         return best_estimator
 
     def getSplitedDataset(self):
@@ -89,6 +88,19 @@ def predictOnFeaturesSet(model, featuresSet):
     y_hat = model.predict(featuresSet)
     return y_hat
 
+def computeMainErrors(model, x_test, y_test):
+    y_pred = model.predict(x_test)
+    mae = metrics.mean_absolute_error(y_test, y_pred) 
+    mse= metrics.mean_squared_error(y_test, y_pred)
+    r_mse = np.sqrt(metrics.mean_squared_error(y_test, y_pred)) # Root Mean Squared Error
+    return mae, mse, r_mse
+
+def reportErrors(model, x_test, y_test):
+    mae, mse, r_mse = computeMainErrors(model, x_test, y_test)
+    print('Mean Absolute Error: ',mae )  
+    print('Mean Squared Error: ', mse)  
+    print('Root Mean Squared Error: ',r_mse)
+
 def investigateFeatureImportance(classifier, x_train, printed = True):
     '''
     @input: feature matrix
@@ -115,8 +127,8 @@ def createSearshGrid():
     param_grid = {
     'n_estimators': np.linspace(90, 120,2).astype(int), #default 100
     'max_depth': [None] + list(np.linspace(3, 20).astype(int)),
-    'max_features': list(np.arange(0.2, 1, 0.1)),
-    'max_leaf_nodes': [None], # + list(np.linspace(10, 50, 500).astype(int)),
+    'max_features': ['auto', 'sqrt', 'log2'],# list(np.arange(0.2, 1, 0.1)),
+    'max_leaf_nodes': [None] + list(np.linspace(2, 30, 1).astype(int)),
     # 'min_samples_split': [2, 5, 10],
     'bootstrap': [True, False]
     }
