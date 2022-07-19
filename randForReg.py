@@ -51,6 +51,7 @@ class implementRandomForestRegressor():
             saveModel(best_estimator)
         investigateFeatureImportance(best_estimator, self.x_train)
         print(f"The best parameters: {self.rfr_WithGridSearch.best_params_}")
+        reportErrors(best_estimator, self.x_validation, self.y_validation)
         return best_estimator
     
     def fitRFRegressorWeighted(self, dominantClassPenalty : 0.1, saveTheModel = True):
@@ -62,13 +63,11 @@ class implementRandomForestRegressor():
             saveModel(best_estimator)
         investigateFeatureImportance(best_estimator, self.x_train)
         print(f"The best parameters: {self.rfr_WithGridSearch.best_params_}")
+        reportErrors(best_estimator, self.x_validation, self.y_validation)
         return best_estimator
     
 
     def getSplitedDataset(self):
-        '''
-        just a comment to chech something
-        '''
         return self.x_train,self.x_validation,self.y_train, self.y_validation
     
 def importDataSet(dataSetName, targetCol: str):
