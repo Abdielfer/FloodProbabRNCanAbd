@@ -54,7 +54,7 @@ class implementRandomForestRegressor():
         reportErrors(best_estimator, self.x_validation, self.y_validation)
         return best_estimator
     
-    def fitRFRegressorWeighted(self, dominantClassPenalty : 0.1, saveTheModel = True):
+    def fitRFRegressorWeighted(self, dominantClassPenalty, saveTheModel = True):
         name = makeNameByTime()
         y_train= (np.array(self.y_train).astype('int')).ravel()
         weights = createWeightVector(y_train, dominantClassPenalty)
@@ -62,7 +62,7 @@ class implementRandomForestRegressor():
         best_estimator = self.rfr_WithGridSearch.best_estimator_
         if saveTheModel:
             saveModel(best_estimator)
-        investigateFeatureImportance(best_estimator, self.x_train)
+        investigateFeatureImportance(best_estimator,name,self.x_train)
         print(f"The best parameters: {self.rfr_WithGridSearch.best_params_}")
         reportErrors(best_estimator, self.x_validation, self.y_validation)
         return best_estimator
@@ -138,7 +138,7 @@ def investigateFeatureImportance(classifier, dateName, x_train, printed = True):
 
 def createSearshGrid():
     param_grid = {
-    'n_estimators': np.linspace(50, 150,5).astype(int), #default 100
+    'n_estimators': np.linspace(20, 200,5).astype(int), #default 100
     'max_depth': [None] + list(np.linspace(3, 20).astype(int)),
     'max_features': list(np.arange(0.2, 1, 0.1)),
     'max_leaf_nodes': [None] + list(np.linspace(2, 30, 1).astype(int)),
@@ -169,3 +169,15 @@ def makeNameByTime():
     name = time.strftime("%y%m%d%H%M")
     return name
 
+
+def main():
+    datasetPath = './sample.csv'
+    rfReg = implementRandomForestRegressor(datasetPath,'percentage', 0.2)
+    x_train,x_validation,y_train, y_validation = rfReg.getSplitedDataset()
+    printDataBalace(x_train, x_validation, y_train, y_validation,'percentage')
+    rfReg.fitRFRegressorWeighted(0.1)
+
+
+if __name__ == "__main__":
+    with myServices.timeit():
+        main()
