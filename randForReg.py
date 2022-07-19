@@ -57,7 +57,9 @@ class implementRandomForestRegressor():
         y_train= (np.array(self.y_train).astype('int')).ravel()
         weights = createWeightVector(y_train, dominantClassPenalty)
         self.rfr_WithGridSearch.fit(self.x_train, y_train,sample_weight = weights)
+        print("#########   fitted   #####")
         best_estimator = self.rfr_WithGridSearch.best_estimator_
+        print(best_estimator)
         if saveTheModel:
             saveModel(best_estimator)
         investigateFeatureImportance(best_estimator, self.x_train)
