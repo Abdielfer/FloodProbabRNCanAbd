@@ -27,18 +27,16 @@ class implementRandomForestRegressor():
         X,Y = importDataSet(dataSet, targetCol)
         self.x_train,self.x_validation,self.y_train, self.y_validation = train_test_split(X,Y, test_size = splitProportion) 
         ## reshape in column vector
-        self.y_train= (np.array(self.y_train).astype('int')).ravel()
-        self.y_validation  = (np.array(self.y_validation).astype('int')).ravel()
         self.rfr_WithGridSearch = implementRandomForestRegressor.createModelRFRegressorWithGridSearsh(self)
 
     def createModelRFRegressorWithGridSearsh(self):
         estimator = RandomForestRegressor(random_state = self.seedRF)
-        scoring = ['neg_mean_squared_error', 'neg_mean_absolute_error','roc_auc','f1']
+        scoring = ['neg_mean_squared_error', 'neg_mean_absolute_error']
         modelRFRegressorWithGridSearsh = GridSearchCV(estimator, 
                                                     param_grid = self.paramGrid,
                                                     n_jobs = -1, 
                                                     scoring = scoring,
-                                                    refit="roc_auc",
+                                                    refit= "neg_mean_squared_error",
                                                     cv = 3, 
                                                     verbose = 1, 
                                                     return_train_score = True
@@ -46,13 +44,26 @@ class implementRandomForestRegressor():
         return modelRFRegressorWithGridSearsh
 
     def fitRFRegressor(self, saveTheModel = True):
-        self.rfr_WithGridSearch.fit(self.x_train, self.y_train)
+        y_train= (np.array(self.y_train).astype('int')).ravel()
+        self.rfr_WithGridSearch.fit(self.x_train, y_train)
         best_estimator = self.rfr_WithGridSearch.best_estimator_
         if saveTheModel:
             saveModel(best_estimator)
         investigateFeatureImportance(best_estimator, self.x_train)
         print(f"The best parameters: {self.rfr_WithGridSearch.best_params_}")
         return best_estimator
+    
+    def fitRFRegressorWeighted(self, dominantClassPenalty : 0.1, saveTheModel = True):
+        y_train= (np.array(self.y_train).astype('int')).ravel()
+        weights = createWeightVector(y_train, dominantClassPenalty)
+        self.rfr_WithGridSearch.fit(self.x_train, y_train,sample_weight = weights)
+        best_estimator = self.rfr_WithGridSearch.best_estimator_
+        if saveTheModel:
+            saveModel(best_estimator)
+        investigateFeatureImportance(best_estimator, self.x_train)
+        print(f"The best parameters: {self.rfr_WithGridSearch.best_params_}")
+        return best_estimator
+    
 
     def getSplitedDataset(self):
         '''
@@ -89,6 +100,7 @@ def predictOnFeaturesSet(model, featuresSet):
     return y_hat
 
 def computeMainErrors(model, x_test, y_test):
+    y_test  = (np.array(y_test).astype('int')).ravel()
     y_pred = model.predict(x_test)
     mae = metrics.mean_absolute_error(y_test, y_pred) 
     mse= metrics.mean_squared_error(y_test, y_pred)
@@ -125,14 +137,25 @@ def investigateFeatureImportance(classifier, x_train, printed = True):
 
 def createSearshGrid():
     param_grid = {
-    'n_estimators': np.linspace(90, 120,2).astype(int), #default 100
+    'n_estimators': np.linspace(50, 150,5).astype(int), #default 100
     'max_depth': [None] + list(np.linspace(3, 20).astype(int)),
-    'max_features': ['auto', 'sqrt', 'log2'],# list(np.arange(0.2, 1, 0.1)),
+    'max_features': list(np.arange(0.2, 1, 0.1)),
     'max_leaf_nodes': [None] + list(np.linspace(2, 30, 1).astype(int)),
     # 'min_samples_split': [2, 5, 10],
     'bootstrap': [True, False]
     }
     return param_grid   
+
+def createWeightVector(y_vector, dominantClassPenalty):
+    '''
+    Create wight vector for sampling weighted training.
+    The goal is to penalize the dominant class. 
+    This is important is the flood study, where majority of points (usually more than 95%) 
+    are not flooded areas. 
+    '''
+    weightVec = np.ones_like(y_vector).astype(float)
+    weightVec = [dominantClassPenalty if y_vector[j] == 0 else 1 for j in range(len(y_vector))]
+    return weightVec
 
 def saveModel(best_estimator):
     date = time.strftime("%y%m%d%H%M")
