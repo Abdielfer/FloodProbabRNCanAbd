@@ -183,7 +183,8 @@ def main():
     rfReg = implementRandomForestRegressor(datasetPath,'percentage', 0.2)
     x_train,x_validation,y_train, y_validation = rfReg.getSplitedDataset()
     printDataBalace(x_train, x_validation, y_train, y_validation,'percentage')
-    rfReg.fitRFRegressorWeighted(0.1)
+    bestReg = rfReg.fitRFRegressorWeighted(0.1)
+    return bestReg
 
 
 if __name__ == "__main__":
