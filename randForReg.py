@@ -55,6 +55,7 @@ class implementRandomForestRegressor():
         return best_estimator
     
     def fitRFRegressorWeighted(self, dominantClassPenalty : 0.1, saveTheModel = True):
+        name = makeNameByTime()
         y_train= (np.array(self.y_train).astype('int')).ravel()
         weights = createWeightVector(y_train, dominantClassPenalty)
         self.rfr_WithGridSearch.fit(self.x_train, y_train,sample_weight = weights)
@@ -112,7 +113,7 @@ def reportErrors(model, x_test, y_test):
     print('Mean Squared Error: ', mse)  
     print('Root Mean Squared Error: ',r_mse)
 
-def investigateFeatureImportance(classifier, x_train, printed = True):
+def investigateFeatureImportance(classifier, dateName, x_train, printed = True):
     '''
     @input: feature matrix
             classifier trained
@@ -121,6 +122,7 @@ def investigateFeatureImportance(classifier, x_train, printed = True):
     '''
     features = x_train.columns
     clasifierName = type(classifier).__name__
+    clasifierName = clasifierName + dateName
     featuresInModel= pd.DataFrame({'feature': features,
                    'importance': classifier.feature_importances_}).\
                     sort_values('importance', ascending = False)
@@ -156,12 +158,14 @@ def createWeightVector(y_vector, dominantClassPenalty):
     weightVec = [dominantClassPenalty if y_vector[j] == 0 else 1 for j in range(len(y_vector))]
     return weightVec
 
-def saveModel(best_estimator):
-    date = time.strftime("%y%m%d%H%M")
+def saveModel(best_estimator, name):
     myServices.ensureDirectory('./models/rwReg')
-    name = "rfwgs_"+ date + ".pkl" 
+    name = "rfwgs_"+ name + ".pkl" 
     destiny = "./models/rwReg/" + name
     print(destiny)
     _ = joblib.dump(best_estimator, destiny, compress=9)
 
+def makeNameByTime():
+    name = time.strftime("%y%m%d%H%M")
+    return name
 
