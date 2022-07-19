@@ -123,7 +123,7 @@ def createSearshGrid():
     return param_grid   
 
 def saveModel(best_estimator):
-    date = time.strftime("%y%m%d")
+    date = time.strftime("%y%m%d%H%M")
     myServices.ensureDirectory('./models/rwReg')
     name = "rfwgs_"+ date + ".pkl" 
     destiny = "./models/rwReg/" + name
