@@ -26,7 +26,6 @@ class implementRandomForestRegressor():
         self.paramGrid = createSearshGrid()
         X,Y = importDataSet(dataSet, targetCol)
         self.x_train,self.x_validation,self.y_train, self.y_validation = train_test_split(X,Y, test_size = splitProportion) 
-        ## reshape in column vector
         self.rfr_WithGridSearch = implementRandomForestRegressor.createModelRFRegressorWithGridSearsh(self)
 
     def createModelRFRegressorWithGridSearsh(self):
@@ -43,7 +42,9 @@ class implementRandomForestRegressor():
                                                     )
         return modelRFRegressorWithGridSearsh
 
-    def fitRFRegressor(self, saveTheModel = True):
+    def fitRFRegressor(self, saveTheModel = True, enhanceClassDiff = True):
+        if enhanceClassDiff:
+            implementRandomForestRegressor.enhanceClassDifferences(10)    
         y_train= (np.array(self.y_train).astype('int')).ravel()
         self.rfr_WithGridSearch.fit(self.x_train, y_train)
         best_estimator = self.rfr_WithGridSearch.best_estimator_
@@ -54,8 +55,10 @@ class implementRandomForestRegressor():
         reportErrors(best_estimator, self.x_validation, self.y_validation)
         return best_estimator
     
-    def fitRFRegressorWeighted(self, dominantClassPenalty, saveTheModel = True):
+    def fitRFRegressorWeighted(self, dominantClassPenalty, saveTheModel = True, enhanceClassDiff = True):
         name = makeNameByTime()
+        if enhanceClassDiff:
+            implementRandomForestRegressor.enhanceClassDifferences(10)    
         y_train= (np.array(self.y_train).astype('int')).ravel()
         weights = createWeightVector(y_train, dominantClassPenalty)
         self.rfr_WithGridSearch.fit(self.x_train, y_train,sample_weight = weights)
@@ -67,15 +70,23 @@ class implementRandomForestRegressor():
         reportErrors(best_estimator, self.x_validation, self.y_validation)
         return best_estimator
     
-
+    def enhanceClassDifferences(self, factor):
+        self.y_train = self.y_train*factor
+        self.y_validation*factor
+    
     def getSplitedDataset(self):
         return self.x_train,self.x_validation,self.y_train, self.y_validation
-    
+
+
+def split(x,y,TestPercent = 0.2):
+    x_train, x_validation, y_train, y_validation = train_test_split( x,y, test_size=TestPercent)
+    return x_train, x_validation, y_train, y_validation 
+
 def importDataSet(dataSetName, targetCol: str):
     '''
     Import datasets and filling NaN values          
     @input: DataSetName => The dataset path. 
-    @Output: Features(x) and tragets(y)    
+    @Output: Features(x) and tragets(y) 
     ''' 
     train = pd.read_csv(dataSetName, index_col = None)
     y = train[[targetCol]]
@@ -84,10 +95,6 @@ def importDataSet(dataSetName, targetCol: str):
     xMean = train.mean()
     x = train.fillna(xMean)
     return x, y
-
-def split(x,y,TestPercent = 0.2):
-    x_train, x_validation, y_train, y_validation = train_test_split( x,y, test_size=TestPercent)
-    return x_train, x_validation, y_train, y_validation
 
 def printDataBalace(x_train, x_validation, y_train, y_validation, targetCol: str):
     ## Data shape exploration
