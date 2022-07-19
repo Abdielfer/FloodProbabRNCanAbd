@@ -8,7 +8,8 @@ def main():
     x_train,x_validation,y_train, y_validation = rfReg.getSplitedDataset()
     rfr.printDataBalace(x_train, x_validation, y_train, y_validation,'percentage')
     bestEstimator = rfReg.fitRFRegressor()
-    print(bestEstimator)
+    rfr.reportErrors(bestEstimator, x_validation, y_validation)
+
 
 if __name__ == "__main__":
     main()
