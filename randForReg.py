@@ -45,7 +45,7 @@ class implementRandomForestRegressor():
     def fitRFRegressor(self, saveTheModel = True, enhanceClassDiff = True):
         name = makeNameByTime()
         if enhanceClassDiff:
-            implementRandomForestRegressor.enhanceClassDifferences(10)    
+            implementRandomForestRegressor.enhanceClassDifferences(self, 10)    
         y_train= (np.array(self.y_train).astype('int')).ravel()
         self.rfr_WithGridSearch.fit(self.x_train, y_train)
         best_estimator = self.rfr_WithGridSearch.best_estimator_
@@ -59,7 +59,7 @@ class implementRandomForestRegressor():
     def fitRFRegressorWeighted(self, dominantClassPenalty, saveTheModel = True, enhanceClassDiff = True):
         name = makeNameByTime()
         if enhanceClassDiff:
-            implementRandomForestRegressor.enhanceClassDifferences(10)    
+            implementRandomForestRegressor.enhanceClassDifferences(self, 10)    
         y_train= (np.array(self.y_train).astype('int')).ravel()
         weights = createWeightVector(y_train, dominantClassPenalty)
         self.rfr_WithGridSearch.fit(self.x_train, y_train,sample_weight = weights)
