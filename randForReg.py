@@ -57,9 +57,7 @@ class implementRandomForestRegressor():
         y_train= (np.array(self.y_train).astype('int')).ravel()
         weights = createWeightVector(y_train, dominantClassPenalty)
         self.rfr_WithGridSearch.fit(self.x_train, y_train,sample_weight = weights)
-        print("#########   fitted   #####")
         best_estimator = self.rfr_WithGridSearch.best_estimator_
-        print(best_estimator)
         if saveTheModel:
             saveModel(best_estimator)
         investigateFeatureImportance(best_estimator, self.x_train)
@@ -82,9 +80,9 @@ def importDataSet(dataSetName, targetCol: str):
     train = pd.read_csv(dataSetName, index_col = None)
     y = train[[targetCol]]
     y = y.fillna(0)
-    x = train.drop(targetCol, axis=1)
-    xMean = x.mean()
-    x = x.fillna(xMean)
+    train.drop([targetCol,'x_coord', 'y_coord'], axis=1, inplace = True)
+    xMean = train.mean()
+    x = train.fillna(xMean)
     return x, y
 
 def split(x,y,TestPercent = 0.2):
