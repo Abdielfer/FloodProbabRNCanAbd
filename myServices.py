@@ -1,7 +1,17 @@
 import os
 import pandas as pd
+from datetime import datetime
 # import gdal
 # import ogr
+
+# to compute ececution time do:
+# with timeit():
+#     # your code, e.g., 
+class timeit(): 
+    def __enter__(self):
+        self.tic = datetime.now()
+    def __exit__(self, *args, **kwargs):
+        print('runtime: {}'.format(datetime.now() - self.tic))
 
 def getLocalPath():
     return os.getcwd()

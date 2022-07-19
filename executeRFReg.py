@@ -12,4 +12,5 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    with myServices.timeit():
+        main()
