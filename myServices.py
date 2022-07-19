@@ -11,13 +11,11 @@ def makePath(str1,str2):
 
 def ensureDirectory(pathToCheck):
     if os.path.isdir(pathToCheck): 
-        return True
-    elif os.path.exists(pathToCheck):
+        return
+    else:
         os.mkdir(pathToCheck)
         print(f"Created directory at path: {pathToCheck} ")
         return True
-    print("Invalid path")
-    return False       
 
 def importListFromExelCol(excell_file_location,Shet_id, col_id):  
     '''

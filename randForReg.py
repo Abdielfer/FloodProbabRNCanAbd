@@ -125,8 +125,9 @@ def createSearshGrid():
 def saveModel(best_estimator):
     date = time.strftime("%Y%M%D_%H%M%S")
     myServices.ensureDirectory('./models/rwReg')
+    
     name = "rfwgs_"+ str(date) + ".pkl" 
-    destiny = "./models//rwReg/" + name
-    joblib.dump(best_estimator, destiny)
+    destiny = "./models/rwReg/" + name
+    _ = joblib.dump(best_estimator, destiny, compress=9)
 
 

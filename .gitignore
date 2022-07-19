@@ -8,6 +8,7 @@ __pycache__/
 *.GTiff
 *.tiff
 *.shp
+*.pkl
 
 # C extensions
 *.so
