@@ -52,8 +52,7 @@ class implementRandomForestRegressor():
             saveModel(best_estimator,name)
         investigateFeatureImportance(best_estimator, self.x_train)
         print(f"The best parameters: {self.rfr_WithGridSearch.best_params_}")
-        y_hate = best_estimator.predict(self.x_validation)
-        r2_validation = metrics.r2_score(self.y_validation, y_hate)
+        r2_validation = validateWithR2(best_estimator, self.y_validation,weighted = False)
         print("R2_score for validation set: ", r2_validation)
         return best_estimator, r2_validation
         
@@ -63,7 +62,7 @@ class implementRandomForestRegressor():
         if enhanceClassDiff:
             implementRandomForestRegressor.enhanceClassDifferences(self, 10)    
         y_train= (np.array(self.y_train).astype('int')).ravel()
-        weights = createWeightVector(y_train, dominantClassPenalty)
+        weights = createWeightVector(y_train, 0,dominantClassPenalty)
         self.rfr_WithGridSearch.fit(self.x_train, y_train,sample_weight = weights)
         best_estimator = self.rfr_WithGridSearch.best_estimator_
         if saveTheModel:
@@ -71,11 +70,12 @@ class implementRandomForestRegressor():
         investigateFeatureImportance(best_estimator,name,self.x_train)
         print(f"The best parameters: {self.rfr_WithGridSearch.best_params_}")
         reportErrors(best_estimator, self.x_validation, self.y_validation)
-        y_hate = best_estimator.predict(self.x_validation)
-        r2_validation = metrics.r2_score(self.y_validation, y_hate,sample_weight = weights)
+        r2_validation = validateWithR2(best_estimator, self.y_validation,0)
         print("R2_score for validation set: ", r2_validation)
         return best_estimator, r2_validation
     
+    
+
     def enhanceClassDifferences(self, factor):
         self.y_train = self.y_train*factor
         self.y_validation*factor
@@ -112,8 +112,13 @@ def predictOnFeaturesSet(model, featuresSet):
     y_hat = model.predict(featuresSet)
     return y_hat
 
-def computeR2(y_true, y_hate, weights):
-    r2 = metrics.r2_score(y_true, y_hate,sample_weight = weights)
+def validateWithR2(model, y_true, weighted = True, dominantValue = np.NaN, dominantValuePenalty = 0.1 ):
+    y_hate = model.predict(y_true)
+    if weighted:
+        weights = createWeightVector(y_true,dominantValue,dominantValuePenalty)
+        r2 = metrics.r2_score(y_true, y_hate,sample_weight = weights)
+    else: 
+        r2 = metrics.r2_score(y_true, y_hate)
     return r2
 
 def computeMainErrors(model, x_test, y_test ):
@@ -164,7 +169,7 @@ def createSearshGrid():
     }
     return param_grid   
 
-def createWeightVector(y_vector, dominantClassPenalty):
+def createWeightVector(y_vector, dominantValue, dominantValuePenalty):
     '''
     Create wight vector for sampling weighted training.
     The goal is to penalize the dominant class. 
@@ -172,7 +177,7 @@ def createWeightVector(y_vector, dominantClassPenalty):
     are not flooded areas. 
     '''
     weightVec = np.ones_like(y_vector).astype(float)
-    weightVec = [dominantClassPenalty if y_vector[j] == 0 else 1 for j in range(len(y_vector))]
+    weightVec = [dominantValuePenalty if y_vector[j] == dominantValue else 1 for j in range(len(y_vector))]
     return weightVec
 
 def saveModel(best_estimator, id):
