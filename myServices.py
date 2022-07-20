@@ -13,6 +13,12 @@ class timeit():
     def __exit__(self, *args, **kwargs):
         print('runtime: {}'.format(datetime.now() - self.tic))
 
+def importConfig():
+    with open('./config.txt') as f:
+        content = f.readlines()
+    print(content)    
+    return content
+
 def getLocalPath():
     return os.getcwd()
 
