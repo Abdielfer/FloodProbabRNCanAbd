@@ -52,8 +52,6 @@ class implementRandomForestRegressor():
             saveModel(best_estimator,name)
         investigateFeatureImportance(best_estimator, self.x_train)
         print(f"The best parameters: {self.rfr_WithGridSearch.best_params_}")
-        r2_validation = metrics.(y_true, y_hate, weights)
-        reportErrors(best_estimator, self.x_validation, self.y_validation)
         y_hate = best_estimator.predict(self.x_validation)
         r2_validation = metrics.r2_score(self.y_validation, y_hate)
         print("R2_score for validation set: ", r2_validation)
