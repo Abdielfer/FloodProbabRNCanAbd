@@ -30,12 +30,11 @@ class implementRandomForestRegressor():
 
     def createModelRFRegressorWithGridSearsh(self):
         estimator = RandomForestRegressor(random_state = self.seedRF)
-        scoring = ['neg_mean_squared_error', 'neg_mean_absolute_error']
+        # scoring = ['neg_mean_squared_error', 'neg_mean_absolute_error']
         modelRFRegressorWithGridSearsh = GridSearchCV(estimator, 
                                                     param_grid = self.paramGrid,
                                                     n_jobs = -1, 
-                                                    scoring = scoring,
-                                                    refit= "neg_mean_squared_error",
+                                                    scoring = 'r2', #refit= "neg_mean_squared_error",
                                                     cv = 3, 
                                                     verbose = 1, 
                                                     return_train_score = True
@@ -53,8 +52,13 @@ class implementRandomForestRegressor():
             saveModel(best_estimator,name)
         investigateFeatureImportance(best_estimator, self.x_train)
         print(f"The best parameters: {self.rfr_WithGridSearch.best_params_}")
+        r2_validation = metrics.(y_true, y_hate, weights)
         reportErrors(best_estimator, self.x_validation, self.y_validation)
-        return best_estimator
+        y_hate = best_estimator.predict(self.x_validation)
+        r2_validation = metrics.r2_score(self.y_validation, y_hate)
+        print("R2_score for validation set: ", r2_validation)
+        return best_estimator, r2_validation
+        
     
     def fitRFRegressorWeighted(self, dominantClassPenalty, saveTheModel = True, enhanceClassDiff = True):
         name = makeNameByTime()
@@ -69,7 +73,10 @@ class implementRandomForestRegressor():
         investigateFeatureImportance(best_estimator,name,self.x_train)
         print(f"The best parameters: {self.rfr_WithGridSearch.best_params_}")
         reportErrors(best_estimator, self.x_validation, self.y_validation)
-        return best_estimator
+        y_hate = best_estimator.predict(self.x_validation)
+        r2_validation = metrics.r2_score(self.y_validation, y_hate,sample_weight = weights)
+        print("R2_score for validation set: ", r2_validation)
+        return best_estimator, r2_validation
     
     def enhanceClassDifferences(self, factor):
         self.y_train = self.y_train*factor
@@ -107,7 +114,11 @@ def predictOnFeaturesSet(model, featuresSet):
     y_hat = model.predict(featuresSet)
     return y_hat
 
-def computeMainErrors(model, x_test, y_test):
+def computeR2(y_true, y_hate, weights):
+    r2 = metrics.r2_score(y_true, y_hate,sample_weight = weights)
+    return r2
+
+def computeMainErrors(model, x_test, y_test ):
     y_test  = (np.array(y_test).astype('int')).ravel()
     y_pred = model.predict(x_test)
     mae = metrics.mean_absolute_error(y_test, y_pred) 
