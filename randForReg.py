@@ -148,7 +148,7 @@ def investigateFeatureImportance(classifier, dateName, x_train, printed = True):
     featuresInModel= pd.DataFrame({'feature': features,
                    'importance': classifier.feature_importances_}).\
                     sort_values('importance', ascending = False)
-    clasifierNameExtended = "./models/rwReg/" + clasifierName + "_featureImportance.csv"     
+    clasifierNameExtended = clasifierName + "_featureImportance.csv"     
     featuresInModel.to_csv(clasifierNameExtended, index = None)
     if printed:
         with pd.option_context('display.max_rows', None,
@@ -181,11 +181,11 @@ def createWeightVector(y_vector, dominantValue:float, dominantValuePenalty:float
     return weightVec
 
 def saveModel(best_estimator, id):
-    myServices.ensureDirectory('./models/rwReg')
-    name = "rfwgs_"+ id + ".pkl" 
-    destiny = "./models/rwReg/" + name
-    print(destiny)
-    _ = joblib.dump(best_estimator, destiny, compress=9)
+    # myServices.ensureDirectory('./models/rwReg')
+    name = id + ".pkl" 
+    # destiny = "./models/rwReg/" + name
+    # print(destiny)
+    _ = joblib.dump(best_estimator, name, compress=9)
 
 def makeNameByTime():
     name = time.strftime("%y%m%d%H%M")
@@ -215,4 +215,5 @@ def main(cfg: DictConfig):
     
 
 if __name__ == "__main__":
-    main()
+    with myServices.timeit():
+        main()
