@@ -97,7 +97,7 @@ def importDataSet(dataSetName, targetCol: str):
     ''' 
     train = pd.read_csv(dataSetName, index_col = None)
     y = train[[targetCol]]
-    train.drop(['Unnamed: 0'], axis=1, inplace = True)
+    train.drop([targetCol,'Unnamed: 0'], axis=1, inplace = True)
     return train, y
 
 def printDataBalace(x_train, x_validation, y_train, y_validation, targetCol: str):
@@ -207,11 +207,12 @@ def main(cfg: DictConfig):
     RForestSingleReg = RandomForestRegressor(random_state = 50)
     dateName = makeNameByTime()
     print("Fitting")
+    print(x_train.head())
     RForestSingleReg.fit(x_train, y_train,sample_weight = weights)
+    r2 = validateWithR2(RForestSingleReg, x_validation,y_validation, dominantValue = 0, dominantValuePenalty = weightPenalty, weighted = True)
+    print("R^2 : ",r2)
     investigateFeatureImportance(RForestSingleReg, dateName, x_train, printed = True)
     saveModel(RForestSingleReg, dateName)
-    r2 = validateWithR2(RForestSingleReg, x_validation,y_validation, dominantValue = 0, dominantValuePenalty = weightPenalty, weighted = True)
-    print(r2)
     
 
 if __name__ == "__main__":
