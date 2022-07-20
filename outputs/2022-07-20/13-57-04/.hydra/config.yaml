@@ -1,0 +1,3 @@
+pathDataset: ./basin1CleanToTrain.csv
+percentOfValidation: 0.2
+weightPenalty: 0.1

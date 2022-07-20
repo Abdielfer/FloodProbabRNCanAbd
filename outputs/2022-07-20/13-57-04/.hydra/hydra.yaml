@@ -113,12 +113,12 @@ hydra:
     - hydra.mode=RUN
     task: []
   job:
-    name: main
+    name: randForReg
     chdir: null
     override_dirname: ''
     id: ???
     num: ???
-    config_name: config
+    config_name: config.yaml
     env_set: {}
     env_copy: []
     config:
@@ -140,7 +140,7 @@ hydra:
     - path: ''
       schema: structured
       provider: schema
-    output_dir: /Users/abdielfer/DESS/Internship2022/RNCanWork/FloodProbabRNCanAbd/outputs/2022-07-20/12-00-50
+    output_dir: /Users/abdielfer/DESS/Internship2022/RNCanWork/FloodProbabRNCanAbd/outputs/2022-07-20/13-57-04
     choices:
       hydra/env: default
       hydra/callbacks: null

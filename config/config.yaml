@@ -1,4 +1,5 @@
 ### config/config.yaml
 
-batch_size: 10
-lr: 1e-4
+pathDataset: './basin1CleanToTrain.csv'
+percentOfValidation: 0.2
+weightPenalty: 0.1

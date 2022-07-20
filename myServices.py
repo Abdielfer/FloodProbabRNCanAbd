@@ -1,8 +1,6 @@
 import os
 import pandas as pd
 from datetime import datetime
-# import gdal
-# import ogr
 
 # to compute ececution time do:
 # with timeit():
