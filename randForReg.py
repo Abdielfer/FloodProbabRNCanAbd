@@ -97,11 +97,8 @@ def importDataSet(dataSetName, targetCol: str):
     ''' 
     train = pd.read_csv(dataSetName, index_col = None)
     y = train[[targetCol]]
-    y = y.fillna(0)
-    train.drop([targetCol,'x_coord', 'y_coord'], axis=1, inplace = True)
-    xMean = train.mean()
-    x = train.fillna(xMean)
-    return x, y
+    train.drop(['Unnamed: 0'], axis=1, inplace = True)
+    return train, y
 
 def printDataBalace(x_train, x_validation, y_train, y_validation, targetCol: str):
     ## Data shape exploration
@@ -197,19 +194,25 @@ def makeNameByTime():
 
 @hydra.main(config_path=f"config", config_name="config.yaml")
 def main(cfg: DictConfig):
-    pathDataset = cfg['pathDataset']
+    local = cfg.local
+    pathDataset = local + cfg['pathDataset']
     percentOfValidation = cfg.percentOfValidation
     weightPenalty = cfg.weightPenalty
-    print(f"The path {pathDataset}")
-    print(f"The percentOfValidation rate is {percentOfValidation}")
-    print(f"The weightPenalty {weightPenalty}")
-    train = pd.read_csv('./sample.csv', index_col = None)
-    # rfReg = implementRandomForestRegressor(pathDataset,'percentage', percentOfValidation)
-    # x_train,x_validation,y_train, y_validation = rfReg.getSplitedDataset()
-    # printDataBalace(x_train, x_validation, y_train, y_validation,'percentage')
-    # bestReg = rfReg.fitRFRegressorWeighted(0.1)
-    return train
+    X,Y = importDataSet(pathDataset, 'percentage')
+    print(X.head())
+    x_train, x_validation, y_train, y_validation = train_test_split(X,Y, test_size = percentOfValidation) 
+    printDataBalace(x_train, x_validation, y_train, y_validation, 'percentage')
+    y_train= (np.array(y_train).astype('float')).ravel()
+    weights = createWeightVector(y_train, 0, weightPenalty)
+    RForestSingleReg = RandomForestRegressor(random_state = 50)
+    dateName = makeNameByTime()
+    print("Fitting")
+    RForestSingleReg.fit(x_train, y_train,sample_weight = weights)
+    investigateFeatureImportance(RForestSingleReg, dateName, x_train, printed = True)
+    saveModel(RForestSingleReg, dateName)
+    r2 = validateWithR2(RForestSingleReg, x_validation,y_validation, dominantValue = 0, dominantValuePenalty = weightPenalty, weighted = True)
+    print(r2)
+    
 
 if __name__ == "__main__":
-    with myServices.timeit():
-        main()
+    main()
