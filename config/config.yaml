@@ -1,5 +1,5 @@
 ### config/config.yaml
 
-pathDataset: './basin1CleanToTrain.csv'
+pathDataset: './sample.csv'
 percentOfValidation: 0.2
 weightPenalty: 0.1

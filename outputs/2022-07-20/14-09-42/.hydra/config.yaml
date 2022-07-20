@@ -1,0 +1,3 @@
+pathDataset: ./sample.csv
+percentOfValidation: 0.2
+weightPenalty: 0.1

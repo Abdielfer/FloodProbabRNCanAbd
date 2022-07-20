@@ -6,14 +6,12 @@ import hydra
 from omegaconf import DictConfig
 import time
 import myServices
-import readConfig
 import numpy as np
 import pandas as pd
 import joblib
 from sklearn.model_selection import train_test_split, GridSearchCV 
 from sklearn import metrics
 from sklearn.ensemble import RandomForestRegressor
-from sklearn.calibration import CalibrationDisplay  ## TODO ##
 
 class implementRandomForestRegressor():
     '''
@@ -199,22 +197,18 @@ def makeNameByTime():
 
 @hydra.main(config_path=f"config", config_name="config.yaml")
 def main(cfg: DictConfig):
-    pathDataset = cfg.pathDataset
-    percentOfValidation = cfg['percentOfValidation']
+    pathDataset = cfg['pathDataset']
+    percentOfValidation = cfg.percentOfValidation
     weightPenalty = cfg.weightPenalty
     print(f"The path {pathDataset}")
     print(f"The percentOfValidation rate is {percentOfValidation}")
     print(f"The weightPenalty {weightPenalty}")
-    # # datasetPath = './sample.csv'
-    # print(f"The path {datasetPath}")
-    # print(f"The percentOfValidation rate is {percentOfValidation}")
-    # print(f"The weightPenalty {weightPenalty}")
-    # rfReg = implementRandomForestRegressor(datasetPath,'percentage', 0.2)
+    train = pd.read_csv('./sample.csv', index_col = None)
+    # rfReg = implementRandomForestRegressor(pathDataset,'percentage', percentOfValidation)
     # x_train,x_validation,y_train, y_validation = rfReg.getSplitedDataset()
     # printDataBalace(x_train, x_validation, y_train, y_validation,'percentage')
     # bestReg = rfReg.fitRFRegressorWeighted(0.1)
-    # return bestReg
-
+    return train
 
 if __name__ == "__main__":
     with myServices.timeit():
