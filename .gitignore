@@ -9,6 +9,7 @@ __pycache__/
 *.tiff
 *.shp
 *.pkl
+*.txt
 
 # C extensions
 *.so

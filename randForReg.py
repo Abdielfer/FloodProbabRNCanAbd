@@ -41,10 +41,10 @@ class implementRandomForestRegressor():
                                                     )
         return modelRFRegressorWithGridSearsh
 
-    def fitRFRegressor(self, saveTheModel = True, enhanceClassDiff = True):
+    def fitRFRegressor(self, saveTheModel = True, enhanceValuesDiff = True):
         name = makeNameByTime()
-        if enhanceClassDiff:
-            implementRandomForestRegressor.enhanceClassDifferences(self, 10)    
+        if enhanceValuesDiff:
+            implementRandomForestRegressor.enhanceValuesDifferences(self, 10)    
         y_train= (np.array(self.y_train).astype('float')).ravel()
         self.rfr_WithGridSearch.fit(self.x_train, y_train)
         best_estimator = self.rfr_WithGridSearch.best_estimator_
@@ -57,12 +57,12 @@ class implementRandomForestRegressor():
         return best_estimator, r2_validation
         
     
-    def fitRFRegressorWeighted(self, dominantClassPenalty, saveTheModel = True, enhanceClassDiff = True):
+    def fitRFRegressorWeighted(self, dominantValeusPenalty, saveTheModel = True, enhanceValuesDiff = True):
         name = makeNameByTime()
-        if enhanceClassDiff:
-            implementRandomForestRegressor.enhanceClassDifferences(self, 10)    
+        if enhanceValuesDiff:
+            implementRandomForestRegressor.enhanceValuesDifferences(self, 10)    
         y_train= (np.array(self.y_train).astype('float')).ravel()
-        weights = createWeightVector(y_train, 0,dominantClassPenalty)
+        weights = createWeightVector(y_train, 0, dominantValeusPenalty)
         self.rfr_WithGridSearch.fit(self.x_train, y_train,sample_weight = weights)
         best_estimator = self.rfr_WithGridSearch.best_estimator_
         if saveTheModel:
@@ -76,7 +76,7 @@ class implementRandomForestRegressor():
     
     
 
-    def enhanceClassDifferences(self, factor):
+    def enhanceValuesDifferences(self, factor):
         self.y_train = self.y_train*factor
         self.y_validation*factor
     
@@ -137,8 +137,10 @@ def reportErrors(model, x_test, y_test):
 
 def investigateFeatureImportance(classifier, dateName, x_train, printed = True):
     '''
+    DEFAULT Path to save: "./models/rwReg/" 
     @input: feature matrix
-            classifier trained
+            classifier and dateName: created when fitting
+            x_train: Dataset to extract features names
             printed option: Default = True
     @return: List of features ordered dessending by importance (pandas DF format). 
     '''
