@@ -10,6 +10,8 @@ from sklearn.model_selection import train_test_split, GridSearchCV,  RandomizedS
 from sklearn import metrics
 from sklearn.ensemble import RandomForestRegressor, RandomForestClassifier
 
+from myServices import clipRasterWithPoligon
+
 class implementRandomForestCalssifier():
     '''
     Class implementing all necessary steps for a ranom Forest 
@@ -21,7 +23,7 @@ class implementRandomForestCalssifier():
     '''
     def __init__(self, dataSet, targetCol, splitProportion ):
         self.seedRF = 50
-        # self.paramGrid = createSearshGrid()
+        self.paramGrid = createSearshGrid()
         X,Y = importDataSet(dataSet, targetCol)
         Y = pd.factorize(self.y_train)
         self.x_train,self.x_validation,self.y_train, self.y_validation = train_test_split(X,Y, test_size = splitProportion) 
@@ -33,14 +35,37 @@ class implementRandomForestCalssifier():
         self.rfClassifier = implementRandomForestCalssifier.createModelRClassifier(self)
     
     def createModelRClassifier(self):
-        estimator = RandomForestClassifier(random_state = seedRF)
+        estimator = RandomForestClassifier(random_state = self.seedRF)
         # Create the random search model
-        rs = RandomizedSearchCV(estimator, param_grid, n_jobs = -1, 
-                                scoring = 'roc_auc', cv = 3, 
-                                n_iter = 10, verbose = 1, random_state=seedRF)
-                
+        rs = RandomizedSearchCV(estimator, 
+                                critreion = 'entropy', 
+                                param_grid = self.paramGrid, 
+                                n_jobs = -1, 
+                                scoring = 'roc_auc',
+                                cv = 4,  # NOTE: in this configurtion StratifiedKfold is used by SckitLearn
+                                n_iter = 10, 
+                                verbose = 4, 
+                                random_state=self.seedRF)           
+        return rs
+    
+    def fitRFClassifierGSearch(self):
+        name = "classifier" + makeNameByTime()
+        self.rfClassifier.fit(self.x_train, self.y_train)
+        best_estimator = self.rfClassifier.best_estimator_
+        saveModel(best_estimator,name)
+        investigateFeatureImportance(best_estimator, name, self.x_train)
+        print(f"The best parameters are: {self.rfClassifier.best_params_}")
+        implementRandomForestCalssifier.printClassificatinMetrics(self, best_estimator,self.x_validation,self.y_validation)
+        
+
+        return best_estimator
+
+    def printClassificatinMetrics(model,x_validation,y_validation):
+
+
 
         return
+
 
     def getSplitedDataset(self):
         return self.x_train,self.x_validation,self.y_train, self.y_validation
@@ -79,28 +104,23 @@ class implementRandomForestRegressor():
         return modelRFRegressorWithGridSearch
 
     def fitRFRegressorGSearch(self):
-        name = makeNameByTime()
         y_train= (np.array(self.y_train).astype('float')).ravel()
         self.rfr_WithGridSearch.fit(self.x_train, y_train)
         best_estimator = self.rfr_WithGridSearch.best_estimator_
-        saveModel(best_estimator,name)
-        investigateFeatureImportance(best_estimator, name, self.x_train)
         print(f"The best parameters: {self.rfr_WithGridSearch.best_params_}")
-        r2_validation = validateWithR2(best_estimator, self.x_validation, self.y_validation,weighted = False)
+        r2_validation = validateWithR2(best_estimator, self.x_validation, self.y_validation, weighted = False)
         print("R2_score for validation set: ", r2_validation)
         return best_estimator, r2_validation
         
     def fitRFRegressorWeighted(self, dominantValeusPenalty):
-        name = makeNameByTime()
         y_train= (np.array(self.y_train).astype('float')).ravel()
-        weights = createWeightVector(y_train, 0, dominantValeusPenalty)
+        weights = createWeightVector(y_train, 
+                                    dominantValue = 0, dominantValuePenalty = dominantValeusPenalty)
         self.rfr_WithGridSearch.fit(self.x_train, y_train,sample_weight = weights)
         best_estimator = self.rfr_WithGridSearch.best_estimator_
-        saveModel(best_estimator,name)
-        investigateFeatureImportance(best_estimator,name,self.x_train)
         print(f"The best parameters: {self.rfr_WithGridSearch.best_params_}")
-        reportErrors(best_estimator, self.x_validation, self.y_validation)
-        r2_validation = validateWithR2(best_estimator,self.x_validation,self.y_validation,0)
+        r2_validation = validateWithR2(best_estimator,self.x_validation,self.y_validation,
+                                      dominantValue = 0, dominantValuePenalty = dominantValeusPenalty)
         print("R2_score for validation set: ", r2_validation)
         return best_estimator, r2_validation
     
@@ -124,7 +144,6 @@ def importDataSet(dataSetName, targetCol: str):
     return train, y
 
 def printDataBalace(x_train, x_validation, y_train, y_validation, targetCol: str):
-
     ## Data shape exploration
     print("",np.shape(x_train),"  :",np.shape(x_validation) )
     print("Label balance on Training set: ", "\n", y_train[targetCol].value_counts())
@@ -136,7 +155,6 @@ def printArrayBalance(array):
     result = np.column_stack([unique, count]) 
     print(result)
     
-
 def predictOnFeaturesSet(model, featuresSet):
     y_hat = model.predict(featuresSet)
     return y_hat
@@ -164,20 +182,20 @@ def reportErrors(model, x_test, y_test):
     print('Mean Squared Error: ', mse)  
     print('Root Mean Squared Error: ',r_mse)
 
-def investigateFeatureImportance(classifier, dateName, x_train, printed = True):
+def investigateFeatureImportance(bestModel, dateName, x_train, printed = True):
     '''
     DEFAULT Path to save: "./models/rwReg/" 
     @input: feature matrix
-            classifier and dateName: created when fitting
+            bestModel and dateName: created when fitting
             x_train: Dataset to extract features names
             printed option: Default = True
     @return: List of features ordered dessending by importance (pandas DF format). 
     '''
     features = x_train.columns
-    clasifierName = type(classifier).__name__
+    clasifierName = type(bestModel).__name__
     clasifierName = clasifierName + dateName
     featuresInModel= pd.DataFrame({'feature': features,
-                   'importance': classifier.feature_importances_}).\
+                   'importance': bestModel.feature_importances_}).\
                     sort_values('importance', ascending = False)
     clasifierNameExtended = clasifierName + "_featureImportance.csv"     
     featuresInModel.to_csv(clasifierNameExtended, index = None)
@@ -195,6 +213,7 @@ def createSearshGrid(arg):
     'max_depth': eval(arg['max_depth']), 
     'max_features': eval(arg['max_features']),
     'max_leaf_nodes': eval(arg['max_leaf_nodes']),
+    'pre_dispatch': '2*n_jobs',
     'bootstrap': eval(arg['bootstrap']),
     }
     return param_grid   

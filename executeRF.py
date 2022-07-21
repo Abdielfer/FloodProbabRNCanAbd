@@ -13,6 +13,8 @@ def main(cfg: DictConfig):
     frRegGS = r.implementRandomForestRegressor(pathDataset,'percentage', percentOfValidation, arg)
     best_estimator, r2 = frRegGS.fitRFRegressorGSearch()
     print(r2)
+    _,x_validation,_,_ = frRegGS.getSplitedDataset()
+    r.investigateFeatureImportance(best_estimator,name,x_validation)
     r.saveModel(best_estimator,name)
 
 if __name__ == "__main__":
