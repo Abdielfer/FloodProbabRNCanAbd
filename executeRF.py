@@ -1,5 +1,5 @@
 import myServices 
-import randForReg as r
+import randForest as r
 import hydra
 from omegaconf import DictConfig
 

@@ -2,16 +2,13 @@
 Aqui vamos a poner 
 todo lo necesario para hacer fincionet RF a ppartir de competition 2
 '''
-import hydra
-from omegaconf import DictConfig
 import time
-import myServices
 import numpy as np
 import pandas as pd
 import joblib
-from sklearn.model_selection import train_test_split, GridSearchCV 
+from sklearn.model_selection import train_test_split, GridSearchCV,  RandomizedSearchCV
 from sklearn import metrics
-from sklearn.ensemble import RandomForestRegressor
+from sklearn.ensemble import RandomForestRegressor, RandomForestClassifier
 
 class implementRandomForestCalssifier():
     '''
@@ -28,11 +25,20 @@ class implementRandomForestCalssifier():
         X,Y = importDataSet(dataSet, targetCol)
         Y = pd.factorize(self.y_train)
         self.x_train,self.x_validation,self.y_train, self.y_validation = train_test_split(X,Y, test_size = splitProportion) 
+        print(self.x_train.head())
+        print("Train balance")
+        printArrayBalance(self.y_train)
+        print("Validation balance")
+        printArrayBalance(self.y_validation)
         self.rfClassifier = implementRandomForestCalssifier.createModelRClassifier(self)
     
     def createModelRClassifier(self):
-
-        
+        estimator = RandomForestClassifier(random_state = seedRF)
+        # Create the random search model
+        rs = RandomizedSearchCV(estimator, param_grid, n_jobs = -1, 
+                                scoring = 'roc_auc', cv = 3, 
+                                n_iter = 10, verbose = 1, random_state=seedRF)
+                
 
         return
 
