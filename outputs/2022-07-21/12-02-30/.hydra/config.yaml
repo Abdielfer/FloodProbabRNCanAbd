@@ -1,0 +1,11 @@
+parameters:
+  n_estimators: '[90,100]'
+  max_depth: '[5,10]'
+  max_features: '[1]'
+  max_leaf_nodes: '[4]'
+  bootstrap: '[True]'
+local: /Users/abdielfer/DESS/Internship2022/RNCanWork/FloodProbabRNCanAbd/
+pathDataset: basin1CleanToTrain.csv
+percentOfValidation: 0.2
+weightPenalty: 0.5
+name: param

@@ -46,13 +46,17 @@ class implementRandomForestRegressor():
       @ targetCol: The name of the column in the dataSet containig the target values.
       @ splitProportion: The proportion for the testing set creation.
     '''
-    def __init__(self, dataSet, targetCol, splitProportion):
+    def __init__(self, dataSet, targetCol, splitProportion, gridArgs):
         self.seedRF = 50
-        self.paramGrid = createSearshGrid()
+        self.paramGrid = createSearshGrid(gridArgs)
         X,Y = importDataSet(dataSet, targetCol)
-        self.x_train,self.x_validation,self.y_train, self.y_validation = train_test_split(X,Y, test_size = splitProportion) 
+        self.x_train,self.x_validation,self.y_train, self.y_validation = train_test_split(X,Y, test_size = splitProportion)
+        print(self.x_train.head())
+        printDataBalace(self.x_train,self.x_validation,self.y_train, self.y_validation, targetCol)
         self.y_train = quadraticRechapeLabes(self.y_train, -0.125, 0.825)
+        printArrayBalance( self.y_train)
         self.y_validation =quadraticRechapeLabes(self.y_validation, -0.125, 0.825)
+        printArrayBalance(self.y_validation)
         self.rfr_WithGridSearch = implementRandomForestRegressor.createModelRFRegressorWithGridSearch(self)
 
     def createModelRFRegressorWithGridSearch(self):
@@ -61,7 +65,7 @@ class implementRandomForestRegressor():
         modelRFRegressorWithGridSearch = GridSearchCV(estimator, 
                                                     param_grid = self.paramGrid,
                                                     n_jobs = -1, 
-                                                    verbose = 5, 
+                                                    verbose = 2, 
                                                     return_train_score = True
                                                     )
         return modelRFRegressorWithGridSearch
@@ -72,7 +76,7 @@ class implementRandomForestRegressor():
         self.rfr_WithGridSearch.fit(self.x_train, y_train)
         best_estimator = self.rfr_WithGridSearch.best_estimator_
         saveModel(best_estimator,name)
-        investigateFeatureImportance(best_estimator, self.x_train)
+        investigateFeatureImportance(best_estimator, name, self.x_train)
         print(f"The best parameters: {self.rfr_WithGridSearch.best_params_}")
         r2_validation = validateWithR2(best_estimator, self.x_validation, self.y_validation,weighted = False)
         print("R2_score for validation set: ", r2_validation)
@@ -112,10 +116,18 @@ def importDataSet(dataSetName, targetCol: str):
     return train, y
 
 def printDataBalace(x_train, x_validation, y_train, y_validation, targetCol: str):
+
     ## Data shape exploration
     print("",np.shape(x_train),"  :",np.shape(x_validation) )
     print("Label balance on Training set: ", "\n", y_train[targetCol].value_counts())
     print("Label balance on Validation set: ", "\n", y_validation[targetCol].value_counts())
+
+def printArrayBalance(array):
+    unique, count = np.unique(array, return_counts=True)
+    print('values,  counts')
+    result = np.column_stack([unique, count]) 
+    print(result)
+    
 
 def predictOnFeaturesSet(model, featuresSet):
     y_hat = model.predict(featuresSet)
@@ -169,13 +181,13 @@ def investigateFeatureImportance(classifier, dateName, x_train, printed = True):
             print(featuresInModel)
     return featuresInModel
 
-def createSearshGrid():
+def createSearshGrid(arg):
     param_grid = {
-    'n_estimators': np.linspace(20, 200,5).astype(int), #default 100
-    'max_depth': [None] + list(np.linspace(3, 20).astype(int)),
-    'max_features': list(np.arange(0.2, 1, 0.1)),
-    'max_leaf_nodes': [None] + list(np.linspace(2, 30, 1).astype(int)),
-    'bootstrap': [True, False]
+    'n_estimators': eval(arg['n_estimators']), 
+    'max_depth': eval(arg['max_depth']), 
+    'max_features': eval(arg['max_features']),
+    'max_leaf_nodes': eval(arg['max_leaf_nodes']),
+    'bootstrap': eval(arg['bootstrap']),
     }
     return param_grid   
 
@@ -215,18 +227,15 @@ def quadraticRechapeLabes(x, a, b):
 
 @hydra.main(config_path=f"config", config_name="config.yaml")
 def main(cfg: DictConfig):
+    name = makeNameByTime()
     local = cfg.local
     pathDataset = local + cfg['pathDataset']
     percentOfValidation = cfg.percentOfValidation
-    
     arg = cfg.parameters
-    print(arg)
-    
-    
-    # # weightPenalty = cfg.weightPenalty
-    # frRegGS = implementRandomForestRegressor(pathDataset,'percentage', percentOfValidation)
-    # _, r2 = frRegGS.fitRFRegressorGSearch()
-    # print(r2)
+    frRegGS = implementRandomForestRegressor(pathDataset,'percentage', percentOfValidation, arg)
+    best_estimator, r2 = frRegGS.fitRFRegressorGSearch()
+    print(r2)
+    saveModel(best_estimator,name)
 
 if __name__ == "__main__":
     with myServices.timeit():

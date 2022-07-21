@@ -1,0 +1,11 @@
+parameters:
+  n_estimators: np.linspace(80, 150, 2).astype(int)
+  max_depth: '[None]'
+  max_features: list(np.arange(0.2, 1, 0.1))
+  max_leaf_nodes: list(np.linspace(2, 30, 1).astype(int))
+  bootstrap: '[True, False]'
+local: /Users/abdielfer/DESS/Internship2022/RNCanWork/FloodProbabRNCanAbd/
+pathDataset: basin1CleanToTrain.csv
+percentOfValidation: 0.2
+weightPenalty: 0.5
+name: param
