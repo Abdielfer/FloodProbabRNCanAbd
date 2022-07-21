@@ -1,6 +1,6 @@
 ### config/parameters/param.yaml
-n_estimators: 'np.linspace(80, 150, 30).astype(int)'
+n_estimators: 'np.linspace(80, 150, 15).astype(int)'
 max_depth: '[None]'
 max_features: 'list(np.arange(0.2, 1, 0.1))'
-max_leaf_nodes: 'list(np.linspace(2, 30, 28).astype(int))'
+max_leaf_nodes: 'list(np.linspace(2, 20, 12).astype(int))'
 bootstrap: '[True, False]'
