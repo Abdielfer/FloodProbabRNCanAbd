@@ -1,5 +1,4 @@
-### config/config.yaml
 local: /Users/abdielfer/DESS/Internship2022/RNCanWork/FloodProbabRNCanAbd/
 pathDataset: basin1CleanToTrain.csv
 percentOfValidation: 0.2
-weightPenalty: 0.5
+weightPenalty: 0.2

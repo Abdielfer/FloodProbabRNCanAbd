@@ -1,11 +1,16 @@
 import os
 import pandas as pd
 from datetime import datetime
+import ogr
 
-# to compute ececution time do:
-# with timeit():
-#     # your code, e.g., 
+### General applications ##
+
 class timeit(): 
+    '''
+    to compute ececution time do:
+    with timeit():
+         your code, e.g., 
+    '''
     def __enter__(self):
         self.tic = datetime.now()
     def __exit__(self, *args, **kwargs):
@@ -31,6 +36,7 @@ def ensureDirectory(pathToCheck):
         print(f"Created directory at path: {pathToCheck} ")
         return True
 
+### GIS ###
 def importListFromExelCol(excell_file_location,Shet_id, col_id):  
     '''
     @return: list from <col_id> in <excell_file_location>.

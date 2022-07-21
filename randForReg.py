@@ -13,6 +13,30 @@ from sklearn.model_selection import train_test_split, GridSearchCV
 from sklearn import metrics
 from sklearn.ensemble import RandomForestRegressor
 
+class implementRandomForestCalssifier():
+    '''
+    Class implementing all necessary steps for a ranom Forest 
+    regression with sklearnpare
+    @imput:
+      @ dataset: The full path to a *.csv file containing the dataSet.
+      @ targetCol: The name of the column in the dataSet containig the target values.
+      @ splitProportion: The proportion for the testing set creation.
+    '''
+    def __init__(self, dataSet, targetCol, splitProportion ):
+        self.seedRF = 50
+        # self.paramGrid = createSearshGrid()
+        X,Y = importDataSet(dataSet, targetCol)
+        self.x_train,self.x_validation,self.y_train, self.y_validation = train_test_split(X,Y, test_size = splitProportion) 
+        self.rfClassifier = implementRandomForestCalssifier.createModelRFRegressorWithGridSearsh(self)
+    
+    def createModelRFRegressorWithGridSearsh(self):
+        
+
+        return
+
+    def getSplitedDataset(self):
+        return self.x_train,self.x_validation,self.y_train, self.y_validation
+
 class implementRandomForestRegressor():
     '''
     Class implementing all necessary steps for a ranom Forest 
@@ -42,10 +66,8 @@ class implementRandomForestRegressor():
                                                     )
         return modelRFRegressorWithGridSearsh
 
-    def fitRFRegressor(self, saveTheModel = True, enhanceValuesDiff = True):
+    def fitRFRegressor(self, saveTheModel = True):
         name = makeNameByTime()
-        if enhanceValuesDiff:
-            implementRandomForestRegressor.enhanceValuesDifferences(self, 10)    
         y_train= (np.array(self.y_train).astype('float')).ravel()
         self.rfr_WithGridSearch.fit(self.x_train, y_train)
         best_estimator = self.rfr_WithGridSearch.best_estimator_
@@ -57,11 +79,8 @@ class implementRandomForestRegressor():
         print("R2_score for validation set: ", r2_validation)
         return best_estimator, r2_validation
         
-    
-    def fitRFRegressorWeighted(self, dominantValeusPenalty, saveTheModel = True, enhanceValuesDiff = True):
+    def fitRFRegressorWeighted(self, dominantValeusPenalty, saveTheModel = True):
         name = makeNameByTime()
-        if enhanceValuesDiff:
-            implementRandomForestRegressor.enhanceValuesDifferences(self, 10)    
         y_train= (np.array(self.y_train).astype('float')).ravel()
         weights = createWeightVector(y_train, 0, dominantValeusPenalty)
         self.rfr_WithGridSearch.fit(self.x_train, y_train,sample_weight = weights)
@@ -74,12 +93,6 @@ class implementRandomForestRegressor():
         r2_validation = validateWithR2(best_estimator,self.x_validation,self.y_validation,0)
         print("R2_score for validation set: ", r2_validation)
         return best_estimator, r2_validation
-    
-    
-
-    def enhanceValuesDifferences(self, factor):
-        self.y_train = self.y_train*factor
-        self.y_validation*factor
     
     def getSplitedDataset(self):
         return self.x_train,self.x_validation,self.y_train, self.y_validation
@@ -191,6 +204,14 @@ def makeNameByTime():
     name = time.strftime("%y%m%d%H%M")
     return name
 
+def quadraticRechapeLabes(x, a, b):
+    '''
+    Apply quadratic function to a vector like : y = aX^2 + bX.
+    You're responsable for providing a and b 
+    '''
+    x = np.array(x.copy())
+    v = (a*x*x) + (b*x) 
+    return v.ravel()
 
 @hydra.main(config_path=f"config", config_name="config.yaml")
 def main(cfg: DictConfig):
@@ -204,11 +225,13 @@ def main(cfg: DictConfig):
     printDataBalace(x_train, x_validation, y_train, y_validation, 'percentage')
     y_train= (np.array(y_train).astype('float')).ravel()
     weights = createWeightVector(y_train, 0, weightPenalty)
+    y_train= quadraticRechapeLabes(y_train, -0.125, 0.825)
     RForestSingleReg = RandomForestRegressor(random_state = 50)
     dateName = makeNameByTime()
     print("Fitting")
     print(x_train.head())
     RForestSingleReg.fit(x_train, y_train,sample_weight = weights)
+    y_validation = quadraticRechapeLabes(y_validation, -0.125, 0.825)
     r2 = validateWithR2(RForestSingleReg, x_validation,y_validation, dominantValue = 0, dominantValuePenalty = weightPenalty, weighted = True)
     print("R^2 : ",r2)
     investigateFeatureImportance(RForestSingleReg, dateName, x_train, printed = True)
