@@ -1,5 +1,14 @@
-### config/config.yaml
+### src/config/config.yaml
+defaults:
+  - parameters: param
+
 local: /Users/abdielfer/DESS/Internship2022/RNCanWork/FloodProbabRNCanAbd/
 pathDataset: basin1CleanToTrain.csv
 percentOfValidation: 0.2
 weightPenalty: 0.5
+
+
+### src/config/parameters/param.yaml
+
+# @package _group_
+name: param

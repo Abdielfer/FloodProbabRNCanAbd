@@ -140,8 +140,9 @@ hydra:
     - path: ''
       schema: structured
       provider: schema
-    output_dir: /Users/abdielfer/DESS/Internship2022/RNCanWork/FloodProbabRNCanAbd/outputs/2022-07-21/09-55-51
+    output_dir: /Users/abdielfer/DESS/Internship2022/RNCanWork/FloodProbabRNCanAbd/outputs/2022-07-21/11-33-25
     choices:
+      parameters: param
       hydra/env: default
       hydra/callbacks: null
       hydra/job_logging: default
