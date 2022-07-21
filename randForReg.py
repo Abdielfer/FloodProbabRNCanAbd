@@ -26,10 +26,12 @@ class implementRandomForestCalssifier():
         self.seedRF = 50
         # self.paramGrid = createSearshGrid()
         X,Y = importDataSet(dataSet, targetCol)
+        Y = pd.factorize(self.y_train)
         self.x_train,self.x_validation,self.y_train, self.y_validation = train_test_split(X,Y, test_size = splitProportion) 
-        self.rfClassifier = implementRandomForestCalssifier.createModelRFRegressorWithGridSearsh(self)
+        self.rfClassifier = implementRandomForestCalssifier.createModelRClassifier(self)
     
-    def createModelRFRegressorWithGridSearsh(self):
+    def createModelRClassifier(self):
+
         
 
         return
@@ -50,12 +52,12 @@ class implementRandomForestRegressor():
         self.seedRF = 50
         self.paramGrid = createSearshGrid(gridArgs)
         X,Y = importDataSet(dataSet, targetCol)
+        Y = quadraticRechapeLabes(Y, -0.125, 0.825)
         self.x_train,self.x_validation,self.y_train, self.y_validation = train_test_split(X,Y, test_size = splitProportion)
         print(self.x_train.head())
-        printDataBalace(self.x_train,self.x_validation,self.y_train, self.y_validation, targetCol)
-        self.y_train = quadraticRechapeLabes(self.y_train, -0.125, 0.825)
-        printArrayBalance( self.y_train)
-        self.y_validation =quadraticRechapeLabes(self.y_validation, -0.125, 0.825)
+        print("Train balance")
+        printArrayBalance(self.y_train)
+        print("Validation balance")
         printArrayBalance(self.y_validation)
         self.rfr_WithGridSearch = implementRandomForestRegressor.createModelRFRegressorWithGridSearch(self)
 
@@ -225,18 +227,10 @@ def quadraticRechapeLabes(x, a, b):
 
 
 
-@hydra.main(config_path=f"config", config_name="config.yaml")
-def main(cfg: DictConfig):
-    name = makeNameByTime()
-    local = cfg.local
-    pathDataset = local + cfg['pathDataset']
-    percentOfValidation = cfg.percentOfValidation
-    arg = cfg.parameters
-    frRegGS = implementRandomForestRegressor(pathDataset,'percentage', percentOfValidation, arg)
-    best_estimator, r2 = frRegGS.fitRFRegressorGSearch()
-    print(r2)
-    saveModel(best_estimator,name)
 
-if __name__ == "__main__":
-    with myServices.timeit():
-        main()
+# def main():
+    
+
+# if __name__ == "__main__":
+#     with myServices.timeit():
+#         main()
