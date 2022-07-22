@@ -6,6 +6,7 @@ geopy
 h5py
 hydra-core
 ipykernel
+imbalanced-learn
 notebook
 numpy
 ogr
