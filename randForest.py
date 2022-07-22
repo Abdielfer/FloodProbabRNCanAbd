@@ -8,8 +8,8 @@ import pandas as pd
 import joblib
 from sklearn.model_selection import train_test_split, GridSearchCV,  RandomizedSearchCV
 from sklearn import metrics
+from sklearn.metrics import roc_auc_score
 from sklearn.ensemble import RandomForestRegressor, RandomForestClassifier
-
 from myServices import clipRasterWithPoligon
 
 class implementRandomForestCalssifier():
@@ -44,7 +44,7 @@ class implementRandomForestCalssifier():
                                 scoring = 'roc_auc',
                                 cv = 4,  # NOTE: in this configurtion StratifiedKfold is used by SckitLearn
                                 n_iter = 10, 
-                                verbose = 4, 
+                                verbose = 5, 
                                 random_state=self.seedRF)           
         return rs
     
@@ -52,20 +52,42 @@ class implementRandomForestCalssifier():
         name = "classifier" + makeNameByTime()
         self.rfClassifier.fit(self.x_train, self.y_train)
         best_estimator = self.rfClassifier.best_estimator_
-        saveModel(best_estimator,name)
-        investigateFeatureImportance(best_estimator, name, self.x_train)
+        clasifierName, featuresInModel = investigateFeatureImportance(best_estimator, name, self.x_train)
         print(f"The best parameters are: {self.rfClassifier.best_params_}")
-        implementRandomForestCalssifier.printClassificatinMetrics(self, best_estimator,self.x_validation,self.y_validation)
-        
+        implementRandomForestCalssifier.computeClassificationMetrics(self, best_estimator,self.x_validation,self.y_validation)
+        return best_estimator, clasifierName, featuresInModel
 
-        return best_estimator
-
-    def printClassificatinMetrics(model,x_validation,y_validation):
-
-
+    def computeClassificationMetrics(model,x_validation,y_validation):
+        '''
+        Ref: https://www.kaggle.com/code/nkitgupta/evaluation-metrics-for-multi-class-classification/notebook
+        '''
+        y_hat = model.predict(x_validation)
+        accScore = metrics.accuracy_score(y_validation, y_hat)
+        macro_averaged_f1 = metrics.f1_score(y_validation, y_hat, average = 'macro') # Better for multiclass
+        micro_averaged_f1 = metrics.f1_score(y_validation, y_hat, average = 'micro')
+        ROC_AUC_multiClass = implementRandomForestCalssifier.roc_auc_score_multiclass(y_validation, y_hat)
 
         return
 
+
+    def roc_auc_score_multiclass(actual_class, pred_class):
+        '''
+        Compute one-vs-all for every single class in the dataset
+        From: https://www.kaggle.com/code/nkitgupta/evaluation-metrics-for-multi-class-classification/notebook
+        '''
+        #creating a set of all the unique classes using the actual class list
+        unique_class = set(actual_class)
+        roc_auc_dict = {}
+        for per_class in unique_class:
+            #creating a list of all the classes except the current class 
+            other_class = [x for x in unique_class if x != per_class]
+            #marking the current class as 1 and all other classes as 0
+            new_actual_class = [0 if x in other_class else 1 for x in actual_class]
+            new_pred_class = [0 if x in other_class else 1 for x in pred_class]
+            #using the sklearn metrics method to calculate the roc_auc_score
+            roc_auc = roc_auc_score(new_actual_class, new_pred_class, average = "macro")
+            roc_auc_dict[per_class] = roc_auc
+        return roc_auc_dict
 
     def getSplitedDataset(self):
         return self.x_train,self.x_validation,self.y_train, self.y_validation
@@ -83,7 +105,7 @@ class implementRandomForestRegressor():
         self.seedRF = 50
         self.paramGrid = createSearshGrid(gridArgs)
         X,Y = importDataSet(dataSet, targetCol)
-        Y = quadraticRechapeLabes(Y, -0.125, 0.825)
+        # Y = quadraticRechapeLabes(Y, -0.125, 0.825)
         self.x_train,self.x_validation,self.y_train, self.y_validation = train_test_split(X,Y, test_size = splitProportion)
         print(self.x_train.head())
         print("Train balance")
@@ -98,7 +120,7 @@ class implementRandomForestRegressor():
         modelRFRegressorWithGridSearch = GridSearchCV(estimator, 
                                                     param_grid = self.paramGrid,
                                                     n_jobs = -1, 
-                                                    verbose = 2, 
+                                                    verbose = 5, 
                                                     return_train_score = True
                                                     )
         return modelRFRegressorWithGridSearch
@@ -108,19 +130,17 @@ class implementRandomForestRegressor():
         self.rfr_WithGridSearch.fit(self.x_train, y_train)
         best_estimator = self.rfr_WithGridSearch.best_estimator_
         print(f"The best parameters: {self.rfr_WithGridSearch.best_params_}")
-        r2_validation = validateWithR2(best_estimator, self.x_validation, self.y_validation, weighted = False)
+        r2_validation = validateWithR2(best_estimator, self.x_validation, self.y_validation,0,0,weighted = False)
         print("R2_score for validation set: ", r2_validation)
         return best_estimator, r2_validation
         
     def fitRFRegressorWeighted(self, dominantValeusPenalty):
         y_train= (np.array(self.y_train).astype('float')).ravel()
-        weights = createWeightVector(y_train, 
-                                    dominantValue = 0, dominantValuePenalty = dominantValeusPenalty)
+        weights = createWeightVector(y_train, 0, dominantValeusPenalty)
         self.rfr_WithGridSearch.fit(self.x_train, y_train,sample_weight = weights)
         best_estimator = self.rfr_WithGridSearch.best_estimator_
         print(f"The best parameters: {self.rfr_WithGridSearch.best_params_}")
-        r2_validation = validateWithR2(best_estimator,self.x_validation,self.y_validation,
-                                      dominantValue = 0, dominantValuePenalty = dominantValeusPenalty)
+        r2_validation = validateWithR2(best_estimator,self.x_validation,self.y_validation,0, dominantValeusPenalty)
         print("R2_score for validation set: ", r2_validation)
         return best_estimator, r2_validation
     
@@ -159,7 +179,7 @@ def predictOnFeaturesSet(model, featuresSet):
     y_hat = model.predict(featuresSet)
     return y_hat
 
-def validateWithR2(model, x_test, y_test, dominantValue = 0, dominantValuePenalty = 0.1, weighted = True):
+def validateWithR2(model, x_test, y_test, dominantValue:float, dominantValuePenalty:float, weighted = True):
     y_hate = model.predict(x_test)
     if weighted:
         weights = createWeightVector(y_test,dominantValue,dominantValuePenalty)
@@ -197,15 +217,15 @@ def investigateFeatureImportance(bestModel, dateName, x_train, printed = True):
     featuresInModel= pd.DataFrame({'feature': features,
                    'importance': bestModel.feature_importances_}).\
                     sort_values('importance', ascending = False)
-    clasifierNameExtended = clasifierName + "_featureImportance.csv"     
-    featuresInModel.to_csv(clasifierNameExtended, index = None)
+    # clasifierNameExtended = clasifierName + "_featureImportance.csv"     
+    # featuresInModel.to_csv(clasifierNameExtended, index = None)
     if printed:
         with pd.option_context('display.max_rows', None,
                        'display.max_columns', None,
                        'display.precision', 3,
                        ):
             print(featuresInModel)
-    return featuresInModel
+    return clasifierName, featuresInModel
 
 def createSearshGrid(arg):
     param_grid = {
@@ -213,8 +233,8 @@ def createSearshGrid(arg):
     'max_depth': eval(arg['max_depth']), 
     'max_features': eval(arg['max_features']),
     'max_leaf_nodes': eval(arg['max_leaf_nodes']),
-    'pre_dispatch': '2*n_jobs',
     'bootstrap': eval(arg['bootstrap']),
+    #'pre_dispatch': '2*n_jobs', # UNCOMMENT Only for classifier
     }
     return param_grid   
 

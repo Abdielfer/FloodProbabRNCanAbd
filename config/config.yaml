@@ -3,9 +3,9 @@ defaults:
   - parameters: param
 
 local: /Users/abdielfer/DESS/Internship2022/RNCanWork/FloodProbabRNCanAbd/
-pathDataset: basin1CleanToTrain.csv
+pathDataset: datasets/basin1CleanToTrain.csv
 percentOfValidation: 0.2
-weightPenalty: 0.5
+weightPenalty: 0.01
 
 
 ### src/config/parameters/param.yaml
