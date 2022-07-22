@@ -4,8 +4,7 @@ import randForest as r
 import hydra
 from omegaconf import DictConfig
 
-@hydra.main(config_path=f"config", config_name="config.yaml")
-def main(cfg: DictConfig):
+def executeRFRegressor(cfg: DictConfig):
     log = pd.DataFrame()
     name = r.makeNameByTime()
     local = cfg.local
@@ -19,13 +18,19 @@ def main(cfg: DictConfig):
     _,x_validation,_,_ = frRegGS.getSplitedDataset()
     casiffierName, featureImportance = r.investigateFeatureImportance(best_estimator,name,x_validation)
     print(r2)
-
     # Fill Log
     log['dataset'] = cfg['pathDataset']
     log['model+Id'] = name
     log['classifierName'] = casiffierName, featureImportance
     log['best_param'] = best_estimator
     log['r2_score'] = r2  # UNCOMENT For Regression Only
+
+
+
+@hydra.main(config_path=f"config", config_name="config.yaml")
+def main(cfg: DictConfig):
+    executeRFRegressor(cfg)
+
 
 if __name__ == "__main__":
     with myServices.timeit():

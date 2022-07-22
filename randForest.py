@@ -66,9 +66,11 @@ class implementRandomForestCalssifier():
         macro_averaged_f1 = metrics.f1_score(y_validation, y_hat, average = 'macro') # Better for multiclass
         micro_averaged_f1 = metrics.f1_score(y_validation, y_hat, average = 'micro')
         ROC_AUC_multiClass = implementRandomForestCalssifier.roc_auc_score_multiclass(y_validation, y_hat)
-
-        return
-
+        print('Accuraci_score: ', accScore)  
+        print('F1_macroAverage: ', macro_averaged_f1)  
+        print('F1_microAverage: ', micro_averaged_f1)
+        print('ROC_AUC one_vs_all: ', ROC_AUC_multiClass)
+        return accScore, macro_averaged_f1, micro_averaged_f1, ROC_AUC_multiClass
 
     def roc_auc_score_multiclass(actual_class, pred_class):
         '''
