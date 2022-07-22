@@ -10,7 +10,7 @@ from sklearn.model_selection import train_test_split, GridSearchCV,  RandomizedS
 from sklearn import metrics
 from sklearn.metrics import roc_auc_score
 from sklearn.ensemble import RandomForestRegressor, RandomForestClassifier
-from myServices import clipRasterWithPoligon
+import myServices as ms
 
 class implementRandomForestCalssifier():
     '''
@@ -24,7 +24,7 @@ class implementRandomForestCalssifier():
     def __init__(self, dataSet, targetCol, splitProportion, gridArgs):
         self.seedRF = 50
         self.paramGrid = createSearshGrid(gridArgs)
-        X,Y = importDataSet(dataSet, targetCol)
+        X,Y = ms.importDataSet(dataSet, targetCol)
         Y, self.labels = pd.factorize(self.y_train) # See: https://pandas.pydata.org/docs/reference/api/pandas.factorize.html
         self.x_train,self.x_validation,self.y_train, self.y_validation = train_test_split(X,Y, test_size = splitProportion) 
         print(self.x_train.head())
@@ -104,7 +104,7 @@ class implementRandomForestRegressor():
     def __init__(self, dataSet, targetCol, splitProportion, gridArgs):
         self.seedRF = 50
         self.paramGrid = createSearshGrid(gridArgs)
-        X,Y = importDataSet(dataSet, targetCol)
+        X,Y = ms.importDataSet(dataSet, targetCol)
         # Y = quadraticRechapeLabes(Y, -0.125, 0.825)
         self.x_train,self.x_validation,self.y_train, self.y_validation = train_test_split(X,Y, test_size = splitProportion)
         print(self.x_train.head())
@@ -154,17 +154,6 @@ class implementRandomForestRegressor():
 def split(x,y,TestPercent = 0.2):
     x_train, x_validation, y_train, y_validation = train_test_split( x,y, test_size=TestPercent)
     return x_train, x_validation, y_train, y_validation 
-
-def importDataSet(dataSetName, targetCol: str):
-    '''
-    Import datasets and filling NaN values          
-    @input: DataSetName => The dataset path. 
-    @Output: Features(x) and tragets(y) 
-    ''' 
-    train = pd.read_csv(dataSetName, index_col = None)
-    y = train[[targetCol]]
-    train.drop([targetCol], axis=1, inplace = True)
-    return train, y
 
 def printDataBalace(x_train, x_validation, y_train, y_validation, targetCol: str):
     ## Data shape exploration

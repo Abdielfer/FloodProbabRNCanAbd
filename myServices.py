@@ -35,6 +35,17 @@ def ensureDirectory(pathToCheck):
         print(f"Created directory at path: {pathToCheck} ")
         return True
 
+def importDataSet(dataSetName, targetCol: str):
+    '''
+    Import datasets and filling NaN values          
+    @input: DataSetName => The dataset path. 
+    @Output: Features(x) and tragets(y) 
+    ''' 
+    train = pd.read_csv(dataSetName, index_col = None)
+    y = train[[targetCol]]
+    train.drop([targetCol], axis=1, inplace = True)
+    return train, y
+
 ### GIS ###
 def importListFromExelCol(excell_file_location,Shet_id, col_id):  
     '''

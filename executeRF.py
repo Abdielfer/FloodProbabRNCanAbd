@@ -1,12 +1,12 @@
 import pandas as pd
 import json
-import myServices 
+import myServices as ms
 import randForest as r
 import hydra
 from omegaconf import DictConfig
 
 def executeRFRegressor(cfg: DictConfig):
-    log = pd.DataFrame()
+    log = {}
     name = r.makeNameByTime()
     local = cfg.local
     pathDataset = local + cfg['pathDataset']
@@ -22,7 +22,7 @@ def executeRFRegressor(cfg: DictConfig):
     # Fill Log
     log['dataset'] = cfg['pathDataset']
     log['model_Id'] = name
-    log['regressor_Name'] = regressorName,
+    log['regressor_Name'] = regressorName
     bestP = json.dumps(bestParameters)
     log['best_param'] = bestP
     log['features_Importance'] = pd.DataFrame(featureImportance).to_string(justify= 'left')
@@ -30,14 +30,14 @@ def executeRFRegressor(cfg: DictConfig):
     return best_estimator,name,log
 
 def executeRFCalssifier(cfg: DictConfig):
-    log = pd.DataFrame()
+    log = {}
     name = r.makeNameByTime()
     local = cfg.local
     pathDataset = local + cfg['pathDataset']
     percentOfValidation = cfg.percentOfValidation
     arg = cfg.parameters
     rfClassifier = r.implementRandomForestCalssifier(pathDataset,'percentage', percentOfValidation, arg)
-    _,x_validation,_,y_validation = rfClassifier.getSplitedDataset()
+    _,x_validation,_,_ = rfClassifier.getSplitedDataset()
     best_estimator, bestParameters = rfClassifier.fitRFClassifierGSearch()
     classifierName, featureImportance = r.investigateFeatureImportance(best_estimator,name,x_validation)
     accScore, macro_averaged_f1, micro_averaged_f1, ROC_AUC_multiClass = rfClassifier.computeClassificationMetrics(best_estimator)
@@ -51,13 +51,17 @@ def executeRFCalssifier(cfg: DictConfig):
     log['macro_averaged_f1'] = macro_averaged_f1
     log['micro_averaged_f1'] = micro_averaged_f1
     log['ROC_AUC_multiClass'] = ROC_AUC_multiClass
+    return best_estimator,name,log
+
+
 
 @hydra.main(config_path=f"config", config_name="config.yaml")
 def main(cfg: DictConfig):
     best_estimator,name, log = executeRFRegressor(cfg)
     r.saveModel(best_estimator, name)
-    log.to_csv(name +'.csv') 
+    logToSave = pd.DataFrame.from_dict(log, orient='index')
+    logToSave.to_csv(name +'.csv',index = False, header=True) 
 
 if __name__ == "__main__":
-    with myServices.timeit():
+    with ms.timeit():
         main()
