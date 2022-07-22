@@ -25,7 +25,7 @@ class implementRandomForestCalssifier():
         self.seedRF = 50
         self.paramGrid = createSearshGrid(gridArgs)
         X,Y = importDataSet(dataSet, targetCol)
-        Y = pd.factorize(self.y_train)
+        Y, self.labels = pd.factorize(self.y_train) # See: https://pandas.pydata.org/docs/reference/api/pandas.factorize.html
         self.x_train,self.x_validation,self.y_train, self.y_validation = train_test_split(X,Y, test_size = splitProportion) 
         print(self.x_train.head())
         print("Train balance")
@@ -49,44 +49,43 @@ class implementRandomForestCalssifier():
         return rs
     
     def fitRFClassifierGSearch(self):
-        name = "classifier" + makeNameByTime()
         self.rfClassifier.fit(self.x_train, self.y_train)
         best_estimator = self.rfClassifier.best_estimator_
-        clasifierName, featuresInModel = investigateFeatureImportance(best_estimator, name, self.x_train)
-        print(f"The best parameters are: {self.rfClassifier.best_params_}")
-        return best_estimator, clasifierName, featuresInModel
+        best_params = self.rfClassifier.get_params()
+        print(f"The best parameters are: {best_params}")
+        return best_estimator,best_params
 
-    def computeClassificationMetrics(model,x_validation,y_validation):
+    def computeClassificationMetrics(self, model):
         '''
         Ref: https://www.kaggle.com/code/nkitgupta/evaluation-metrics-for-multi-class-classification/notebook
         '''
-        y_hat = model.predict(x_validation)
-        accScore = metrics.accuracy_score(y_validation, y_hat)
-        macro_averaged_f1 = metrics.f1_score(y_validation, y_hat, average = 'macro') # Better for multiclass
-        micro_averaged_f1 = metrics.f1_score(y_validation, y_hat, average = 'micro')
-        ROC_AUC_multiClass = implementRandomForestCalssifier.roc_auc_score_multiclass(y_validation, y_hat)
+        y_hat = model.predict(self.x_validation)
+        accScore = metrics.accuracy_score(self.y_validation, y_hat)
+        macro_averaged_f1 = metrics.f1_score(self.y_validation, y_hat, average = 'macro') # Better for multiclass
+        micro_averaged_f1 = metrics.f1_score(self.y_validation, y_hat, average = 'micro')
+        ROC_AUC_multiClass = implementRandomForestCalssifier.roc_auc_score_multiclass(y_hat)
         print('Accuraci_score: ', accScore)  
         print('F1_macroAverage: ', macro_averaged_f1)  
         print('F1_microAverage: ', micro_averaged_f1)
         print('ROC_AUC one_vs_all: ', ROC_AUC_multiClass)
         return accScore, macro_averaged_f1, micro_averaged_f1, ROC_AUC_multiClass
 
-    def roc_auc_score_multiclass(actual_class, pred_class):
+    def roc_auc_score_multiclass(self, y_hat):
         '''
         Compute one-vs-all for every single class in the dataset
         From: https://www.kaggle.com/code/nkitgupta/evaluation-metrics-for-multi-class-classification/notebook
         '''
         #creating a set of all the unique classes using the actual class list
-        unique_class = set(actual_class)
+        unique_class = set(self.y_validation)
         roc_auc_dict = {}
         for per_class in unique_class:
             #creating a list of all the classes except the current class 
             other_class = [x for x in unique_class if x != per_class]
             #marking the current class as 1 and all other classes as 0
-            new_actual_class = [0 if x in other_class else 1 for x in actual_class]
-            new_pred_class = [0 if x in other_class else 1 for x in pred_class]
+            new_y_validation = [0 if x in other_class else 1 for x in self.y_validation]
+            new_y_hat = [0 if x in other_class else 1 for x in y_hat]
             #using the sklearn metrics method to calculate the roc_auc_score
-            roc_auc = roc_auc_score(new_actual_class, new_pred_class, average = "macro")
+            roc_auc = roc_auc_score(new_y_validation, new_y_hat, average = "macro")
             roc_auc_dict[per_class] = roc_auc
         return roc_auc_dict
 
@@ -270,13 +269,3 @@ def quadraticRechapeLabes(x, a, b):
     x = np.array(x.copy())
     v = (a*x*x) + (b*x) 
     return v.ravel()
-
-
-
-
-# def main():
-    
-
-# if __name__ == "__main__":
-#     with myServices.timeit():
-#         main()
