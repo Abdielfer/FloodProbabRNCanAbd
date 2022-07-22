@@ -1,12 +1,11 @@
-### src/config/config.yaml
-defaults:
-  - parameters: param
-
+parameters:
+  n_estimators: '[200]'
+  max_depth: '[None]'
+  max_features: '[0.8]'
+  max_leaf_nodes: '[None]'
+  bootstrap: '[False]'
 local: /Users/abdielfer/DESS/Internship2022/RNCanWork/FloodProbabRNCanAbd/
 pathDataset: basin1CleanToTrain.csv
 percentOfValidation: 0.2
 weightPenalty: 0.025
-
-### src/config/parameters/param.yaml
-# @package _group_
 name: param

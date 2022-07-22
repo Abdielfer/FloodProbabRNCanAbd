@@ -21,9 +21,9 @@ class implementRandomForestCalssifier():
       @ targetCol: The name of the column in the dataSet containig the target values.
       @ splitProportion: The proportion for the testing set creation.
     '''
-    def __init__(self, dataSet, targetCol, splitProportion ):
+    def __init__(self, dataSet, targetCol, splitProportion, gridArgs):
         self.seedRF = 50
-        self.paramGrid = createSearshGrid()
+        self.paramGrid = createSearshGrid(gridArgs)
         X,Y = importDataSet(dataSet, targetCol)
         Y = pd.factorize(self.y_train)
         self.x_train,self.x_validation,self.y_train, self.y_validation = train_test_split(X,Y, test_size = splitProportion) 
@@ -54,7 +54,6 @@ class implementRandomForestCalssifier():
         best_estimator = self.rfClassifier.best_estimator_
         clasifierName, featuresInModel = investigateFeatureImportance(best_estimator, name, self.x_train)
         print(f"The best parameters are: {self.rfClassifier.best_params_}")
-        implementRandomForestCalssifier.computeClassificationMetrics(self, best_estimator,self.x_validation,self.y_validation)
         return best_estimator, clasifierName, featuresInModel
 
     def computeClassificationMetrics(model,x_validation,y_validation):
@@ -121,6 +120,7 @@ class implementRandomForestRegressor():
         # scoring = ['neg_mean_squared_error', 'neg_mean_absolute_error']
         modelRFRegressorWithGridSearch = GridSearchCV(estimator, 
                                                     param_grid = self.paramGrid,
+                                                    cv = 2,
                                                     n_jobs = -1, 
                                                     verbose = 5, 
                                                     return_train_score = True
@@ -131,20 +131,22 @@ class implementRandomForestRegressor():
         y_train= (np.array(self.y_train).astype('float')).ravel()
         self.rfr_WithGridSearch.fit(self.x_train, y_train)
         best_estimator = self.rfr_WithGridSearch.best_estimator_
-        print(f"The best parameters: {self.rfr_WithGridSearch.best_params_}")
+        bestParameters = self.rfr_WithGridSearch.best_params_
+        print(f"The best parameters: {bestParameters}")
         r2_validation = validateWithR2(best_estimator, self.x_validation, self.y_validation,0,0,weighted = False)
         print("R2_score for validation set: ", r2_validation)
-        return best_estimator, r2_validation
+        return best_estimator, bestParameters, r2_validation
         
     def fitRFRegressorWeighted(self, dominantValeusPenalty):
         y_train= (np.array(self.y_train).astype('float')).ravel()
         weights = createWeightVector(y_train, 0, dominantValeusPenalty)
         self.rfr_WithGridSearch.fit(self.x_train, y_train,sample_weight = weights)
         best_estimator = self.rfr_WithGridSearch.best_estimator_
-        print(f"The best parameters: {self.rfr_WithGridSearch.best_params_}")
+        bestParameters = self.rfr_WithGridSearch.best_params_
+        print(f"The best parameters: {bestParameters}")
         r2_validation = validateWithR2(best_estimator,self.x_validation,self.y_validation,0, dominantValeusPenalty)
         print("R2_score for validation set: ", r2_validation)
-        return best_estimator, r2_validation
+        return best_estimator, bestParameters, r2_validation
     
     def getSplitedDataset(self):
         return self.x_train,self.x_validation,self.y_train, self.y_validation
@@ -162,7 +164,7 @@ def importDataSet(dataSetName, targetCol: str):
     ''' 
     train = pd.read_csv(dataSetName, index_col = None)
     y = train[[targetCol]]
-    train.drop([targetCol,'Unnamed: 0'], axis=1, inplace = True)
+    train.drop([targetCol], axis=1, inplace = True)
     return train, y
 
 def printDataBalace(x_train, x_validation, y_train, y_validation, targetCol: str):
@@ -253,10 +255,7 @@ def createWeightVector(y_vector, dominantValue:float, dominantValuePenalty:float
     return weightVec
 
 def saveModel(best_estimator, id):
-    # myServices.ensureDirectory('./models/rwReg')
     name = id + ".pkl" 
-    # destiny = "./models/rwReg/" + name
-    # print(destiny)
     _ = joblib.dump(best_estimator, name, compress=9)
 
 def makeNameByTime():
