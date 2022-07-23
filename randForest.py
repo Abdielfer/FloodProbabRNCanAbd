@@ -2,6 +2,7 @@
 Aqui vamos a poner 
 todo lo necesario para hacer fincionet RF a ppartir de competition 2
 '''
+from logging import critical
 import time
 import numpy as np
 import pandas as pd
@@ -25,8 +26,9 @@ class implementRandomForestCalssifier():
         self.seedRF = 50
         self.paramGrid = createSearshGrid(gridArgs)
         X,Y = ms.importDataSet(dataSet, targetCol)
-        Y, self.labels = pd.factorize(self.y_train) # See: https://pandas.pydata.org/docs/reference/api/pandas.factorize.html
-        self.x_train,self.x_validation,self.y_train, self.y_validation = train_test_split(X,Y, test_size = splitProportion) 
+        Y = np.array(Y).ravel()
+        Y_factorized, self.labels = pd.factorize(Y) # See: https://pandas.pydata.org/docs/reference/api/pandas.factorize.html
+        self.x_train,self.x_validation,self.y_train, self.y_validation = train_test_split(X,Y_factorized, test_size = splitProportion) 
         print(self.x_train.head())
         print("Train balance")
         printArrayBalance(self.y_train)
@@ -35,17 +37,15 @@ class implementRandomForestCalssifier():
         self.rfClassifier = implementRandomForestCalssifier.createModelRClassifier(self)
     
     def createModelRClassifier(self):
-        estimator = RandomForestClassifier(random_state = self.seedRF)
+        estimator = RandomForestClassifier(criterion='entropy', random_state = self.seedRF)
         # Create the random search model
-        rs = RandomizedSearchCV(estimator, 
-                                critreion = 'entropy', 
-                                param_grid = self.paramGrid, 
-                                n_jobs = -1, 
-                                scoring = 'roc_auc',
-                                cv = 4,  # NOTE: in this configurtion StratifiedKfold is used by SckitLearn
-                                n_iter = 10, 
-                                verbose = 5, 
-                                random_state=self.seedRF)           
+        rs = GridSearchCV(estimator, 
+                        param_grid = self.paramGrid, 
+                        n_jobs = -1, 
+                        scoring = 'roc_auc',
+                        cv = 4,  # NOTE: in this configurtion StratifiedKfold is used by SckitLearn
+                        verbose = 5, 
+                        )           
         return rs
     
     def fitRFClassifierGSearch(self):
@@ -63,7 +63,7 @@ class implementRandomForestCalssifier():
         accScore = metrics.accuracy_score(self.y_validation, y_hat)
         macro_averaged_f1 = metrics.f1_score(self.y_validation, y_hat, average = 'macro') # Better for multiclass
         micro_averaged_f1 = metrics.f1_score(self.y_validation, y_hat, average = 'micro')
-        ROC_AUC_multiClass = implementRandomForestCalssifier.roc_auc_score_multiclass(y_hat)
+        ROC_AUC_multiClass = implementRandomForestCalssifier.roc_auc_score_multiclass(self,y_hat)
         print('Accuraci_score: ', accScore)  
         print('F1_macroAverage: ', macro_averaged_f1)  
         print('F1_microAverage: ', micro_averaged_f1)

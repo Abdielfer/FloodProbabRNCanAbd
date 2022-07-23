@@ -44,9 +44,8 @@ def executeRFCalssifier(cfg: DictConfig):
     log['dataset'] = cfg['pathDataset']
     log['model_Id'] = name
     log['regressor_Name'] = classifierName
-    bestP = json.dumps(bestParameters)
-    log['best_param'] = bestP
-    log['features_Importance'] = featureImportance.ravel()
+    log['best_param'] = bestParameters
+    log['features_Importance'] = featureImportance.to_dict('tight')
     log['Accuraci_score'] = accScore
     log['macro_averaged_f1'] = macro_averaged_f1
     log['micro_averaged_f1'] = micro_averaged_f1
@@ -55,12 +54,12 @@ def executeRFCalssifier(cfg: DictConfig):
 
 
 
-@hydra.main(config_path=f"config", config_name="config.yaml")
+@hydra.main(config_path=f"config", config_name="config2.yaml")
 def main(cfg: DictConfig):
     best_estimator,name, log = executeRFCalssifier(cfg)
     r.saveModel(best_estimator, name)
     logToSave = pd.DataFrame.from_dict(log, orient='index')
-    logToSave.to_csv(name +'.csv',index = False, header=True) 
+    logToSave.to_csv(name +'.csv',index = True, header=True) 
 
 if __name__ == "__main__":
     with ms.timeit():
