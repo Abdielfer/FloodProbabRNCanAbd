@@ -19,6 +19,11 @@ class describeDataset():
         pyplot.title(self.classCount)
         pyplot.legend()
         pyplot.show()
+
+####  TODO ###
+
+    def confussionMatrix():
+        return 
     
 
 

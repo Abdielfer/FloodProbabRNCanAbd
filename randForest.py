@@ -41,9 +41,9 @@ class implementRandomForestCalssifier():
         # Create the random search model
         rs = GridSearchCV(estimator, 
                         param_grid = self.paramGrid, 
-                        n_jobs = -1, 
-                        scoring = 'roc_auc',
-                        cv = 4,  # NOTE: in this configurtion StratifiedKfold is used by SckitLearn
+                        n_jobs = -1,
+                        scoring = 'accuracy',
+                        cv = 3,  # NOTE: in this configurtion StratifiedKfold is used by SckitLearn  
                         verbose = 5, 
                         )           
         return rs
@@ -53,7 +53,7 @@ class implementRandomForestCalssifier():
         best_estimator = self.rfClassifier.best_estimator_
         best_params = self.rfClassifier.get_params()
         print(f"The best parameters are: {best_params}")
-        return best_estimator,best_params
+        return best_estimator, best_params  
 
     def computeClassificationMetrics(self, model):
         '''
