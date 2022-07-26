@@ -226,7 +226,6 @@ def createSearshGrid(arg):
     'max_features': eval(arg['max_features']),
     'max_leaf_nodes': eval(arg['max_leaf_nodes']),
     'bootstrap': eval(arg['bootstrap']),
-    #'pre_dispatch': '2*n_jobs', # UNCOMMENT Only for classifier
     }
     return param_grid   
 

@@ -1,5 +1,4 @@
 import pandas as pd
-import json
 import myServices as ms
 import randForest as r
 import hydra
@@ -23,8 +22,31 @@ def executeRFRegressor(cfg: DictConfig):
     log['dataset'] = cfg['pathDataset']
     log['model_Id'] = name
     log['regressor_Name'] = regressorName
-    bestP = json.dumps(bestParameters)
-    log['best_param'] = bestP
+    log['best_param'] = bestParameters
+    log['features_Importance'] = pd.DataFrame(featureImportance).to_string(justify= 'left')
+    log['r2_score'] = r2_validation 
+    return best_estimator,name,log
+
+
+def executeRFRegressorWeighted(cfg: DictConfig):
+    log = {}
+    name = r.makeNameByTime()
+    local = cfg.local
+    pathDataset = local + cfg['pathDataset']
+    percentOfValidation = cfg.percentOfValidation
+    penalty = cfg.weightPenalty  ## UNCOMENT Onli for weighted fit
+    arg = cfg.parameters
+    rForestReg = r.implementRandomForestRegressor(pathDataset,'percentage', percentOfValidation, arg)
+    best_estimator, bestParameters, r2_validation= rForestReg.fitRFRegressorWeighted(penalty)
+    r.saveModel(best_estimator,name)
+    _,x_validation,_,_ = rForestReg.getSplitedDataset()
+    regressorName, featureImportance = r.investigateFeatureImportance(best_estimator,name,x_validation)
+    print(r2_validation)
+    # Fill Log
+    log['dataset'] = cfg['pathDataset']
+    log['model_Id'] = name
+    log['regressor_Name'] = regressorName
+    log['best_param'] = bestParameters
     log['features_Importance'] = pd.DataFrame(featureImportance).to_string(justify= 'left')
     log['r2_score'] = r2_validation 
     return best_estimator,name,log
@@ -54,9 +76,9 @@ def executeRFCalssifier(cfg: DictConfig):
 
 
 
-@hydra.main(config_path=f"config", config_name="config2.yaml")
+@hydra.main(config_path=f"config", config_name="config.yaml")
 def main(cfg: DictConfig):
-    best_estimator,name, log = executeRFCalssifier(cfg)
+    best_estimator,name, log = executeRFRegressor(cfg)
     r.saveModel(best_estimator, name)
     logToSave = pd.DataFrame.from_dict(log, orient='index')
     logToSave.to_csv(name +'.csv',index = True, header=True) 
