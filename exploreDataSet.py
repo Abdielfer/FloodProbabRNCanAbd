@@ -1,12 +1,11 @@
 # Generate and plot a synthetic imbalanced classification dataset
-from collections import Counter
-from gettext import npgettext
+import myServices as ms
 import seaborn as sns
 import matplotlib.pyplot as plt
+from sklearn.metrics import ConfusionMatrixDisplay
 import numpy as np
-import pandas as pd
 from numpy import where
-import myServices as ms
+
 
 class describeDataset():
     def __init__(self, dataset, targetCol) -> None:
@@ -42,13 +41,11 @@ class describeDataset():
 
 ####  TODO ###
 
-
-    def confussionMatrix():
-
-        return 
+def plotConfusionMatrixFromEstimator(estimator,X_test, y_test):
+    ConfusionMatrixDisplay.from_estimator(estimator, X_test, y_test)
+    plt.show()
     
-
-
+    
 def main():
     describer = describeDataset('basin1CleanToTrain.csv','percentage' )
 
