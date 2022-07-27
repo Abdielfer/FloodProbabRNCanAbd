@@ -8,10 +8,13 @@ from numpy import where
 
 
 class describeDataset():
+    '''
+    This class takes adataset as input to performe descriptive representation of features and they relationships. 
+    '''
     def __init__(self, dataset, targetCol) -> None:
+        self.X, self.Y = ms.importDataSet(dataset, targetCol)
         self.targetCol = targetCol
         self.classCount = np.unique(self.Y)
-        self.X, self.Y = ms.importDataSet(dataset, targetCol)
         self.dataset = dataset
         return
 
@@ -38,14 +41,10 @@ class describeDataset():
     def featuresCorrelationHeatMap(self):
         self.X.corr().style.format("{:.4}").background_gradient(cmap=plt.get_cmap('coolwarm'), axis=1)
 
-
-####  TODO ###
-
 def plotConfusionMatrixFromEstimator(estimator,X_test, y_test):
     ConfusionMatrixDisplay.from_estimator(estimator, X_test, y_test)
     plt.show()
-    
-    
+        
 def main():
     describer = describeDataset('basin1CleanToTrain.csv','percentage' )
 
