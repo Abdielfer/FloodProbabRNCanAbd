@@ -51,7 +51,7 @@ def importListFromExelCol(excell_file_location,Shet_id, col_id):
     '''
     @return: list from <col_id> in <excell_file_location>.
     Argument:
-    @excell_file_location: file name if is in the project directory, full file laction otherwise.
+    @excell_file_location: full path file location and name.
     @col_id : number of the desired collumn to extrac info from (Conside index 0 for the first column)
     '''       
     x=[]

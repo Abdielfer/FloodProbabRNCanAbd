@@ -16,7 +16,7 @@ class dtmTransformer():
     Functions are mostly based on Whitebox libraries. For optimal functionality DTM’s most be high resolution, 
     ideally Lidar 1 m or < 2m. 
     '''
-    def __init__(self, workingDir = "None"):
+    def __init__(self, workingDir):
         self.mainFileName = " "
         if os.path.isdir(workingDir): # Creates output dir if it does not already exist 
             self.workingDir = workingDir

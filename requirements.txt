@@ -17,6 +17,7 @@ pytorch-lightning
 rasterio
 requests
 scikit-learn
+seaborn
 segmentation-models-pytorch
 torch
 torchgeo

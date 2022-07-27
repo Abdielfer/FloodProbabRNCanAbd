@@ -1,6 +1,9 @@
+import imp
 import os
-import myServices
-from whitebox.whitebox_tools import WhiteboxTools, default_callback
+import myServices as ms
+import whiteboxApplications as wba
+
+from whitebox.whitebox_tools import WhiteboxTools
 from torchgeo.datasets.utils import download_url
 
 
@@ -19,7 +22,7 @@ class dtmTailImporter():
     Arguments at creation:
      @tail_URL_NamesList : list of url for the tail to import
     '''
-    def __init__(self, tail_URL_NamesList, localPath = "None"):
+    def __init__(self, tail_URL_NamesList, localPath):
         self.tail_URL_NamesList = tail_URL_NamesList
         self.localPath = localPath
 
@@ -34,7 +37,7 @@ class dtmTailImporter():
         else:
             outputPath = input('Enter a destiny path to download:')
             print(outputPath)
-            if myServices.ensureDirectory(outputPath):
+            if ms.ensureDirectory(outputPath):
                 for path in self.tail_URL_NamesList:
                     download_url(path, outputPath)
                 print(f"Tails dawnloaded to: {outputPath}")      
@@ -43,3 +46,15 @@ class dtmTailImporter():
                     download_url(path, currentDirectory)
                 print(f"Tails dawnloaded to: {currentDirectory}") 
    
+
+
+def main():
+    # list = ms.importListFromExelCol('/Users/abdielfer/DESS/Internship2022/RNCanWork/FloodProbabRNCanAbd/saint_john_NFL_DTM.xlsx','Feuil1','ftp_dtm')
+    # importer = dtmTailImporter(list, '/Users/abdielfer/DESS/Internship2022/RNCanWork/FloodMaps/testZone')
+    # importer.impotTailToLocalDir()
+    wba.setWBTWorkingDir('/Users/abdielfer/DESS/Internship2022/RNCanWork/FloodMaps/testZone')
+    transformer = wba.dtmTransformer('/Users/abdielfer/DESS/Internship2022/RNCanWork/FloodMaps/testZone')
+    transformer.computeMosaic()
+    
+if __name__ == "__main__":
+    main()
