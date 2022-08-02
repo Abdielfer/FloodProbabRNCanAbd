@@ -1,5 +1,7 @@
 from re import M
 import pandas as pd
+import numpy as np
+from sklearn.linear_model import ridge_regression
 import myServices as ms
 import randForest as r
 from sklearn import metrics
@@ -10,7 +12,7 @@ class getEstimatorMetric():
     def __init__(self,cfg:DictConfig):
         local = cfg.local
         self.pathDataset = local + cfg['pathDataset']
-        self.model = cfg.model
+        self.model = local + cfg.estimator
         self.targetColName = cfg.targetColName
         self.x_validation, self.y_validation = ms.importDataSet(self.pathDataset, self.targetColName)
         pass
@@ -22,7 +24,6 @@ class getEstimatorMetric():
         macro_averaged_f1 = metrics.f1_score(self.y_validation, y_hat, average = 'macro') # Better for multiclass
         micro_averaged_f1 = metrics.f1_score(self.y_validation, y_hat, average = 'micro')
         ROC_AUC_multiClass = r.roc_auc_score_multiclass(self.y_validation,y_hat)
-        accScore, macro_averaged_f1, micro_averaged_f1, ROC_AUC_multiClass = classifier.computeClassificationMetrics(best_estimator)
         metric = {}
         metric['accScore'] = accScore
         metric['macro_averaged_f1'] = macro_averaged_f1
@@ -37,35 +38,34 @@ class getEstimatorMetric():
             
     # Defining a function to decide which function to call
     def metric(self, modelType: str):
-        method = switch(self,modelType)
+        method = getEstimatorMetric.switch(self,modelType)
         if method != False:
-            return getattr(self, method)()
+            return method
         else: 
             return print("Invalide model type. Vefify configurations")
 
-def switch(self,model):
-    dict={
-        'regressor': getEstimatorMetric.regressorMetric(),
-        'classifier': getEstimatorMetric.classifierMetric(),
-    }
-    return dict.get(model, False)
+    def switch(self, modelType:str):
+        dict={
+            'regressor': getEstimatorMetric.regressorMetric(self),
+            'classifier': getEstimatorMetric.classifierMetric(self),
+        }
+        return dict.get(modelType, False)
 
-# Calling the switch case method
 def computeMetric(cfg: DictConfig):
-    model = cfg.model
     estimatorMetric = getEstimatorMetric(cfg)
-    metricMethod = estimatorMetric.metric(cfg.modelType)
-    metric = metricMethod(model)
-    return metric
+    metricResults = estimatorMetric.metric(cfg.modelType)
+    print(metricResults)
+    return metricResults
 
 
 @hydra.main(config_path=f"config", config_name="configEval.yaml")
 def main(cfg: DictConfig):
     metric = computeMetric(cfg)
-    print(metric)
-    # metricToSave = pd.DataFrame.from_dict(metric, orient='index')
-    # metricToSave.to_csv('metric.csv',index = True, header=True)
-
+    if cfg.writeReport == True:
+        name = cfg.modelType + '_metrics.csv'
+        metricToSave = pd.DataFrame.from_dict(metric, orient='index')
+        metricToSave.to_csv(name,index = True, header=True)
+       
 if __name__ == "__main__":
     with ms.timeit():
         main()

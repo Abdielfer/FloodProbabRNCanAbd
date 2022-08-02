@@ -1,9 +1,6 @@
-
 local: /Users/abdielfer/DESS/Internship2022/RNCanWork/FloodProbabRNCanAbd/
 estimator: bestModels/Classifier/2207232146.pkl
 pathDataset: basin1CleanToTrain.csv
-targetColName: 'percentage'
-modelType: 'classifier'
-writeReport: True
-
-
+targetColName: percentage
+modelType: classifier
+writeReport: 'False'

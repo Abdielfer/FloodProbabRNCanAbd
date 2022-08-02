@@ -205,7 +205,8 @@ def roc_auc_score_multiclass(y_validation, y_hat):
         Compute one-vs-all for every single class in the dataset
         From: https://www.kaggle.com/code/nkitgupta/evaluation-metrics-for-multi-class-classification/notebook
         '''
-        unique_class = set(y_validation)
+        unique_class = y_validation.unique()
+        print("UNIQUE CLASSES: ", unique_class)
         roc_auc_dict = {}
         for per_class in unique_class:
             other_class = [x for x in unique_class if x != per_class]

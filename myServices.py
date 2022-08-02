@@ -44,7 +44,7 @@ def importDataSet(dataSetName, targetCol: str):
     @Output: Features(x) and tragets(y) 
     ''' 
     x  = pd.read_csv(dataSetName, index_col = None)
-    y = x[[targetCol]]
+    y = x[targetCol]
     x.drop([targetCol], axis=1, inplace = True)
     return x, y
 
