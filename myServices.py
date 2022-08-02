@@ -1,5 +1,7 @@
 import os
+from re import A
 import pandas as pd
+import numpy as np
 from datetime import datetime
 
 ### General applications ##
@@ -46,6 +48,13 @@ def importDataSet(dataSetName, targetCol: str):
     train.drop([targetCol], axis=1, inplace = True)
     return train, y
 
+def logTransformation(x):
+    '''
+    Logarithmic transformation to redistribute values between 0 and 1. 
+     after transformation: min = 0 and max = 5.3018981
+    '''
+    return np.max(np.log(x)**2) - np.log(x)**2
+            
 ### GIS ###
 def importListFromExelCol(excell_file_location,Shet_id, col_id):  
     '''

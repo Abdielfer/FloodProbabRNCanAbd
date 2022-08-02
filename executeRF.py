@@ -76,9 +76,9 @@ def executeRFCalssifier(cfg: DictConfig):
 
 
 
-@hydra.main(config_path=f"config", config_name="config.yaml")
+@hydra.main(config_path=f"config", config_name="configClassifier.yaml")
 def main(cfg: DictConfig):
-    best_estimator,name, log = executeRFRegressorWeighted(cfg)
+    best_estimator,name, log = executeRFCalssifier(cfg)
     r.saveModel(best_estimator, name)
     logToSave = pd.DataFrame.from_dict(log, orient='index')
     logToSave.to_csv(name +'.csv',index = True, header=True) 
