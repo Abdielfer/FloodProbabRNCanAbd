@@ -63,31 +63,12 @@ class implementRandomForestCalssifier():
         accScore = metrics.accuracy_score(self.y_validation, y_hat)
         macro_averaged_f1 = metrics.f1_score(self.y_validation, y_hat, average = 'macro') # Better for multiclass
         micro_averaged_f1 = metrics.f1_score(self.y_validation, y_hat, average = 'micro')
-        ROC_AUC_multiClass = implementRandomForestCalssifier.roc_auc_score_multiclass(self,y_hat)
+        ROC_AUC_multiClass = roc_auc_score_multiclass(self.y_validation,y_hat)
         print('Accuraci_score: ', accScore)  
         print('F1_macroAverage: ', macro_averaged_f1)  
         print('F1_microAverage: ', micro_averaged_f1)
         print('ROC_AUC one_vs_all: ', ROC_AUC_multiClass)
         return accScore, macro_averaged_f1, micro_averaged_f1, ROC_AUC_multiClass
-
-    def roc_auc_score_multiclass(self, y_hat):
-        '''
-        Compute one-vs-all for every single class in the dataset
-        From: https://www.kaggle.com/code/nkitgupta/evaluation-metrics-for-multi-class-classification/notebook
-        '''
-        #creating a set of all the unique classes using the actual class list
-        unique_class = set(self.y_validation)
-        roc_auc_dict = {}
-        for per_class in unique_class:
-            #creating a list of all the classes except the current class 
-            other_class = [x for x in unique_class if x != per_class]
-            #marking the current class as 1 and all other classes as 0
-            new_y_validation = [0 if x in other_class else 1 for x in self.y_validation]
-            new_y_hat = [0 if x in other_class else 1 for x in y_hat]
-            #using the sklearn metrics method to calculate the roc_auc_score
-            roc_auc = roc_auc_score(new_y_validation, new_y_hat, average = "macro")
-            roc_auc_dict[per_class] = roc_auc
-        return roc_auc_dict
 
     def getSplitedDataset(self):
         return self.x_train,self.x_validation,self.y_train, self.y_validation
@@ -218,6 +199,21 @@ def investigateFeatureImportance(bestModel, dateName, x_train, printed = True):
                        ):
             print(featuresInModel)
     return clasifierName, featuresInModel
+
+def roc_auc_score_multiclass(y_validation, y_hat):
+        '''
+        Compute one-vs-all for every single class in the dataset
+        From: https://www.kaggle.com/code/nkitgupta/evaluation-metrics-for-multi-class-classification/notebook
+        '''
+        unique_class = set(y_validation)
+        roc_auc_dict = {}
+        for per_class in unique_class:
+            other_class = [x for x in unique_class if x != per_class]
+            new_y_validation = [0 if x in other_class else 1 for x in y_validation]
+            new_y_hat = [0 if x in other_class else 1 for x in y_hat]
+            roc_auc = roc_auc_score(new_y_validation, new_y_hat, average = "macro")
+            roc_auc_dict[per_class] = roc_auc
+        return roc_auc_dict
 
 def createSearshGrid(arg):
     param_grid = {

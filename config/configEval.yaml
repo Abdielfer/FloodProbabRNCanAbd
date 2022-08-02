@@ -1,0 +1,8 @@
+
+local: /Users/abdielfer/DESS/Internship2022/RNCanWork/FloodProbabRNCanAbd/
+estimator: bestModels/Classifier/2207232146.pkl
+pathDataset: basin1CleanToTrain.csv
+targetCol: 'percentage'
+modelType: 'classifier'
+percentOfValidation: '1' # To include the full dataSet for validation 
+

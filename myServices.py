@@ -43,17 +43,17 @@ def importDataSet(dataSetName, targetCol: str):
     @input: DataSetName => The dataset path. 
     @Output: Features(x) and tragets(y) 
     ''' 
-    train = pd.read_csv(dataSetName, index_col = None)
-    y = train[[targetCol]]
-    train.drop([targetCol], axis=1, inplace = True)
-    return train, y
+    x  = pd.read_csv(dataSetName, index_col = None)
+    y = x[[targetCol]]
+    x.drop([targetCol], axis=1, inplace = True)
+    return x, y
 
 def logTransformation(x):
     '''
     Logarithmic transformation to redistribute values between 0 and 1. 
-     after transformation: min = 0 and max = 5.3018981
     '''
-    return np.max(np.log(x)**2) - np.log(x)**2
+    x_nonZeros = np.where(x <= 0.0000001, 0.0001, x)
+    return np.max(np.log(x_nonZeros)**2) - np.log(x_nonZeros)**2
             
 ### GIS ###
 def importListFromExelCol(excell_file_location,Shet_id, col_id):  
