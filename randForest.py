@@ -245,6 +245,9 @@ def saveModel(best_estimator, id):
     name = id + ".pkl" 
     _ = joblib.dump(best_estimator, name, compress=9)
 
+def loadModel(modelName):
+    return joblib.load(modelName)
+
 def makeNameByTime():
     name = time.strftime("%y%m%d%H%M")
     return name
