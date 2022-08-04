@@ -54,8 +54,12 @@ def logTransformation(x):
     '''
     x_nonZeros = np.where(x <= 0.0000001, 0.0001, x)
     return np.max(np.log(x_nonZeros)**2) - np.log(x_nonZeros)**2
-            
-### GIS ###
+
+
+            ###########            
+            ### GIS ###
+            ###########
+
 def importListFromExelCol(excell_file_location,Shet_id, col_id):  
     '''
     @return: list from <col_id> in <excell_file_location>.

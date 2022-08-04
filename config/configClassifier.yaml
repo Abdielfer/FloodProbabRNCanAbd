@@ -3,7 +3,7 @@ defaults:
   - parameters: paramClassifier
 
 local: /Users/abdielfer/DESS/Internship2022/RNCanWork/FloodProbabRNCanAbd/
-pathDataset: basin1CleanToTrain.csv
+pathDataset: basin1_FaccNorm.csv
 percentOfValidation: 0.2
 weightPenalty: 0.01
 

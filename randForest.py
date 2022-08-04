@@ -7,8 +7,10 @@ import time
 import numpy as np
 import pandas as pd
 import joblib
-from sklearn.model_selection import train_test_split, GridSearchCV,  RandomizedSearchCV
-from sklearn import metrics
+import matplotlib.pyplot as plt
+
+from sklearn.model_selection import train_test_split, GridSearchCV
+from sklearn import metrics 
 from sklearn.metrics import roc_auc_score
 from sklearn.ensemble import RandomForestRegressor, RandomForestClassifier
 import myServices as ms
@@ -215,6 +217,38 @@ def roc_auc_score_multiclass(y_validation, y_hat):
             roc_auc = roc_auc_score(new_y_validation, new_y_hat, average = "macro")
             roc_auc_dict[per_class] = roc_auc
         return roc_auc_dict
+
+def plot_ROC_AUC_OneVsRest(classifier, x_test, y_test):
+    '''
+    Allows to plot multiclass classification ROC_AUC by computing tpr and fpr of each calss by One vs Rest. 
+    '''
+    unique_class = y_test.unique()
+    print("UNIQUE CLASSES: ", unique_class)
+    y_hat = classifier.predict(x_test)
+    printArrayBalance(y_test)
+    printArrayBalance(y_hat)
+    y_prob = classifier.predict_proba(x_test)   
+    fig, axs = plt.subplots(1,figsize=(13,4), sharey=True)
+    plt.ylabel('True Positive Rate')
+    plt.xlabel('False Positive Rate')
+    plt.figure(0).clf()
+    roc_auc_dict = {}
+    i = 0
+    for per_class in unique_class:
+        y_testInLoop = y_test.copy()
+        other_class = [x for x in unique_class if x != per_class]
+        print(f"actual class: {per_class} vs rest {other_class}")
+        new_y_validation = [0 if x in other_class else 1 for x in y_testInLoop]
+        new_y_hat = [0 if x in other_class else 1 for x in y_hat]
+        print(f"Class {per_class} balance vs rest")
+        printArrayBalance(new_y_validation)
+        roc_auc = roc_auc_score(new_y_validation, new_y_hat, average = "macro")
+        roc_auc_dict[per_class] = roc_auc
+        fpr, tpr, _ = metrics.roc_curve(new_y_validation, y_prob[:,i])  ### TODO Results doen't match roc_auc_score..
+        axs.plot(fpr,tpr,label = "Class "+ str(per_class) + f" AUC: {roc_auc}")
+        axs.legend()
+        i+=1
+    return roc_auc_dict
 
 def createSearshGrid(arg):
     param_grid = {
