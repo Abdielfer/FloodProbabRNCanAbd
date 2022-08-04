@@ -9,13 +9,14 @@ import matplotlib.pyplot as plt
 from sklearn.model_selection import train_test_split, GridSearchCV
 from sklearn import metrics 
 from sklearn.metrics import roc_auc_score
+from sklearn.multiclass import OneVsRestClassifier
 from sklearn.ensemble import RandomForestRegressor, RandomForestClassifier
 import myServices as ms
 
 class implementRandomForestCalssifier():
     '''
     Class implementing all necessary steps for a ranom Forest 
-    regression with sklearnpare
+    regression with sklear
     @imput:
       @ dataset: The full path to a *.csv file containing the dataSet.
       @ targetCol: The name of the column in the dataSet containig the target values.
@@ -33,9 +34,9 @@ class implementRandomForestCalssifier():
         printArrayBalance(self.y_train)
         print("Validation balance")
         printArrayBalance(self.y_validation)
-        self.rfClassifier = implementRandomForestCalssifier.createModelRClassifier(self)
+        self.rfClassifier = implementRandomForestCalssifier.createModelClassifier(self)
     
-    def createModelRClassifier(self):
+    def createModelClassifier(self):
         estimator = RandomForestClassifier(criterion='entropy', random_state = self.seedRF)
         # Create the random search model
         rs = GridSearchCV(estimator, 
@@ -54,23 +55,72 @@ class implementRandomForestCalssifier():
         print(f"The best parameters are: {best_params}")
         return best_estimator, best_params  
 
-    def computeClassificationMetrics(self, model):
-        '''
-        Ref: https://www.kaggle.com/code/nkitgupta/evaluation-metrics-for-multi-class-classification/notebook
-        '''
-        y_hat = model.predict(self.x_validation)
-        accScore = metrics.accuracy_score(self.y_validation, y_hat)
-        macro_averaged_f1 = metrics.f1_score(self.y_validation, y_hat, average = 'macro') # Better for multiclass
-        micro_averaged_f1 = metrics.f1_score(self.y_validation, y_hat, average = 'micro')
-        ROC_AUC_multiClass = roc_auc_score_multiclass(self.y_validation,y_hat)
-        print('Accuraci_score: ', accScore)  
-        print('F1_macroAverage: ', macro_averaged_f1)  
-        print('F1_microAverage: ', micro_averaged_f1)
-        print('ROC_AUC one_vs_all: ', ROC_AUC_multiClass)
-        return accScore, macro_averaged_f1, micro_averaged_f1, ROC_AUC_multiClass
-
     def getSplitedDataset(self):
         return self.x_train,self.x_validation,self.y_train, self.y_validation
+
+class implementOneVsRestClassifier():
+    '''
+    Class implementing all necessary steps for a ranom Forest 
+    regression with sklearn
+    @imput:
+      @ dataset: The full path to a *.csv file containing the dataSet.
+      @ targetCol: The name of the column in the dataSet containig the target values.
+      @ splitProportion: The proportion for the testing set creation.
+    '''
+    def __init__(self, dataSet, targetCol, splitProportion, gridArgs):
+        self.seedRF = 50
+        self.paramGrid = createSearshGrid(gridArgs)
+        self.x_train,Y = ms.importDataSet(dataSet, targetCol)
+        Y = np.array(Y).ravel()
+        self.y_train, self.labels = pd.factorize(Y) # See: https://pandas.pydata.org/docs/reference/api/pandas.factorize.html
+        # self.x_train,self.x_validation,self.y_train, self.y_validation = train_test_split(X,Y_factorized, test_size = splitProportion) 
+        print(self.x_train.head())
+        print("Train balance")
+        printArrayBalance(self.y_train)
+        # print("Validation balance")
+        # printArrayBalance(self.y_validation)
+        self.OneVsRestClassifier = implementOneVsRestClassifier.createModel(self)
+
+    '''
+        model_to_set = OneVsRestClassifier(SVC(kernel="poly"))
+        parameters = {
+            "estimator__C": [1,2,4,8],
+            "estimator__kernel": ["poly","rbf"],
+            "estimator__degree":[1, 2, 3, 4],
+        }
+        model_tunning = GridSearchCV(model_to_set, param_grid=parameters,
+                                    scoring='f1_weighted')
+
+        model_tunning.fit(iris.data, iris.target)
+
+        print(model_tunning.best_score_)
+        print(model_tunning.best_params_)
+
+    '''
+
+    def createModel(self):
+        estimator = RandomForestClassifier(criterion='entropy', random_state = self.seedRF) 
+        model_to_set = OneVsRestClassifier(estimator)     
+        # Create the random search model
+        rs = GridSearchCV(model_to_set, 
+                        param_grid = self.paramGrid, 
+                        n_jobs = -1,
+                        scoring = 'accuracy',
+                        cv = 3,  # NOTE: in this configurtion StratifiedKfold is used by SckitLearn  
+                        verbose = 5, 
+                        )           
+        return rs
+    
+    def fitOneVsRestClassifierGSearch(self):
+        self.OneVsRestClassifier.fit(self.x_train, self.y_train)
+        best_params = self.OneVsRestClassifier.best_params_
+        print(f"The best parameters are: {best_params}")
+        return self.OneVsRestClassifier, best_params  
+
+   
+    # def getSplitedDataset(self):
+    #     return self.x_train,self.x_validation,self.y_train, self.y_validation
+
 
 class implementRandomForestRegressor():
     '''
@@ -159,6 +209,22 @@ def validateWithR2(model, x_test, y_test, dominantValue:float, dominantValuePena
     else: 
         r2 = metrics.r2_score(y_test, y_hate)
     return r2
+
+def computeClassificationMetrics(model, x_validation, y_validation):
+    '''
+    Ref: https://www.kaggle.com/code/nkitgupta/evaluation-metrics-for-multi-class-classification/notebook
+    '''
+    y_hat = model.predict(x_validation)
+    accScore = metrics.accuracy_score(y_validation, y_hat)
+    macro_averaged_f1 = metrics.f1_score(y_validation, y_hat, average = 'macro') # Better for multiclass
+    micro_averaged_f1 = metrics.f1_score(y_validation, y_hat, average = 'micro')
+    ROC_AUC_multiClass = roc_auc_score_multiclass(y_validation,y_hat)
+    print('Accuraci_score: ', accScore)  
+    print('F1_macroAverage: ', macro_averaged_f1)  
+    print('F1_microAverage: ', micro_averaged_f1)
+    print('ROC_AUC one_vs_all: ', ROC_AUC_multiClass)
+    return accScore, macro_averaged_f1, micro_averaged_f1, ROC_AUC_multiClass
+
 
 def computeMainErrors(model, x_test, y_test ):
     y_test  = (np.array(y_test).astype('float')).ravel()

@@ -1,3 +1,4 @@
+from numpy import msort
 import pandas as pd
 import myServices as ms
 import models as m
@@ -10,7 +11,7 @@ from sklearn.ensemble import RandomForestClassifier
 
 def executeRFRegressor(cfg: DictConfig):
     log = {}
-    name = m.makeNameByTime()
+    name = ms.makeNameByTime()
     local = cfg.local
     pathDataset = local + cfg['pathDataset']
     percentOfValidation = cfg.percentOfValidation
@@ -34,7 +35,7 @@ def executeRFRegressor(cfg: DictConfig):
 
 def executeRFRegressorWeighted(cfg: DictConfig):
     log = {}
-    name = m.makeNameByTime()
+    name = ms.makeNameByTime()
     local = cfg.local
     pathDataset = local + cfg['pathDataset']
     percentOfValidation = cfg.percentOfValidation
@@ -57,16 +58,16 @@ def executeRFRegressorWeighted(cfg: DictConfig):
 
 def executeRFCalssifier(cfg: DictConfig):
     log = {}
-    name = m.makeNameByTime()
+    name = ms.makeNameByTime()
     local = cfg.local
     pathDataset = local + cfg['pathDataset']
     percentOfValidation = cfg.percentOfValidation
     arg = cfg.parameters
     rfClassifier = m.implementRandomForestCalssifier(pathDataset,'percentage', percentOfValidation, arg)
-    _,x_validation,_,_ = rfClassifier.getSplitedDataset()
+    _,x_validation,_,y_validation = rfClassifier.getSplitedDataset()
     best_estimator, bestParameters = rfClassifier.fitRFClassifierGSearch()
     classifierName, featureImportance = m.investigateFeatureImportance(best_estimator,name,x_validation)
-    accScore, macro_averaged_f1, micro_averaged_f1, ROC_AUC_multiClass = rfClassifier.computeClassificationMetrics(best_estimator)
+    accScore, macro_averaged_f1, micro_averaged_f1, ROC_AUC_multiClass = m.computeClassificationMetrics(best_estimator,x_validation,y_validation)
     log['dataset'] = cfg['pathDataset']
     log['model_Id'] = name
     log['model_Name'] = classifierName
@@ -78,35 +79,31 @@ def executeRFCalssifier(cfg: DictConfig):
     log['ROC_AUC_multiClass'] = ROC_AUC_multiClass
     return best_estimator,name,log
 
-def testOneVsAll(cfg: DictConfig):
+def executeOneVsAll(cfg: DictConfig):
     log = {}
-    name = m.makeNameByTime()
+    name = ms.makeNameByTime()
     local = cfg.local
-    pathTrainDataset = local + cfg['pathTrainingDataset']
-    pathValidationDataset = local + cfg['pathValidationDataset']
-    estimator = RandomForestClassifier(criterion='entropy', random_state = 50)
-    x_train,y_train = ms.importDataSet(pathTrainDataset, 'percentage')
-    classifier = OneVsRestClassifier(estimator).fit(x_train,y_train)
+    pathTrainingDataset = local + cfg['pathTrainingDataset']
+    pathValidationDataset = local + cfg['basin1Validation']
+    arg = cfg.parameters  
+    oneVsAllClassifier = m.implementOneVsRestClassifier(pathTrainingDataset,'percentage', arg)
+    oneVsAllClassifier.fitOneVsRestClassifierGSearch()
     x_validation,y_validation = ms.importDataSet(pathValidationDataset, 'percentage')
-    y_hat = classifier.predict(x_validation)
-    accScore = metrics.accuracy_score(y_validation, y_hat)
-    macro_averaged_f1 = metrics.f1_score(y_validation, y_hat, average = 'macro') # Better for multiclass
-    micro_averaged_f1 = metrics.f1_score(y_validation, y_hat, average = 'micro')
-    ROC_AUC_multiClass = m.roc_auc_score_multiclass(y_validation,y_hat)
+    accScore, macro_averaged_f1, micro_averaged_f1, ROC_AUC_multiClass = m.computeClassificationMetrics(oneVsAllClassifier,x_validation,y_validation)
     log['pathTrainDataset'] = cfg['pathTrainDataset']
     log['pathValidationDataset'] = cfg['pathValidationDataset']
     log['model_Id'] = name
     log['model_Name'] = "classifier"
-    log['best_param'] = classifier.get_params
+    log['best_param'] = oneVsAllClassifier.get_params
     log['Accuraci_score'] = accScore
     log['macro_averaged_f1'] = macro_averaged_f1
     log['micro_averaged_f1'] = micro_averaged_f1
     log['ROC_AUC_multiClass'] = ROC_AUC_multiClass
-    return classifier,name,log
+    return oneVsAllClassifier,name,log
 
 @hydra.main(config_path=f"config", config_name="configClassOnevsAll.yaml")
 def main(cfg: DictConfig):
-    best_estimator,name, log = testOneVsAll(cfg)
+    best_estimator,name, log = executeOneVsAll(cfg)
     m.saveModel(best_estimator, name)
     logToSave = pd.DataFrame.from_dict(log, orient='index')
     logToSave.to_csv(name +'.csv',index = True, header=True) 
