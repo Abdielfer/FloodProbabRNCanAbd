@@ -67,9 +67,9 @@ class implementOneVsRestClassifier():
       @ targetCol: The name of the column in the dataSet containig the target values.
       @ splitProportion: The proportion for the testing set creation.
     '''
-    def __init__(self, dataSet, targetCol, splitProportion, gridArgs):
+    def __init__(self, dataSet, targetCol, gridArgs):
         self.seedRF = 50
-        self.paramGrid = createSearshGrid(gridArgs)
+        self.paramGrid = createSearshGridOneVsRest(gridArgs)
         self.x_train,Y = ms.importDataSet(dataSet, targetCol)
         Y = np.array(Y).ravel()
         self.y_train, self.labels = pd.factorize(Y) # See: https://pandas.pydata.org/docs/reference/api/pandas.factorize.html
@@ -99,15 +99,13 @@ class implementOneVsRestClassifier():
     '''
 
     def createModel(self):
-        estimator = RandomForestClassifier(criterion='entropy', random_state = self.seedRF) 
+        estimator = RandomForestClassifier(criterion='entropy', random_state = self.seedRF, bootstrap = False) 
         model_to_set = OneVsRestClassifier(estimator)     
         # Create the random search model
         rs = GridSearchCV(model_to_set, 
                         param_grid = self.paramGrid, 
-                        n_jobs = -1,
                         scoring = 'accuracy',
-                        cv = 3,  # NOTE: in this configurtion StratifiedKfold is used by SckitLearn  
-                        verbose = 5, 
+                        cv = 3,  # NOTE: in this configurtion StratifiedKfold is used by SckitLearn 
                         )           
         return rs
     
@@ -320,6 +318,17 @@ def createSearshGrid(arg):
     'max_features': eval(arg['max_features']),
     'max_leaf_nodes': eval(arg['max_leaf_nodes']),
     'bootstrap': eval(arg['bootstrap']),
+    }
+    return param_grid   
+
+def createSearshGridOneVsRest(arg):
+    param_grid = {
+    'estimator__n_estimators': eval(arg['estimator__n_estimators']), 
+    'estimator__max_depth': eval(arg['estimator__max_depth']), 
+    'estimator__max_features': eval(arg['estimator__max_features']),
+    'estimator__max_leaf_nodes': eval(arg['estimator__max_leaf_nodes']),
+    'n_jobs': eval(arg['n_jobs']), 
+    'verbose': eval(arg['verbose']),
     }
     return param_grid   
 

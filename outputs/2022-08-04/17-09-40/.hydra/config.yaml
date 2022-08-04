@@ -1,13 +1,10 @@
-### src/config/config.yaml
-defaults:
-  - parameters: paramOneVsAll
-
+parameters:
+  n_estimators: '[58]'
+  n_jobs: '[-1]'
+  verbose: '[4]'
 local: /Users/abdielfer/DESS/Internship2022/RNCanWork/FloodProbabRNCanAbd/
 pathTrainingDataset: basin1Train.csv
 pathValidationDataset: basin1Validation.csv
 percentOfValidation: 0.2
 weightPenalty: 0.01
-
-### src/config/parameters/paramClassifier.yaml
-# @package _group_
 name: param

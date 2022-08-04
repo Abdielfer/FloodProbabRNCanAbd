@@ -84,7 +84,7 @@ def executeOneVsAll(cfg: DictConfig):
     name = ms.makeNameByTime()
     local = cfg.local
     pathTrainingDataset = local + cfg['pathTrainingDataset']
-    pathValidationDataset = local + cfg['basin1Validation']
+    pathValidationDataset = local + cfg['pathValidationDataset']
     arg = cfg.parameters  
     oneVsAllClassifier = m.implementOneVsRestClassifier(pathTrainingDataset,'percentage', arg)
     oneVsAllClassifier.fitOneVsRestClassifierGSearch()
