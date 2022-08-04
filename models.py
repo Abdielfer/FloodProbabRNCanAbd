@@ -111,9 +111,10 @@ class implementOneVsRestClassifier():
     
     def fitOneVsRestClassifierGSearch(self):
         self.OneVsRestClassifier.fit(self.x_train, self.y_train)
-        best_params = self.OneVsRestClassifier.best_params_
+        best_params = self.OneVsRestClassifier.get_params
+        model = self.OneVsRestClassifier.best_estimator_
         print(f"The best parameters are: {best_params}")
-        return self.OneVsRestClassifier, best_params  
+        return model, best_params  
 
    
     # def getSplitedDataset(self):

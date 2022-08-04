@@ -87,14 +87,17 @@ def executeOneVsAll(cfg: DictConfig):
     pathValidationDataset = local + cfg['pathValidationDataset']
     arg = cfg.parameters  
     oneVsAllClassifier = m.implementOneVsRestClassifier(pathTrainingDataset,'percentage', arg)
-    oneVsAllClassifier.fitOneVsRestClassifierGSearch()
+    print("Fitting ")
+    model,best_params = oneVsAllClassifier.fitOneVsRestClassifierGSearch()
     x_validation,y_validation = ms.importDataSet(pathValidationDataset, 'percentage')
-    accScore, macro_averaged_f1, micro_averaged_f1, ROC_AUC_multiClass = m.computeClassificationMetrics(oneVsAllClassifier,x_validation,y_validation)
+    print("Computing metrics ")
+    accScore, macro_averaged_f1, micro_averaged_f1, ROC_AUC_multiClass = m.computeClassificationMetrics(model,x_validation,y_validation)
+    print(f"ROC_AUC_multiClass: {ROC_AUC_multiClass}")
     log['pathTrainDataset'] = cfg['pathTrainDataset']
     log['pathValidationDataset'] = cfg['pathValidationDataset']
     log['model_Id'] = name
     log['model_Name'] = "classifier"
-    log['best_param'] = oneVsAllClassifier.get_params
+    log['best_param'] = best_params
     log['Accuraci_score'] = accScore
     log['macro_averaged_f1'] = macro_averaged_f1
     log['micro_averaged_f1'] = micro_averaged_f1
