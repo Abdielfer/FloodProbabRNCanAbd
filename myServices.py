@@ -1,5 +1,6 @@
 import os
-from re import A
+import joblib
+import time
 import pandas as pd
 import numpy as np
 from datetime import datetime
@@ -132,4 +133,25 @@ def clipRaster(rasterPath,polygonPath,field, outputPath):
     return True
     
 
+def createWeightVector(y_vector, dominantValue:float, dominantValuePenalty:float):
+    '''
+    Create wight vector for sampling weighted training.
+    The goal is to penalize the dominant class. 
+    This is important is the flood study, where majority of points (usually more than 95%) 
+    are not flooded areas. 
+    '''
+    y_ravel  = (np.array(y_vector).astype('int')).ravel()
+    weightVec = np.ones_like(y_ravel).astype(float)
+    weightVec = [dominantValuePenalty if y_ravel[j] == dominantValue else 1 for j in range(len(y_ravel))]
+    return weightVec
 
+def saveModel(estimator, id):
+    name = id + ".pkl" 
+    _ = joblib.dump(estimator, name, compress=9)
+
+def loadModel(modelName):
+    return joblib.load(modelName)
+
+def makeNameByTime():
+    name = time.strftime("%y%m%d%H%M")
+    return name

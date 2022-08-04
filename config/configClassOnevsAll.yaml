@@ -1,0 +1,9 @@
+### src/config/config.yaml
+defaults:
+  - parameters: paramClassifier
+
+local: /Users/abdielfer/DESS/Internship2022/RNCanWork/FloodProbabRNCanAbd/
+pathTrainingDataset: basin1Train.csv
+pathValidationDataset: basin1Validation.csv
+percentOfValidation: 0.2
+weightPenalty: 0.01

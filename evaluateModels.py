@@ -3,7 +3,7 @@ import pandas as pd
 import numpy as np
 from sklearn.linear_model import ridge_regression
 import myServices as ms
-import randForest as r
+import models as r
 from sklearn import metrics
 import hydra
 from omegaconf import DictConfig

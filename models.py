@@ -2,11 +2,8 @@
 Aqui vamos a poner 
 todo lo necesario para hacer fincionet RF a ppartir de competition 2
 '''
-from logging import critical
-import time
 import numpy as np
 import pandas as pd
-import joblib
 import matplotlib.pyplot as plt
 
 from sklearn.model_selection import train_test_split, GridSearchCV
@@ -121,7 +118,7 @@ class implementRandomForestRegressor():
         
     def fitRFRegressorWeighted(self, dominantValeusPenalty):
         y_train= (np.array(self.y_train).astype('float')).ravel()
-        weights = createWeightVector(y_train, 0, dominantValeusPenalty)
+        weights = ms.createWeightVector(y_train, 0, dominantValeusPenalty)
         self.rfr_WithGridSearch.fit(self.x_train, y_train,sample_weight = weights)
         best_estimator = self.rfr_WithGridSearch.best_estimator_
         bestParameters = self.rfr_WithGridSearch.best_params_
@@ -157,7 +154,7 @@ def predictOnFeaturesSet(model, featuresSet):
 def validateWithR2(model, x_test, y_test, dominantValue:float, dominantValuePenalty:float, weighted = True):
     y_hate = model.predict(x_test)
     if weighted:
-        weights = createWeightVector(y_test,dominantValue,dominantValuePenalty)
+        weights = ms.createWeightVector(y_test,dominantValue,dominantValuePenalty)
         r2 = metrics.r2_score(y_test, y_hate,sample_weight = weights)
     else: 
         r2 = metrics.r2_score(y_test, y_hate)
@@ -259,29 +256,6 @@ def createSearshGrid(arg):
     'bootstrap': eval(arg['bootstrap']),
     }
     return param_grid   
-
-def createWeightVector(y_vector, dominantValue:float, dominantValuePenalty:float):
-    '''
-    Create wight vector for sampling weighted training.
-    The goal is to penalize the dominant class. 
-    This is important is the flood study, where majority of points (usually more than 95%) 
-    are not flooded areas. 
-    '''
-    y_ravel  = (np.array(y_vector).astype('int')).ravel()
-    weightVec = np.ones_like(y_ravel).astype(float)
-    weightVec = [dominantValuePenalty if y_ravel[j] == dominantValue else 1 for j in range(len(y_ravel))]
-    return weightVec
-
-def saveModel(best_estimator, id):
-    name = id + ".pkl" 
-    _ = joblib.dump(best_estimator, name, compress=9)
-
-def loadModel(modelName):
-    return joblib.load(modelName)
-
-def makeNameByTime():
-    name = time.strftime("%y%m%d%H%M")
-    return name
 
 def quadraticRechapeLabes(x, a, b):
     '''
