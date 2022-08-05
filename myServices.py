@@ -35,8 +35,13 @@ def stratifiedSampling(dataSetName, targetColName):
     
     return X_train, y_train, X_test, y_test
 
-def removeCoordinatesFromDataSet(dataSetName):
-    DSNoCoord = pd.read_csv(dataSetName, index_col = None)
+def removeCoordinatesFromDataSet(dataSet):
+    '''
+    Remove colums of coordinates if they exist in dataset
+    @input:
+      @dataSet: pandas dataSet
+    '''
+    DSNoCoord = dataSet
     if 'x_coord' in DSNoCoord.keys(): 
       DSNoCoord.drop(['x_coord','y_coord'], axis=1, inplace = True)
     else: 
