@@ -92,8 +92,8 @@ def executeOneVsAll(cfg: DictConfig):
     x_validation,y_validation = ms.importDataSet(pathValidationDataset, 'percentage')
     print("Computing metrics ")
     accScore, macro_averaged_f1, micro_averaged_f1, ROC_AUC_multiClass = m.computeClassificationMetrics(model,x_validation,y_validation)
-    print(f"ROC_AUC_multiClass: {ROC_AUC_multiClass}")
-    log['pathTrainDataset'] = cfg['pathTrainDataset']
+    # print(f"ROC_AUC_multiClass: {ROC_AUC_multiClass}")
+    log['pathTrainingDataset'] = cfg['pathTrainingDataset']
     log['pathValidationDataset'] = cfg['pathValidationDataset']
     log['model_Id'] = name
     log['model_Name'] = "classifier"

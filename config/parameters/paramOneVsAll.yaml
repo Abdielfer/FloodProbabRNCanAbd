@@ -1,7 +1,7 @@
 ### config/parameters/param.yaml    list(np.linspace(2, 40, 10).astype(int))
-estimator__n_estimators: '[58]' 
+estimator__n_estimators: 'np.linspace(2,100, 50).astype(int)' 
 estimator__max_depth: '[None]'
-estimator__max_features: '[0.8]'
+estimator__max_features: '[0.2, 0.4, 0.6, 0.8]'
 estimator__max_leaf_nodes: '[None]'
 n_jobs:  '[-1]'
 verbose: '[5]'
