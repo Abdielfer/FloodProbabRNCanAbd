@@ -1,0 +1,13 @@
+parameters:
+  n_estimators: np.linspace(2,110, 50).astype(int)
+  max_depth: '[None]'
+  max_features: '[0.2,0.4,0.6,0.8]'
+  max_leaf_nodes: '[None]'
+  bootstrap: '[False]'
+local: /Users/abdielfer/DESS/Internship2022/RNCanWork/FloodProbabRNCanAbd/
+pathTrainingDataset: basin1TrainingBanlanced.csv
+pathTestDataset: basin1TestForBanlanced.csv
+percentOfValidation: 0.2
+weightPenalty: 0.01
+targetColName: percentage
+name: param

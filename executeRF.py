@@ -73,6 +73,7 @@ def executeRFCalssifier(cfg: DictConfig):
     classifierName, featureImportance = m.investigateFeatureImportance(best_estimator,name,x_validation_Clean)
     accScore, macro_averaged_f1, micro_averaged_f1, ROC_AUC_multiClass = m.computeClassificationMetrics(best_estimator,x_validation_Clean,y_validation)
     log['model_Id'] = name
+    log['model'] = best_estimator
     log['model_Name'] = classifierName
     log['best_param'] = bestParameters
     log['features_Importance'] = featureImportance.to_dict('tight')

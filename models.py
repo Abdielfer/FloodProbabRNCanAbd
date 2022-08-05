@@ -47,7 +47,7 @@ class implementRandomForestCalssifier():
     def fitRFClassifierGSearch(self):
         self.rfClassifier.fit(self.x_train, self.y_train)
         best_estimator = self.rfClassifier.best_estimator_
-        best_params = self.rfClassifier.get_params()
+        best_params = self.rfClassifier.best_params_
         print(f"The best parameters are: {best_params}")
         return best_estimator, best_params  
 

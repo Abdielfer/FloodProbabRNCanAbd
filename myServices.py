@@ -86,7 +86,7 @@ def makeNameByTime():
             ### GIS ###
             ###########
 
-def makePredictionToImportAsSHP(model, x_test, y_test, targetColName):
+def makePredictionToImportAsSHP(csvName, model, x_test, y_test, targetColName):
     '''
     We asume here that x_test contain coordinates as <x_coord> and <y_coord>.
     Return:
@@ -102,9 +102,8 @@ def makePredictionToImportAsSHP(model, x_test, y_test, targetColName):
     ds_toSHP['x_coord'] = sampleCoordinates['x_coord']
     ds_toSHP['y_coord'] = sampleCoordinates['y_coord']
     ds_toSHP['prediction'] = y_hay
-
+    ds_toSHP.to_csv(csvName, index = None)
     return ds_toSHP
-
 
 
 
