@@ -60,15 +60,18 @@ def executeRFCalssifier(cfg: DictConfig):
     log = {}
     name = ms.makeNameByTime()
     local = cfg.local
-    pathDataset = local + cfg['pathDataset']
-    percentOfValidation = cfg.percentOfValidation
+    pathTrainingDataset = local + cfg['pathTrainingDataset']
+    pathTestDataset = local + cfg['pathTestDataset']
     arg = cfg.parameters
-    rfClassifier = m.implementRandomForestCalssifier(pathDataset,'percentage', percentOfValidation, arg)
-    _,x_validation,_,y_validation = rfClassifier.getSplitedDataset()
+    rfClassifier = m.implementRandomForestCalssifier(pathTrainingDataset,cfg['targetColName'], arg)
+    x_validation, y_validation = ms.importDataSet(pathTestDataset, cfg['targetColName'])
+    x_validation_Clean = x_validation.copy()
+    x_validation_Clean.drop(['x_coord','y_coord'], axis=1, inplace = True)
+    print("Validation balance")
+    m.printArrayBalance(y_validation)
     best_estimator, bestParameters = rfClassifier.fitRFClassifierGSearch()
-    classifierName, featureImportance = m.investigateFeatureImportance(best_estimator,name,x_validation)
-    accScore, macro_averaged_f1, micro_averaged_f1, ROC_AUC_multiClass = m.computeClassificationMetrics(best_estimator,x_validation,y_validation)
-    log['dataset'] = cfg['pathDataset']
+    classifierName, featureImportance = m.investigateFeatureImportance(best_estimator,name,x_validation_Clean)
+    accScore, macro_averaged_f1, micro_averaged_f1, ROC_AUC_multiClass = m.computeClassificationMetrics(best_estimator,x_validation_Clean,y_validation)
     log['model_Id'] = name
     log['model_Name'] = classifierName
     log['best_param'] = bestParameters
@@ -104,10 +107,10 @@ def executeOneVsAll(cfg: DictConfig):
     log['ROC_AUC_multiClass'] = ROC_AUC_multiClass
     return oneVsAllClassifier,name,log
 
-@hydra.main(config_path=f"config", config_name="configClassOnevsAll.yaml")
+@hydra.main(config_path=f"config", config_name="configClassifier.yaml")
 def main(cfg: DictConfig):
-    best_estimator,name, log = executeOneVsAll(cfg)
-    m.saveModel(best_estimator, name)
+    best_estimator,name, log = executeRFCalssifier(cfg)
+    ms.saveModel(best_estimator, name)
     logToSave = pd.DataFrame.from_dict(log, orient='index')
     logToSave.to_csv(name +'.csv',index = True, header=True) 
 

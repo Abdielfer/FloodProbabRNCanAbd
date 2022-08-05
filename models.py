@@ -22,18 +22,14 @@ class implementRandomForestCalssifier():
       @ targetCol: The name of the column in the dataSet containig the target values.
       @ splitProportion: The proportion for the testing set creation.
     '''
-    def __init__(self, dataSet, targetCol, splitProportion, gridArgs):
+    def __init__(self,trainDataSet, targetCol, gridArgs):
         self.seedRF = 50
         self.paramGrid = createSearshGrid(gridArgs)
-        X,Y = ms.importDataSet(dataSet, targetCol)
-        Y = np.array(Y).ravel()
-        Y_factorized, self.labels = pd.factorize(Y) # See: https://pandas.pydata.org/docs/reference/api/pandas.factorize.html
-        self.x_train,self.x_validation,self.y_train, self.y_validation = train_test_split(X,Y_factorized, test_size = splitProportion) 
+        self.x_train,self.y_train= ms.importDataSet(trainDataSet, targetCol)
+        self.y_train = np.array(self.y_train).ravel()
         print(self.x_train.head())
         print("Train balance")
         printArrayBalance(self.y_train)
-        print("Validation balance")
-        printArrayBalance(self.y_validation)
         self.rfClassifier = implementRandomForestCalssifier.createModelClassifier(self)
     
     def createModelClassifier(self):
@@ -55,7 +51,7 @@ class implementRandomForestCalssifier():
         print(f"The best parameters are: {best_params}")
         return best_estimator, best_params  
 
-    def getSplitedDataset(self):
+    def getDataset(self):
         return self.x_train,self.x_validation,self.y_train, self.y_validation
 
 class implementOneVsRestClassifier():

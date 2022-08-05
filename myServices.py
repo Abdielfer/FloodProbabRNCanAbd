@@ -92,15 +92,15 @@ def makePredictionToImportAsSHP(model, x_test, y_test, targetColName):
     Return:
          The full dataset including a prediction column.  
     ''' 
-    sampleCoordinates = pd.date_range()
-    sampleCoordinates['x_cood'] = x_test['x_coord']
-    sampleCoordinates['y_cood'] = x_test['y_coord']
-    x_test.drop(['x_cood','y_cood'], axis=1, inplace = True)
+    sampleCoordinates = pd.DataFrame()
+    sampleCoordinates['x_coord'] = x_test['x_coord']
+    sampleCoordinates['y_coord'] = x_test['y_coord']
+    x_test.drop(['x_coord','y_coord'], axis=1, inplace = True)
     y_hay = model.predict(x_test)
     ds_toSHP = x_test
     ds_toSHP[targetColName] = y_test
-    ds_toSHP['x_cood'] = sampleCoordinates['x_cood']
-    ds_toSHP['y_cood'] = sampleCoordinates['y_cood']
+    ds_toSHP['x_coord'] = sampleCoordinates['x_coord']
+    ds_toSHP['y_coord'] = sampleCoordinates['y_coord']
     ds_toSHP['prediction'] = y_hay
 
     return ds_toSHP
