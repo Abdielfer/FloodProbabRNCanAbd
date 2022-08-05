@@ -4,6 +4,7 @@ import time
 import pandas as pd
 import numpy as np
 from datetime import datetime
+from sklearn.model_selection import StratifiedShuffleSplit
 
 ### General applications ##
 
@@ -17,6 +18,30 @@ class timeit():
         self.tic = datetime.now()
     def __exit__(self, *args, **kwargs):
         print('runtime: {}'.format(datetime.now() - self.tic))
+
+
+def stratifiedSampling(dataSetName, targetColName):
+    '''
+    Performe a sampling that preserve classses proportions on both, train and test sets.
+    '''
+    X,Y = importDataSet(dataSetName, targetColName)
+    sss = StratifiedShuffleSplit(n_splits=1, test_size=0.2, random_state=50)
+    for train_index, test_index in sss.split(X, Y):
+        print("TRAIN:", train_index.size, "TEST:", test_index)
+        X_train = X.iloc[train_index]
+        y_train = Y.iloc[train_index]
+        X_test = X.iloc[test_index]
+        y_test = Y.iloc[test_index]
+    
+    return X_train, y_train, X_test, y_test
+
+def removeCoordinatesFromDataSet(dataSetName):
+    DSNoCoord = pd.read_csv(dataSetName, index_col = None)
+    if 'x_coord' in DSNoCoord.keys(): 
+      DSNoCoord.drop(['x_coord','y_coord'], axis=1, inplace = True)
+    else: 
+      print("DataSet has no coordinates to remove")
+    return DSNoCoord
 
 def importConfig():
     with open('./config.txt') as f:
