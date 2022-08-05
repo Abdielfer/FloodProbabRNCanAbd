@@ -49,6 +49,7 @@ def executeRFRegressorWeighted(cfg: DictConfig):
     print(r2_validation)
     # Fill Log
     log['dataset'] = cfg['pathDataset']
+    log['model'] = best_estimator
     log['model_Id'] = name
     log['regressor_Name'] = regressorName
     log['best_param'] = bestParameters
@@ -69,19 +70,21 @@ def executeRFCalssifier(cfg: DictConfig):
     x_validation_Clean.drop(['x_coord','y_coord'], axis=1, inplace = True)
     print("Validation balance")
     m.printArrayBalance(y_validation)
-    best_estimator, bestParameters = rfClassifier.fitRFClassifierGSearch()
+    best_estimator, _ = rfClassifier.fitRFClassifierGSearch()
     classifierName, featureImportance = m.investigateFeatureImportance(best_estimator,name,x_validation_Clean)
     accScore, macro_averaged_f1, micro_averaged_f1, ROC_AUC_multiClass = m.computeClassificationMetrics(best_estimator,x_validation_Clean,y_validation)
+    ## Make Prediction
+    prediction = ms.makePredictionToImportAsSHP( best_estimator, x_validation, y_validation, 'percentage')
+    # Log
     log['model_Id'] = name
     log['model'] = best_estimator
     log['model_Name'] = classifierName
-    log['best_param'] = bestParameters
     log['features_Importance'] = featureImportance.to_dict('tight')
     log['Accuraci_score'] = accScore
     log['macro_averaged_f1'] = macro_averaged_f1
     log['micro_averaged_f1'] = micro_averaged_f1
     log['ROC_AUC_multiClass'] = ROC_AUC_multiClass
-    return best_estimator,name,log
+    return best_estimator,name,log, prediction
 
 def executeOneVsAll(cfg: DictConfig):
     log = {}
@@ -100,6 +103,7 @@ def executeOneVsAll(cfg: DictConfig):
     log['pathTrainingDataset'] = cfg['pathTrainingDataset']
     log['pathValidationDataset'] = cfg['pathValidationDataset']
     log['model_Id'] = name
+    log['model'] = model
     log['model_Name'] = "classifier"
     log['best_param'] = best_params
     log['Accuraci_score'] = accScore
@@ -110,8 +114,10 @@ def executeOneVsAll(cfg: DictConfig):
 
 @hydra.main(config_path=f"config", config_name="configClassifier.yaml")
 def main(cfg: DictConfig):
-    best_estimator,name, log = executeRFCalssifier(cfg)
+    best_estimator,name, log , prediction = executeRFCalssifier(cfg)
     ms.saveModel(best_estimator, name)
+    predictionName = name +"_prediction_" + cfg['pathTrainingDataset']
+    prediction.to_csv(predictionName,index = True, header=True)  
     logToSave = pd.DataFrame.from_dict(log, orient='index')
     logToSave.to_csv(name +'.csv',index = True, header=True) 
 
