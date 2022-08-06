@@ -5,6 +5,8 @@ import pandas as pd
 import numpy as np
 from datetime import datetime
 from sklearn.model_selection import StratifiedShuffleSplit
+from collections import Counter
+from imblearn.under_sampling import RandomUnderSampler 
 
 ### General applications ##
 
@@ -34,6 +36,12 @@ def stratifiedSampling(dataSetName, targetColName):
         y_test = Y.iloc[test_index]
     
     return X_train, y_train, X_test, y_test
+
+def randomUndersampling(x_DataSet, y_DataSet, sampling_strategy = 'auto'):
+    sm = RandomUnderSampler(random_state=50, sampling_strategy=sampling_strategy)
+    x_res, y_res = sm.fit_resample(x_DataSet, y_DataSet)
+    print('Resampled dataset shape %s' % Counter(y_res))
+    return x_res, y_res
 
 def removeCoordinatesFromDataSet(dataSet):
     '''
