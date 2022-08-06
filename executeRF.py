@@ -34,8 +34,8 @@ def executeRFRegressorWeighted(cfg: DictConfig):
     log = {}
     name = ms.makeNameByTime()
     local = cfg.local
-    pathTrainingDataset = local + cfg['pathTrainingDataset']
-    pathTestDataset = local + cfg['pathTestDataset']
+    pathTrainingDataset = local + cfg.pathTrainingDataset
+    pathTestDataset = local + cfg.pathTestDataset
     penalty = cfg.weightPenalty  ## UNCOMENT Onli for weighted fit
     arg = cfg.parameters
     rForestReg = m.implementRandomForestRegressor(pathTrainingDataset, cfg['targetColName'], arg)

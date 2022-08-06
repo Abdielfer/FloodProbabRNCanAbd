@@ -128,7 +128,6 @@ class implementRandomForestRegressor():
         self.seedRF = 50
         self.paramGrid = createSearshGrid(gridArgs)
         self.x_train, self.y_train= ms.importDataSet(dataSet, targetCol)
-        # Y = quadraticRechapeLabes(Y, -0.125, 0.825)
         print(self.x_train.head())
         print("Train balance")
         printArrayBalance(self.y_train)
