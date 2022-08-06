@@ -17,18 +17,15 @@ def executeRFRegressor(cfg: DictConfig):
     percentOfValidation = cfg.percentOfValidation
     # penalty = cfg.weightPenalty  ## UNCOMENT Onli for weighted fit
     arg = cfg.parameters
-    rForestReg = m.implementRandomForestRegressor(pathDataset,'percentage', percentOfValidation, arg)
+    rForestReg = m.implementRandomForestRegressor(pathDataset,cfg['targetColName'], percentOfValidation, arg)
     best_estimator, bestParameters, r2_validation= rForestReg.fitRFRegressorGSearch()
     m.saveModel(best_estimator,name)
-    _,x_validation,_,_ = rForestReg.getSplitedDataset()
-    regressorName, featureImportance = m.investigateFeatureImportance(best_estimator,name,x_validation)
+    _, featureImportance = m.investigateFeatureImportance(best_estimator,name,x_validation)
     print(r2_validation)
     # Fill Log
-    log['dataset'] = cfg['pathDataset']
+    log['dataset'] = cfg['pathTrainingDataset']
     log['model_Id'] = name
-    log['regressor_Name'] = regressorName
-    log['best_param'] = bestParameters
-    log['features_Importance'] = pd.DataFrame(featureImportance).to_string(justify= 'left')
+    log[''] = pd.DataFrame(featureImportance).to_string(justify= 'left')
     log['r2_score'] = r2_validation 
     return best_estimator,name,log
 
@@ -37,25 +34,30 @@ def executeRFRegressorWeighted(cfg: DictConfig):
     log = {}
     name = ms.makeNameByTime()
     local = cfg.local
-    pathDataset = local + cfg['pathDataset']
-    percentOfValidation = cfg.percentOfValidation
+    pathTrainingDataset = local + cfg['pathTrainingDataset']
+    pathTestDataset = local + cfg['pathTestDataset']
     penalty = cfg.weightPenalty  ## UNCOMENT Onli for weighted fit
     arg = cfg.parameters
-    rForestReg = m.implementRandomForestRegressor(pathDataset,'percentage', percentOfValidation, arg)
-    best_estimator, bestParameters, r2_validation= rForestReg.fitRFRegressorWeighted(penalty)
-    m.saveModel(best_estimator,name)
-    _,x_validation,_,_ = rForestReg.getSplitedDataset()
-    regressorName, featureImportance = m.investigateFeatureImportance(best_estimator,name,x_validation)
+    rForestReg = m.implementRandomForestRegressor(pathTrainingDataset, cfg['targetColName'], arg)
+    x_validation, y_validation = ms.importDataSet(pathTestDataset, cfg['targetColName'])
+    x_validation_Clean = x_validation.copy()
+    x_validation_Clean.drop(['x_coord','y_coord'], axis=1, inplace = True)
+    print("Test set  balance")
+    m.printArrayBalance(y_validation)
+    best_estimator, _ = rForestReg.fitRFRegressorWeighted(penalty)
+    r2_validation = m.validateWithR2(best_estimator, x_validation_Clean, y_validation,
+                                     cfg['weightPenalty'], cfg['dominantClass'], weighted = cfg['weighted'])
+    print("R2_score for validation set: ", r2_validation)
+    featureImportance = m.investigateFeatureImportance(best_estimator,x_validation_Clean)
     print(r2_validation)
+    prediction = ms.makePredictionToImportAsSHP(best_estimator, x_validation, y_validation, cfg['targetColName'])
     # Fill Log
-    log['dataset'] = cfg['pathDataset']
+    log['dataset'] = cfg['pathTrainingDataset']
     log['model'] = best_estimator
     log['model_Id'] = name
-    log['regressor_Name'] = regressorName
-    log['best_param'] = bestParameters
-    log['features_Importance'] = pd.DataFrame(featureImportance).to_string(justify= 'left')
+    log[''] = pd.DataFrame(featureImportance).to_string(justify= 'left')
     log['r2_score'] = r2_validation 
-    return best_estimator,name,log
+    return best_estimator,name,log, prediction
 
 def executeRFCalssifier(cfg: DictConfig):
     log = {}
@@ -68,18 +70,17 @@ def executeRFCalssifier(cfg: DictConfig):
     x_validation, y_validation = ms.importDataSet(pathTestDataset, cfg['targetColName'])
     x_validation_Clean = x_validation.copy()
     x_validation_Clean.drop(['x_coord','y_coord'], axis=1, inplace = True)
-    print("Validation balance")
+    print("Test set  balance")
     m.printArrayBalance(y_validation)
     best_estimator, _ = rfClassifier.fitRFClassifierGSearch()
-    classifierName, featureImportance = m.investigateFeatureImportance(best_estimator,name,x_validation_Clean)
+    _, featureImportance = m.investigateFeatureImportance(best_estimator,name,x_validation_Clean)
     accScore, macro_averaged_f1, micro_averaged_f1, ROC_AUC_multiClass = m.computeClassificationMetrics(best_estimator,x_validation_Clean,y_validation)
     ## Make Prediction
-    prediction = ms.makePredictionToImportAsSHP( best_estimator, x_validation, y_validation, 'percentage')
+    prediction = ms.makePredictionToImportAsSHP(best_estimator, x_validation, y_validation, cfg['targetColName'])
     # Log
     log['model_Id'] = name
     log['model'] = best_estimator
-    log['model_Name'] = classifierName
-    log['features_Importance'] = featureImportance.to_dict('tight')
+    log[''] = featureImportance.to_dict('tight')
     log['Accuraci_score'] = accScore
     log['macro_averaged_f1'] = macro_averaged_f1
     log['micro_averaged_f1'] = micro_averaged_f1
@@ -104,17 +105,15 @@ def executeOneVsAll(cfg: DictConfig):
     log['pathValidationDataset'] = cfg['pathValidationDataset']
     log['model_Id'] = name
     log['model'] = model
-    log['model_Name'] = "classifier"
-    log['best_param'] = best_params
     log['Accuraci_score'] = accScore
     log['macro_averaged_f1'] = macro_averaged_f1
     log['micro_averaged_f1'] = micro_averaged_f1
     log['ROC_AUC_multiClass'] = ROC_AUC_multiClass
     return oneVsAllClassifier,name,log
 
-@hydra.main(config_path=f"config", config_name="configClassifier.yaml")
+@hydra.main(config_path=f"config", config_name="config.yaml")
 def main(cfg: DictConfig):
-    best_estimator,name, log , prediction = executeRFCalssifier(cfg)
+    best_estimator,name,log, prediction = executeRFRegressorWeighted(cfg)
     ms.saveModel(best_estimator, name)
     predictionName = name +"_prediction_" + cfg['pathTrainingDataset']
     prediction.to_csv(predictionName,index = True, header=True)  

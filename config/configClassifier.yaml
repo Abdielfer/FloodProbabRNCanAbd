@@ -5,7 +5,6 @@ defaults:
 local: /Users/abdielfer/DESS/Internship2022/RNCanWork/FloodProbabRNCanAbd/
 pathTrainingDataset: basin1TrainUnbalanced.csv
 pathTestDataset: basin1Test.csv
-percentOfValidation: 0.2
 weightPenalty: 0.01
 targetColName: percentage
 

@@ -51,8 +51,6 @@ class implementRandomForestCalssifier():
         print(f"The best parameters are: {best_params}")
         return best_estimator, best_params  
 
-    def getDataset(self):
-        return self.x_train,self.x_validation,self.y_train, self.y_validation
 
 class implementOneVsRestClassifier():
     '''
@@ -126,17 +124,14 @@ class implementRandomForestRegressor():
       @ targetCol: The name of the column in the dataSet containig the target values.
       @ splitProportion: The proportion for the testing set creation.
     '''
-    def __init__(self, dataSet, targetCol, splitProportion, gridArgs):
+    def __init__(self, dataSet, targetCol, gridArgs):
         self.seedRF = 50
         self.paramGrid = createSearshGrid(gridArgs)
-        X,Y = ms.importDataSet(dataSet, targetCol)
+        self.x_train, self.y_train= ms.importDataSet(dataSet, targetCol)
         # Y = quadraticRechapeLabes(Y, -0.125, 0.825)
-        self.x_train,self.x_validation,self.y_train, self.y_validation = train_test_split(X,Y, test_size = splitProportion)
         print(self.x_train.head())
         print("Train balance")
         printArrayBalance(self.y_train)
-        print("Validation balance")
-        printArrayBalance(self.y_validation)
         self.rfr_WithGridSearch = implementRandomForestRegressor.createModelRFRegressorWithGridSearch(self)
 
     def createModelRFRegressorWithGridSearch(self):
@@ -144,7 +139,7 @@ class implementRandomForestRegressor():
         # scoring = ['neg_mean_squared_error', 'neg_mean_absolute_error']
         modelRFRegressorWithGridSearch = GridSearchCV(estimator, 
                                                     param_grid = self.paramGrid,
-                                                    cv = 2,
+                                                    cv = 3,
                                                     n_jobs = -1, 
                                                     verbose = 5, 
                                                     return_train_score = True
@@ -157,9 +152,7 @@ class implementRandomForestRegressor():
         best_estimator = self.rfr_WithGridSearch.best_estimator_
         bestParameters = self.rfr_WithGridSearch.best_params_
         print(f"The best parameters: {bestParameters}")
-        r2_validation = validateWithR2(best_estimator, self.x_validation, self.y_validation,0,0,weighted = False)
-        print("R2_score for validation set: ", r2_validation)
-        return best_estimator, bestParameters, r2_validation
+        return best_estimator, bestParameters, 
         
     def fitRFRegressorWeighted(self, dominantValeusPenalty):
         y_train= (np.array(self.y_train).astype('float')).ravel()
@@ -168,13 +161,8 @@ class implementRandomForestRegressor():
         best_estimator = self.rfr_WithGridSearch.best_estimator_
         bestParameters = self.rfr_WithGridSearch.best_params_
         print(f"The best parameters: {bestParameters}")
-        r2_validation = validateWithR2(best_estimator,self.x_validation,self.y_validation,0, dominantValeusPenalty)
-        print("R2_score for validation set: ", r2_validation)
-        return best_estimator, bestParameters, r2_validation
-    
-    def getSplitedDataset(self):
-        return self.x_train,self.x_validation,self.y_train, self.y_validation
-
+        return best_estimator, bestParameters
+     
 
 def split(x,y,TestPercent = 0.2):
     x_train, x_validation, y_train, y_validation = train_test_split( x,y, test_size=TestPercent)
@@ -188,10 +176,14 @@ def printDataBalace(x_train, x_validation, y_train, y_validation, targetCol: str
 
 def printArrayBalance(array):
     unique, count = np.unique(array, return_counts=True)
-    print('values,  counts')
-    result = np.column_stack([unique, count]) 
+    total = count.sum()
+    percent = np.zeros_like(unique)
+    for i in range(len(unique)):
+       percent[i] = count[1]/total
+    print('values, counts , percent')
+    result = np.column_stack([unique, count, percent]) 
     print(result)
-    
+
 def predictOnFeaturesSet(model, featuresSet):
     y_hat = model.predict(featuresSet)
     return y_hat
@@ -234,8 +226,9 @@ def reportErrors(model, x_test, y_test):
     print('Mean Absolute Error: ',mae )  
     print('Mean Squared Error: ', mse)  
     print('Root Mean Squared Error: ',r_mse)
+    
 
-def investigateFeatureImportance(bestModel, dateName, x_train, printed = True):
+def investigateFeatureImportance(bestModel, x_train, printed = True):
     '''
     DEFAULT Path to save: "./models/rwReg/" 
     @input: feature matrix
@@ -245,8 +238,6 @@ def investigateFeatureImportance(bestModel, dateName, x_train, printed = True):
     @return: List of features ordered dessending by importance (pandas DF format). 
     '''
     features = x_train.columns
-    clasifierName = type(bestModel).__name__
-    clasifierName = clasifierName + dateName
     featuresInModel= pd.DataFrame({'feature': features,
                    'importance': bestModel.feature_importances_}).\
                     sort_values('importance', ascending = False)
@@ -255,10 +246,10 @@ def investigateFeatureImportance(bestModel, dateName, x_train, printed = True):
     if printed:
         with pd.option_context('display.max_rows', None,
                        'display.max_columns', None,
-                       'display.precision', 3,
+                       'display.precision', 4,
                        ):
             print(featuresInModel)
-    return clasifierName, featuresInModel
+    return featuresInModel
 
 def roc_auc_score_multiclass(y_validation, y_hat):
         '''
@@ -289,8 +280,9 @@ def plot_ROC_AUC_OneVsRest(classifier, x_test, y_test):
     printArrayBalance(y_hat)
     y_prob = classifier.predict_proba(x_test)   
     fig, axs = plt.subplots(1,figsize=(13,4), sharey=True)
-    plt.ylabel('True Positive Rate')
-    plt.xlabel('False Positive Rate')
+    plt.rcParams.update({'font.size': 14})
+    plt.ylabel('True Positive Rate', fontsize=16)
+    plt.xlabel('False Positive Rate', fontsize=16)
     plt.figure(0).clf()
     roc_auc_dict = {}
     i = 0
@@ -305,7 +297,7 @@ def plot_ROC_AUC_OneVsRest(classifier, x_test, y_test):
         roc_auc = roc_auc_score(new_y_validation, new_y_hat, average = "macro")
         roc_auc_dict[per_class] = roc_auc
         fpr, tpr, _ = metrics.roc_curve(new_y_validation, y_prob[:,i])  ### TODO Results doen't match roc_auc_score..
-        axs.plot(fpr,tpr,label = "Class "+ str(per_class) + f" AUC: {roc_auc}")
+        axs.plot(fpr,tpr,label = "Class "+ str(per_class) + " AUC : " + format(roc_auc,".4f")) 
         axs.legend()
         i+=1
     return roc_auc_dict
