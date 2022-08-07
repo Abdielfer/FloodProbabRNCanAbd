@@ -88,7 +88,9 @@ def removeCoordinatesFromDataSet(dataSet):
 
 def pseudoClassCreation(dataset, conditionVariable, threshold, pseudoClass, targetClassName):
     '''
-    Goal: Replace target value in some of the samples, performe   
+    Replace <targetClass> by  <pseudoClass> where <conditionVariable >= threshold>. 
+    Return:
+      dataset with new classes group. 
     '''
     datsetReclassified = dataset.copy()
     actualTarget = (np.array(dataset[targetClassName])).ravel()
@@ -101,7 +103,9 @@ def pseudoClassCreation(dataset, conditionVariable, threshold, pseudoClass, targ
 
 def revertPseudoClassCreation(dataset, originalClass, pseudoClass, targetClassName):
     '''
-    Goal: Replace target value. 
+    Restablich  <targetClass> with <originalClass> where <targetClassName == pseudoClass>. 
+    Return:
+      dataset with original classes group. 
     '''
     datsetReclassified = dataset.copy()
     actualTarget = (np.array(dataset[targetClassName])).ravel()
