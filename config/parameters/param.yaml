@@ -1,5 +1,5 @@
 ### config/parameters/param.yaml 
-  n_estimators: '[100]' #'np.linspace(2,100, 50).astype(int)'
+  n_estimators: '[200]' #np.linspace(50,150,10).astype(int)'
   max_depth: '[None]'
   max_features: '[0.8]'
   max_leaf_nodes: '[None]'

@@ -9,7 +9,6 @@ from collections import Counter
 from imblearn.under_sampling import RandomUnderSampler 
 
 ### General applications ##
-
 class timeit(): 
     '''
     to compute execution time do:
@@ -21,7 +20,38 @@ class timeit():
     def __exit__(self, *args, **kwargs):
         print('runtime: {}'.format(datetime.now() - self.tic))
 
+def makeNameByTime():
+    name = time.strftime("%y%m%d%H%M")
+    return name
 
+## modeling manipulation
+def saveModel(estimator, id):
+    name = id + ".pkl" 
+    _ = joblib.dump(estimator, name, compress=9)
+
+def loadModel(modelName):
+    return joblib.load(modelName)
+
+def logTransformation(x):
+    '''
+    Logarithmic transformation to redistribute values between 0 and 1. 
+    '''
+    x_nonZeros = np.where(x <= 0.0000001, 0.0001, x)
+    return np.max(np.log(x_nonZeros)**2) - np.log(x_nonZeros)**2
+
+def createWeightVector(y_vector, dominantValue:float, dominantValuePenalty:float):
+    '''
+    Create wight vector for sampling weighted training.
+    The goal is to penalize the dominant class. 
+    This is important is the flood study, where majority of points (usually more than 95%) 
+    are not flooded areas. 
+    '''
+    y_ravel  = (np.array(y_vector).astype('int')).ravel()
+    weightVec = np.ones_like(y_ravel).astype(float)
+    weightVec = [dominantValuePenalty if y_ravel[j] == dominantValue else 1 for j in range(len(y_ravel))]
+    return weightVec
+
+####  Sampling manipulation
 def stratifiedSampling(dataSetName, targetColName):
     '''
     Performe a sampling that preserve classses proportions on both, train and test sets.
@@ -56,6 +86,32 @@ def removeCoordinatesFromDataSet(dataSet):
       print("DataSet has no coordinates to remove")
     return DSNoCoord
 
+def pseudoClassCreation(dataset, conditionVariable, threshold, pseudoClass, targetClassName):
+    '''
+    Goal: Replace target value in some of the samples, performe   
+    '''
+    datsetReclassified = dataset.copy()
+    actualTarget = (np.array(dataset[targetClassName])).ravel()
+    conditionVar = (np.array(dataset[conditionVariable])).ravel()
+    datsetReclassified[targetClassName] = [ pseudoClass if conditionVar[j] >= threshold 
+                                           else actualTarget[j]
+                                           for j in range(len(actualTarget))]
+    print(Counter(datsetReclassified[targetClassName]))
+    return  datsetReclassified
+
+def revertPseudoClassCreation(dataset, originalClass, pseudoClass, targetClassName):
+    '''
+    Goal: Replace target value. 
+    '''
+    datsetReclassified = dataset.copy()
+    actualTarget = (np.array(dataset[targetClassName])).ravel()
+    datsetReclassified[targetClassName] = [ originalClass if actualTarget[j] == pseudoClass
+                                           else actualTarget[j]
+                                           for j in range(len(actualTarget))]
+    print(Counter(datsetReclassified[targetClassName]))
+    return  datsetReclassified
+
+### Configurations And file management
 def importConfig():
     with open('./config.txt') as f:
         content = f.readlines()
@@ -86,38 +142,6 @@ def importDataSet(dataSetName, targetCol: str):
     y = x[targetCol]
     x.drop([targetCol], axis=1, inplace = True)
     return x, y
-
-def logTransformation(x):
-    '''
-    Logarithmic transformation to redistribute values between 0 and 1. 
-    '''
-    x_nonZeros = np.where(x <= 0.0000001, 0.0001, x)
-    return np.max(np.log(x_nonZeros)**2) - np.log(x_nonZeros)**2
-
-
-def createWeightVector(y_vector, dominantValue:float, dominantValuePenalty:float):
-    '''
-    Create wight vector for sampling weighted training.
-    The goal is to penalize the dominant class. 
-    This is important is the flood study, where majority of points (usually more than 95%) 
-    are not flooded areas. 
-    '''
-    y_ravel  = (np.array(y_vector).astype('int')).ravel()
-    weightVec = np.ones_like(y_ravel).astype(float)
-    weightVec = [dominantValuePenalty if y_ravel[j] == dominantValue else 1 for j in range(len(y_ravel))]
-    return weightVec
-
-def saveModel(estimator, id):
-    name = id + ".pkl" 
-    _ = joblib.dump(estimator, name, compress=9)
-
-def loadModel(modelName):
-    return joblib.load(modelName)
-
-def makeNameByTime():
-    name = time.strftime("%y%m%d%H%M")
-    return name
-
 
 
             ###########            

@@ -115,7 +115,7 @@ def executeOneVsAll(cfg: DictConfig):
 def main(cfg: DictConfig):
     best_estimator,name,log, prediction = executeRFRegressorWeighted(cfg)
     ms.saveModel(best_estimator, name)
-    predictionName = name +"_prediction_" + cfg['pathTrainingDataset']
+    predictionName = name + "_prediction_" + cfg['pathTrainingDataset']
     prediction.to_csv(predictionName,index = True, header=True)  
     logToSave = pd.DataFrame.from_dict(log, orient='index')
     logToSave.to_csv(name +'.csv',index = True, header=True) 
