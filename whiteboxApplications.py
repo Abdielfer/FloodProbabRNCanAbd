@@ -117,9 +117,21 @@ class dtmTransformer():
             pntr=False, 
             esri_pntr=False, 
             callback=default_callback
-            )
-        print("d8 Done")
-
+            ) 
+            
+    def dInfFlowAcc(self, inFilledDTMName, id,  userLog: bool):
+        output = id
+        wbt.d_inf_flow_accumulation(
+            inFilledDTMName, 
+            output, 
+            out_type="ca", 
+            threshold=None, 
+            log=userLog, 
+            clip=False, 
+            pntr=False, 
+            callback=default_callback
+        )
+  
     def jensePourPoint(self,inOutlest,d8FAccOutputName):
         jensenOutput = "correctedSnapPoints.shp"
         wbt.jenson_snap_pour_points(
@@ -183,6 +195,27 @@ class dtmTransformer():
                 zfactor=None, 
                 callback=default_callback
                 )
+
+class rasterTools():
+    def __init__(self, workingDir):
+        self.mainFileName = " "
+        if os.path.isdir(workingDir): # Creates output dir if it does not already exist 
+            self.workingDir = workingDir
+            wbt.set_working_dir(workingDir)
+        else:
+            self.workingDir = input('Enter working directory')
+            if myServices.ensureDirectory(self.workingDir):
+                wbt.set_working_dir(self.workingDir)
+
+    def raterToVectorLine(inputRaster, outputVector):
+        wbt.raster_to_vector_lines(
+            inputRaster, 
+            outputVector, 
+            callback=default_callback
+            )
+
+
+
 
 # Helpers
 def setWBTWorkingDir(workingDir):
