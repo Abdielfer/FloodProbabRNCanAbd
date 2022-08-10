@@ -207,13 +207,21 @@ class rasterTools():
             if myServices.ensureDirectory(self.workingDir):
                 wbt.set_working_dir(self.workingDir)
 
-    def raterToVectorLine(inputRaster, outputVector):
+    def rasterToVectorLine(sefl, inputRaster, outputVector):
         wbt.raster_to_vector_lines(
             inputRaster, 
             outputVector, 
             callback=default_callback
             )
-
+            
+    def rasterVisibility_index(sefl, inputDTM, outputVisIdx):
+            wbt.visibility_index(
+                inputDTM, 
+                outputVisIdx, 
+                height=2.0, 
+                res_factor=2, 
+                callback=default_callback
+                )           
 
 
 
