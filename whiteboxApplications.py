@@ -213,9 +213,12 @@ class rasterTools():
             outputVector, 
             callback=default_callback
             )
-            
+
     def rasterVisibility_index(sefl, inputDTM, outputVisIdx):
-            wbt.visibility_index(
+        '''
+        Both, input and output are raster. 
+        '''
+        wbt.visibility_index(
                 inputDTM, 
                 outputVisIdx, 
                 height=2.0, 
