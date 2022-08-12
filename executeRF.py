@@ -111,9 +111,9 @@ def executeOneVsAll(cfg: DictConfig):
     log['ROC_AUC_multiClass'] = ROC_AUC_multiClass
     return oneVsAllClassifier,name,log
 
-@hydra.main(config_path=f"config", config_name="config.yaml")
+@hydra.main(config_path=f"config", config_name="configClassifier.yaml")
 def main(cfg: DictConfig):
-    best_estimator,name,log, prediction = executeRFRegressorWeighted(cfg)
+    best_estimator,name,log, prediction = executeRFCalssifier(cfg)
     ms.saveModel(best_estimator, name)
     predictionName = name + "_prediction_" + cfg['pathTrainingDataset']
     prediction.to_csv(predictionName,index = True, header=True)  
