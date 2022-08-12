@@ -29,7 +29,6 @@ def executeRFRegressor(cfg: DictConfig):
     log['r2_score'] = r2_validation 
     return best_estimator,name,log
 
-
 def executeRFRegressorWeighted(cfg: DictConfig):
     log = {}
     name = ms.makeNameByTime()
@@ -73,14 +72,15 @@ def executeRFCalssifier(cfg: DictConfig):
     print("Test set  balance")
     m.printArrayBalance(y_validation)
     best_estimator, _ = rfClassifier.fitRFClassifierGSearch()
-    _, featureImportance = m.investigateFeatureImportance(best_estimator,name,x_validation_Clean)
+    _, featureImportance = m.investigateFeatureImportance(best_estimator, x_validation_Clean)
     accScore, macro_averaged_f1, micro_averaged_f1, ROC_AUC_multiClass = m.computeClassificationMetrics(best_estimator,x_validation_Clean,y_validation)
     ## Make Prediction
     prediction = ms.makePredictionToImportAsSHP(best_estimator, x_validation, y_validation, cfg['targetColName'])
     # Log
     log['model_Id'] = name
     log['model'] = best_estimator
-    log[''] = featureImportance.to_dict('tight')
+    log['dataset'] = cfg['pathTrainingDataset']
+    log[''] = pd.DataFrame(featureImportance).to_string(justify= 'left')
     log['Accuraci_score'] = accScore
     log['macro_averaged_f1'] = macro_averaged_f1
     log['micro_averaged_f1'] = micro_averaged_f1
