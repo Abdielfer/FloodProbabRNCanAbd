@@ -72,7 +72,7 @@ def executeRFCalssifier(cfg: DictConfig):
     print("Test set  balance")
     m.printArrayBalance(y_validation)
     best_estimator, _ = rfClassifier.fitRFClassifierGSearch()
-    _, featureImportance = m.investigateFeatureImportance(best_estimator, x_validation_Clean)
+    featureImportance = m.investigateFeatureImportance(best_estimator, x_validation_Clean)
     accScore, macro_averaged_f1, micro_averaged_f1, ROC_AUC_multiClass = m.computeClassificationMetrics(best_estimator,x_validation_Clean,y_validation)
     ## Make Prediction
     prediction = ms.makePredictionToImportAsSHP(best_estimator, x_validation, y_validation, cfg['targetColName'])
