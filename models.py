@@ -248,6 +248,7 @@ def investigateFeatureImportance(bestModel, x_train, printed = True):
                        'display.precision', 4,
                        ):
             print(featuresInModel)
+
     return featuresInModel
 
 def roc_auc_score_multiclass(y_validation, y_hat):
