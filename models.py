@@ -2,6 +2,7 @@
 Aqui vamos a poner 
 todo lo necesario para hacer fincionet RF a ppartir de competition 2
 '''
+from hashlib import sha1
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -176,11 +177,12 @@ def printDataBalace(x_train, x_validation, y_train, y_validation, targetCol: str
 def printArrayBalance(array):
     unique, count = np.unique(array, return_counts=True)
     total = count.sum()
-    percent = np.zeros_like(unique)
+    result = np.empty_like(unique,dtype='f8')
+    result = [(i/total) for i in count]
     for i in range(len(unique)):
-       percent[i] = count[1]/total
-    print('values, counts , percent')
-    print(result)
+        print("Class ", str(unique[i]), f" count : {count[i]}  for  %.4f  percent" %(result[i]))
+    
+
 
 def predictOnFeaturesSet(model, featuresSet):
     y_hat = model.predict(featuresSet)
