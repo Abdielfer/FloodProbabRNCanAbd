@@ -180,7 +180,6 @@ def printArrayBalance(array):
     for i in range(len(unique)):
        percent[i] = count[1]/total
     print('values, counts , percent')
-    result = np.column_stack([unique, count, percent]) 
     print(result)
 
 def predictOnFeaturesSet(model, featuresSet):
