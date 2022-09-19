@@ -42,7 +42,8 @@ def executeRFRegressorWeighted(cfg: DictConfig):
     x_validation_Clean = x_validation.copy()
     x_validation_Clean.drop(['x_coord','y_coord'], axis=1, inplace = True)
     print("Test set  balance")
-    m.printArrayBalance(y_validation)
+    total, classCountPercent = m.listClassCountPercent(y_validation)
+    print(classCountPercent)
     best_estimator, _ = rForestReg.fitRFRegressorWeighted(penalty)
     r2_validation = m.validateWithR2(best_estimator, x_validation_Clean, y_validation,
                                      cfg['weightPenalty'], cfg['dominantClass'], weighted = cfg['weighted'])
@@ -52,6 +53,8 @@ def executeRFRegressorWeighted(cfg: DictConfig):
     prediction = ms.makePredictionToImportAsSHP(best_estimator, x_validation, y_validation, cfg['targetColName'])
     # Fill Log
     log['dataset'] = cfg['pathTrainingDataset']
+    log['Training samples'] = total
+    log['Class_Count_percent'] = classCountPercent
     log['model'] = best_estimator
     log['model_Id'] = name
     log[''] = pd.DataFrame(featureImportance).to_string(justify= 'left')
@@ -70,7 +73,8 @@ def executeRFCalssifier(cfg: DictConfig):
     x_validation_Clean = x_validation.copy()
     x_validation_Clean.drop(['x_coord','y_coord'], axis=1, inplace = True)
     print("Test set  balance")
-    m.printArrayBalance(y_validation)
+    total, classCountPercent = m.listClassCountPercent(y_validation)
+    print(classCountPercent)
     best_estimator, _ = rfClassifier.fitRFClassifierGSearch()
     featureImportance = m.investigateFeatureImportance(best_estimator, x_validation_Clean)
     accScore, macro_averaged_f1, micro_averaged_f1, ROC_AUC_multiClass = m.computeClassificationMetrics(best_estimator,x_validation_Clean,y_validation)
@@ -80,6 +84,8 @@ def executeRFCalssifier(cfg: DictConfig):
     log['model_Id'] = name
     log['model'] = best_estimator
     log['dataset'] = cfg['pathTrainingDataset']
+    log['Training samples'] = total
+    log['Class_Count_percent'] = classCountPercent
     log[''] = pd.DataFrame(featureImportance).to_string(justify= 'left')
     log['Accuraci_score'] = accScore
     log['macro_averaged_f1'] = macro_averaged_f1

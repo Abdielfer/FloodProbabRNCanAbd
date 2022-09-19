@@ -30,7 +30,7 @@ class implementRandomForestCalssifier():
         self.y_train = np.array(self.y_train).ravel()
         print(self.x_train.head())
         print("Train balance")
-        printArrayBalance(self.y_train)
+        listClassCountPercent(self.y_train)
         self.rfClassifier = implementRandomForestCalssifier.createModelClassifier(self)
     
     def createModelClassifier(self):
@@ -71,7 +71,7 @@ class implementOneVsRestClassifier():
         # self.x_train,self.x_validation,self.y_train, self.y_validation = train_test_split(X,Y_factorized, test_size = splitProportion) 
         print(self.x_train.head())
         print("Train balance")
-        printArrayBalance(self.y_train)
+        listClassCountPercent(self.y_train)
         # print("Validation balance")
         # printArrayBalance(self.y_validation)
         self.OneVsRestClassifier = implementOneVsRestClassifier.createModel(self)
@@ -131,7 +131,7 @@ class implementRandomForestRegressor():
         self.x_train, self.y_train= ms.importDataSet(dataSet, targetCol)
         print(self.x_train.head())
         print("Train balance")
-        printArrayBalance(self.y_train)
+        listClassCountPercent(self.y_train)
         self.rfr_WithGridSearch = implementRandomForestRegressor.createModelRFRegressorWithGridSearch(self)
 
     def createModelRFRegressorWithGridSearch(self):
@@ -174,16 +174,21 @@ def printDataBalace(x_train, x_validation, y_train, y_validation, targetCol: str
     print("Label balance on Training set: ", "\n", y_train[targetCol].value_counts())
     print("Label balance on Validation set: ", "\n", y_validation[targetCol].value_counts())
 
-def printArrayBalance(array):
+def listClassCountPercent(array):
+    '''
+      Return the <total> amount of elements and the number of unique values (Classes) 
+    in input <array>, with the corresponding count and percent respect to <total>. 
+    '''
     unique, count = np.unique(array, return_counts=True)
     total = count.sum()
     result = np.empty_like(unique,dtype='f8')
     result = [(i/total) for i in count]
+    listClassCountPercent = {}
     for i in range(len(unique)):
-        print("Class ", str(unique[i]), f" count : {count[i]}  for  %.4f  percent" %(result[i]))
-    
-
-
+        listClassCountPercent[unique[i]] = str(f"Class_count: {count[i]}  for  %.4f  percent" %(result[i]))
+    print(listClassCountPercent)
+    return total, listClassCountPercent
+   
 def predictOnFeaturesSet(model, featuresSet):
     y_hat = model.predict(featuresSet)
     return y_hat
@@ -276,9 +281,9 @@ def plot_ROC_AUC_OneVsRest(classifier, x_test, y_test):
     print("UNIQUE CLASSES: ", unique_class)
     y_hat = classifier.predict(x_test)
     print("Test Set balance:" )
-    printArrayBalance(y_test)
+    listClassCountPercent(y_test)
     print("Prediction balance:")
-    printArrayBalance(y_hat)
+    listClassCountPercent(y_hat)
     y_prob = classifier.predict_proba(x_test)   
     fig, axs = plt.subplots(1,figsize=(13,4), sharey=True)
     plt.rcParams.update({'font.size': 14})
@@ -294,7 +299,7 @@ def plot_ROC_AUC_OneVsRest(classifier, x_test, y_test):
         new_y_validation = [0 if x in other_class else 1 for x in y_testInLoop]
         new_y_hat = [0 if x in other_class else 1 for x in y_hat]
         print(f"Class {per_class} balance vs rest")
-        printArrayBalance(new_y_validation)
+        listClassCountPercent(new_y_validation)
         roc_auc = roc_auc_score(new_y_validation, new_y_hat, average = "macro")
         roc_auc_dict[per_class] = roc_auc
         fpr, tpr, _ = metrics.roc_curve(new_y_validation, y_prob[:,i])  ### TODO Results doen't match roc_auc_score..
