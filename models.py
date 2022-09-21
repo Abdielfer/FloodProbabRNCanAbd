@@ -30,7 +30,8 @@ class implementRandomForestCalssifier():
         self.y_train = np.array(self.y_train).ravel()
         print(self.x_train.head())
         print("Train balance")
-        listClassCountPercent(self.y_train)
+        _,l = listClassCountPercent(self.y_train)
+        print(l)
         self.rfClassifier = implementRandomForestCalssifier.createModelClassifier(self)
     
     def createModelClassifier(self):
@@ -186,7 +187,6 @@ def listClassCountPercent(array):
     listClassCountPercent = {}
     for i in range(len(unique)):
         listClassCountPercent[unique[i]] = str(f"Class_count: {count[i]}  for  %.4f  percent" %(result[i]))
-    print(listClassCountPercent)
     return total, listClassCountPercent
    
 def predictOnFeaturesSet(model, featuresSet):
