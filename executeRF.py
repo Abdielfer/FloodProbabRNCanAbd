@@ -53,7 +53,7 @@ def executeRFRegressorWeighted(cfg: DictConfig):
     prediction = ms.makePredictionToImportAsSHP(best_estimator, x_validation, y_validation, cfg['targetColName'])
     # Fill Log
     log['dataset'] = cfg['pathTrainingDataset']
-    log['Training samples'] = total
+    log['Testing_samples'] = total
     log['Class_Count_percent'] = classCountPercent
     log['model'] = best_estimator
     log['model_Id'] = name

@@ -1,13 +1,12 @@
-### src/config/config.yaml
-defaults:
-  - parameters: paramClassifier
-
+parameters:
+  n_estimators: np.linspace(70,250,25).astype(int)
+  max_depth: '[None]'
+  max_features: '[0.5,0.6,0.7,0.8]'
+  max_leaf_nodes: '[None]'
+  bootstrap: '[False]'
 local: /Users/abdielfer/DESS/Internship2022/RNCanWork/FloodProbabRNCanAbd/datasets/
 pathTrainingDataset: allVs_basin5_CleanDataSet_Training.csv
 pathTestDataset: basin5_CleanDataSet_VsAll_Test.csv
 weightPenalty: 0.01
 targetColName: percentage
-
-### src/config/parameters/paramClassifier.yaml
-# @package _group_
 name: param
