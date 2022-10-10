@@ -1,0 +1,13 @@
+### src/config/config.yaml
+defaults:
+  - parameters: paramMLPClassifier
+
+local: /Users/abdielfer/DESS/Internship2022/RNCanWork/FloodProbabRNCanAbd/datasets/dataset4MLP/
+pathTrainingDataset: basin3_Training.csv
+pathTestDataset: basin3_Test.csv
+weightPenalty: 0.01
+targetColName: percentage
+
+### src/config/parameters/paramClassifier.yaml
+# @package _group_
+name: param

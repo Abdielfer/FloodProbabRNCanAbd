@@ -2,10 +2,11 @@
 Aqui vamos a poner 
 todo lo necesario para hacer fincionet RF a ppartir de competition 2
 '''
-from hashlib import sha1
+import warnings
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+from pyrsistent import T
 
 from sklearn.model_selection import train_test_split, GridSearchCV
 from sklearn import metrics 
@@ -13,6 +14,7 @@ from sklearn.metrics import roc_auc_score
 from sklearn.multiclass import OneVsRestClassifier
 from sklearn.ensemble import RandomForestRegressor, RandomForestClassifier
 from sklearn.neural_network import MLPClassifier
+from sklearn.exceptions import ConvergenceWarning
 import myServices as ms
 
 class implementRandomForestCalssifier():
@@ -154,24 +156,41 @@ class implementingMLPCalssifier():
         self.seedRF = 50
         self.x_train, self.y_train= ms.importDataSet(dataSet, targetCol)
         self.args
-        self.mlpClassifier = implementingMLPCalssifier.createClassifierMLP(self.args) 
+        self.mlpClassifier = implementingMLPCalssifier.createMLPClassifier(self.args) 
         ### Report ##
         print(self.x_train.head())
         print("Train balance")
         listClassCountPercent(self.y_train)
 
-
-
-    def createClassifierMLP(self, args):
+    def createMLPClassifier(self, args):
         '''
         MLPClassifier(hidden_layer_sizes=(100,), activation='relu', *, solver='adam', alpha=0.0001, batch_size='auto', 
         learning_rate='constant', learning_rate_init=0.001, power_t=0.5, max_iter=200, shuffle=True, random_state=None, 
         tol=0.0001, verbose=False, warm_start=False, momentum=0.9, nesterovs_momentum=True, early_stopping=False, 
         validation_fraction=0.1, beta_1=0.9, beta_2=0.999, epsilon=1e-08, n_iter_no_change=10, max_fun=15000)[source]
         '''
-        mlpClassifier = MLPClassifier(random_state = self.seedRF)
-
+        mlpClassifier = MLPClassifier(random_state = self.seedRF,
+                                     early_stopping= args['eStop'],
+                                     verbose=args['verbose'])
         return mlpClassifier
+
+    def fitMLPClassifier(self):
+        #  with warnings.catch_warnings():
+        #     warnings.filterwarnings(
+        #         "ignore", category=ConvergenceWarning, module="sklearn"
+        #     )
+        self.mlpClassifier.fit(self.x_train, self.y_train)
+        
+
+        
+             
+    def plotLossBVehavior(self):
+        lossList = self.mlpClassifier.loss_curve_()
+        iters = self.mlpClassifier.n_iter_()
+        
+
+
+    
 
 
 def split(x,y,TestPercent = 0.2):
@@ -316,6 +335,11 @@ def plot_ROC_AUC_OneVsRest(classifier, x_test, y_test):
         axs.legend()
         i+=1
     return roc_auc_dict
+
+def plotLostCurve(lossList):
+
+    pass
+
 
 def createSearshGrid(arg):
     param_grid = {
