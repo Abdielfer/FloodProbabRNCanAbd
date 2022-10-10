@@ -30,7 +30,6 @@ def executeRFRegressor(cfg: DictConfig):
     return best_estimator,name,log
 
 def executeRFRegressorWeighted(cfg: DictConfig):
-    log = {}
     name = ms.makeNameByTime()
     local = cfg.local
     pathTrainingDataset = local + cfg.pathTrainingDataset
@@ -52,6 +51,7 @@ def executeRFRegressorWeighted(cfg: DictConfig):
     print(r2_validation)
     prediction = ms.makePredictionToImportAsSHP(best_estimator, x_validation, y_validation, cfg['targetColName'])
     # Fill Log
+    log = {}
     log['dataset'] = cfg['pathTrainingDataset']
     log['Testing_samples'] = total
     log['Class_Count_percent'] = classCountPercent
@@ -62,7 +62,6 @@ def executeRFRegressorWeighted(cfg: DictConfig):
     return best_estimator,name,log, prediction
 
 def executeRFCalssifier(cfg: DictConfig):
-    log = {}
     name = ms.makeNameByTime()
     local = cfg.local
     pathTrainingDataset = local + cfg['pathTrainingDataset']
@@ -81,6 +80,7 @@ def executeRFCalssifier(cfg: DictConfig):
     ## Make Prediction
     prediction = ms.makePredictionToImportAsSHP(best_estimator, x_validation, y_validation, cfg['targetColName'])
     # Log
+    log = {}
     log['model_Id'] = name
     log['model'] = best_estimator
     log['dataset'] = cfg['pathTrainingDataset']
@@ -94,7 +94,6 @@ def executeRFCalssifier(cfg: DictConfig):
     return best_estimator,name,log, prediction
 
 def executeOneVsAll(cfg: DictConfig):
-    log = {}
     name = ms.makeNameByTime()
     local = cfg.local
     pathTrainingDataset = local + cfg['pathTrainingDataset']
@@ -107,6 +106,7 @@ def executeOneVsAll(cfg: DictConfig):
     print("Computing metrics ")
     accScore, macro_averaged_f1, micro_averaged_f1, ROC_AUC_multiClass = m.computeClassificationMetrics(model,x_validation,y_validation)
     # print(f"ROC_AUC_multiClass: {ROC_AUC_multiClass}")
+    log = {}
     log['pathTrainingDataset'] = cfg['pathTrainingDataset']
     log['pathValidationDataset'] = cfg['pathValidationDataset']
     log['model_Id'] = name
