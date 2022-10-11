@@ -153,14 +153,17 @@ class implementRandomForestRegressor():
 class implementingMLPCalssifier():
     def __init__(self, dataSet, targetCol, args):
         self.seedRF = 50
+        self.args = args
+        print(dataSet)
+        print(targetCol)
         self.x_train, self.y_train= ms.importDataSet(dataSet, targetCol)
-        self.mlpClassifier = implementingMLPCalssifier.createMLPClassifier(args)
+        self.mlpClassifier = implementingMLPCalssifier.createMLPClassifier(self)
         ### Report ###
         print(self.x_train.head())
         print("Train balance")
-        listClassCountPercent(self.y_train)
+        print(listClassCountPercent(self.y_train))
 
-    def createMLPClassifier(self, args):
+    def createMLPClassifier(self):
         '''
         defoult parameters: MLPClassifier(hidden_layer_sizes=(100,), activation='relu', *, solver='adam', alpha=0.0001,
         batch_size='auto',learning_rate='constant', learning_rate_init=0.001, power_t=0.5, max_iter=200, shuffle=True, 
@@ -168,8 +171,9 @@ class implementingMLPCalssifier():
         validation_fraction=0.1, beta_1=0.9, beta_2=0.999, epsilon=1e-08, n_iter_no_change=10, max_fun=15000)[source]
         '''
         mlpClassifier = MLPClassifier(random_state = self.seedRF,
-                                     early_stopping= args['eStop'],
-                                     verbose=args['verbose'])
+                                     early_stopping= self.args['eStop'],
+                                     verbose=self.args['verbose'],
+                                     validation_fraction=0.2)
         return mlpClassifier
 
     def fitMLPClassifier(self):
@@ -177,12 +181,15 @@ class implementingMLPCalssifier():
         #     warnings.filterwarnings(
         #         "ignore", category=ConvergenceWarning, module="sklearn"
         #     )
-        self.mlpClassifier.fit(self.x_train, self.y_train)
+        self.mlpClassifier.fit(self.x_train.values, self.y_train.values)
         return 
-         
+
+    def getMLPClassifier(self):
+        return self.mlpClassifier
+
     def plotLossBehaviour(self):
-        lossList = self.mlpClassifier.loss_curve_()
-        iters = np.arange(1,self.mlpClassifier.n_iter_()+1)
+        lossList = self.mlpClassifier.loss_curve_
+        iters = np.arange(1,self.mlpClassifier.n_iter_+1)
         plt.rcParams.update({'font.size': 14})
         plt.ylabel('Loss', fontsize=16)
         plt.xlabel('Iterations', fontsize=16)
