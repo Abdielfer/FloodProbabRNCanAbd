@@ -173,6 +173,7 @@ class implementingMLPCalssifier():
         mlpClassifier = MLPClassifier(random_state = self.seedRF,
                                      early_stopping= self.args['eStop'],
                                      verbose=self.args['verbose'],
+                                     max_iter= self.args['epochs'],
                                      validation_fraction=0.2)
         return mlpClassifier
 
