@@ -5,6 +5,7 @@ import pandas as pd
 import numpy as np
 from datetime import datetime
 from sklearn.model_selection import StratifiedShuffleSplit
+from sklearn.metrics import confusion_matrix
 from collections import Counter
 from imblearn.under_sampling import RandomUnderSampler 
 
@@ -146,6 +147,16 @@ def importDataSet(dataSetName, targetCol: str):
     y = x[targetCol]
     x.drop([targetCol], axis=1, inplace = True)
     return x, y
+
+   
+def accuracyFromConfisionMatrix(confusion_matrix):
+   diagonal_sum = confusion_matrix.trace()
+   sum_of_all_elements = confusion_matrix.sum()
+   return diagonal_sum / sum_of_all_elements
+
+def pritnAccuracy(y_predic, y_val):
+    cm = confusion_matrix(y_predic, y_val) 
+    print("Accuracy of MLPClassifier : ", accuracyFromConfisionMatrix(cm)) 
 
 
             ###########            
