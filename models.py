@@ -169,15 +169,13 @@ class implementingMLPCalssifier():
         '''
         defoult parameters: MLPClassifier(hidden_layer_sizes=(100,), activation=['relu'/ 'logistic’], *, solver='adam', alpha=0.0001,
         batch_size='auto',learning_rate='constant'({‘constant’, ‘invscaling’, ‘adaptive’}, learning_rate_init=0.001, default=’constant’)
-        power_t=0.5, max_iter=200, shuffle=True, random_state=None, tol=0.0001, verbose=False, warm_start=False, momentum=0.9, nesterovs_momentum=True, early_stopping=False, 
-        validation_fraction=0.1, beta_1=0.9, beta_2=0.999, epsilon=1e-08, n_iter_no_change=10, max_fun=15000)[source]
+        power_t=0.5, max_iter=200, shuffle=True, random_state=None, tol=0.0001, verbose=False, warm_start=False, momentum=0.9, nesterovs_momentum=True, 
+        early_stopping=False, validation_fraction=0.1, beta_1=0.9, beta_2=0.999, epsilon=1e-08, n_iter_no_change=10, max_fun=15000)[source]
         '''
-        mlpClassifier = MLPClassifier(random_state = self.seedRF,
-                                     hidden_layer_sizes=(200,),
-                                     early_stopping= self.args['eStop'],
-                                     verbose=True,
-                                     tol=0.00010,
-                                     validation_fraction=0.2)
+        args = [{'random_state':'50', 'hidden_layer_sizes':(16,32,64,32,16),
+                'early_stopping':True,'verbose':True,
+                'tol':0.00010,'validation_fraction':0.2,' warm_start':True}]
+        mlpClassifier = MLPClassifier(**args)
         return mlpClassifier
 
     def fitMLPClassifier(self):
@@ -205,7 +203,7 @@ class implementingMLPCalssifier():
         self.logsDic['activation'] = self.mlpClassifier.activation
         self.logsDic['hidden_layer_sizes'] = self.mlpClassifier.hidden_layer_sizes
         self.logsDic['n_iter'] = self.mlpClassifier.n_iter_
-        self.logsDic['best_loss'] = self.mlpClassifier.best_loss_ 
+        self.logsDic['lossCurve'] = self.mlpClassifier.loss_curve_
     
     def get_logsDic(self):
         return self.logsDic
