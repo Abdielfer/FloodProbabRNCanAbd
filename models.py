@@ -152,9 +152,9 @@ class implementRandomForestRegressor():
      
 
 class implementingMLPCalssifier():
-    def __init__(self, dataSet, targetCol, args):
+    def __init__(self, dataSet, targetCol, params):
         self.seedRF = 50
-        self.args = args
+        self.params = params
         self.logsDic = {}
         print(dataSet)
         print(targetCol)
@@ -172,10 +172,7 @@ class implementingMLPCalssifier():
         power_t=0.5, max_iter=200, shuffle=True, random_state=None, tol=0.0001, verbose=False, warm_start=False, momentum=0.9, nesterovs_momentum=True, 
         early_stopping=False, validation_fraction=0.1, beta_1=0.9, beta_2=0.999, epsilon=1e-08, n_iter_no_change=10, max_fun=15000)[source]
         '''
-        params = {'random_state':50, 'hidden_layer_sizes':(200,150,100,50),
-                'early_stopping':True,'verbose':True,
-                'tol':0.00010,'validation_fraction':0.2,'warm_start':True}
-        mlpClassifier = MLPClassifier(**params)
+        mlpClassifier = MLPClassifier(**self.params)
         return mlpClassifier
 
     def fitMLPClassifier(self):
@@ -203,7 +200,7 @@ class implementingMLPCalssifier():
         self.logsDic['activation'] = self.mlpClassifier.activation
         self.logsDic['hidden_layer_sizes'] = self.mlpClassifier.hidden_layer_sizes
         self.logsDic['n_iter'] = self.mlpClassifier.n_iter_
-        self.logsDic['lossCurve'] = self.mlpClassifier.loss_curve_
+        # self.logsDic['lossCurve'] = self.mlpClassifier.loss_curve_
     
     def get_logsDic(self):
         return self.logsDic

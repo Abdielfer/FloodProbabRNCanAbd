@@ -226,7 +226,16 @@ class rasterTools():
                 callback=default_callback
                 )           
 
-
+    def gaussianFilter(sefl, input, output, sigma = 0.75):
+        '''
+        input@: kernelSize = integer or tupel(x,y). If integer, kernel is square, othewise, is a (with=x,hight=y) rectagle. 
+        '''
+        wbt.gaussian_filter(
+        input, 
+        output, 
+        sigma = sigma, 
+        callback=default_callback
+        )
 
 # Helpers
 def setWBTWorkingDir(workingDir):
