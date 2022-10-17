@@ -56,7 +56,6 @@ class implementRandomForestCalssifier():
         print(f"The best parameters are: {best_params}")
         return best_estimator, best_params  
 
-
 class implementOneVsRestClassifier():
     '''
     Class implementing all necessary steps for a ranom Forest 
@@ -97,11 +96,6 @@ class implementOneVsRestClassifier():
         model = self.OneVsRestClassifier.best_estimator_
         print(f"The best parameters are: {best_params}")
         return model, best_params  
-
-   
-    # def getSplitedDataset(self):
-    #     return self.x_train,self.x_validation,self.y_train, self.y_validation
-
 
 class implementRandomForestRegressor():
     '''
@@ -150,7 +144,6 @@ class implementRandomForestRegressor():
         print(f"The best parameters: {bestParameters}")
         return best_estimator, bestParameters
      
-
 class implementingMLPCalssifier():
     def __init__(self, dataSet, targetCol, params):
         self.seedRF = 50
@@ -195,6 +188,27 @@ class implementingMLPCalssifier():
         plt.xlabel('Iterations', fontsize=16)
         plt.plot(iters,lossList)
     
+    def explore4BestHLSize(self,X_val,Y_val):
+        '''
+        This function implements a cyclic exploration to find the best hidden layer size   
+        '''
+        params = {'random_state':50, 
+          'hidden_layer_sizes':(10),
+          'early_stopping':True,
+          'verbose':True,
+          'tol':0.00010,
+          'validation_fraction':0.1,
+          'warm_start':True} 
+        mlpc = implementingMLPCalssifier.createMLPClassifier(self)
+        lag = np.linspace(100,1000,100)
+        bestSize = 0
+        record = []
+        for i in lag:
+            mlpc.fitMLPClassifier(self) 
+
+
+        return bestSize, 
+
     def logMLPClassifier(self):
         self.logsDic['optimizer'] = self.mlpClassifier._optimizer
         self.logsDic['activation'] = self.mlpClassifier.activation

@@ -117,6 +117,21 @@ def executeOneVsAll(cfg: DictConfig):
     log['ROC_AUC_multiClass'] = ROC_AUC_multiClass
     return oneVsAllClassifier,name,log
 
+
+def excecuteMLPClassifier(cfg: DictConfig):
+    name = ms.makeNameByTime()
+    local = cfg.local
+    pathTrainingDataset = cfg['pathTrainingDataset']
+    pathValidationDataset = cfg['pathValidationDataset']
+    
+    params = cfg.parameters
+    mlpc = m.implementingMLPCalssifier(pathTrainingDataset,'percentage',params)
+    print("Fitting ")
+    mlpc.fitMLPClassifier()
+    # mlpc.plotLossBehaviour()  
+   
+
+
 @hydra.main(config_path=f"config", config_name="configClassifier.yaml")
 def main(cfg: DictConfig):
     best_estimator,name,log, prediction = executeRFCalssifier(cfg)
