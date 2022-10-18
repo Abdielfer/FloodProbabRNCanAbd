@@ -6,3 +6,5 @@ Setting environments:
 Executing code priorities:
  - enctivate venv: source venv/bin/activate
  - To Open Jupyter Notebook with command line: jupyter notebook  
+
+NOte to test Git push
