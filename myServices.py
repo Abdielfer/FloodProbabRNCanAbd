@@ -164,15 +164,6 @@ def pritnAccuracy(y_predic, y_val):
     cm = confusion_matrix(y_predic, y_val) 
     print("Accuracy of MLPClassifier : ", accuracyFromConfisionMatrix(cm)) 
 
-
-
-
-
-
-
-
-
-
             ###########            
             ### GIS ###
             ###########

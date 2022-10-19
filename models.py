@@ -2,6 +2,7 @@
 Aqui vamos a poner 
 todo lo necesario para hacer fincionet RF a ppartir de competition 2
 '''
+from audioop import add
 import warnings
 import numpy as np
 import pandas as pd
@@ -218,12 +219,18 @@ class implementingMLPCalssifier():
         print(self.scoreRecord)
         return bestSize 
 
-    def logMLPClassifier(self):
+    def logMLPClassifier(self,newFeatureDic = {}):
+        '''
+        @newFeatureDic : is a dictionary of features to add
+        '''
         self.logsDic['optimizer'] = self.mlpClassifier._optimizer
         self.logsDic['activation'] = self.mlpClassifier.activation
         self.logsDic['hidden_layer_sizes'] = self.mlpClassifier.hidden_layer_sizes
         self.logsDic['n_iter'] = self.mlpClassifier.n_iter_
-        # self.logsDic['lossCurve'] = self.mlpClassifier.loss_curve_
+        self.logsDic['lossCurve'] = self.mlpClassifier.loss_curve_
+        for k in newFeatureDic.keys():
+            self.logsDic[k] = newFeatureDic[k]
+        
     
     def plotLossBehaviour(self):
         lossList = self.mlpClassifier.loss_curve_

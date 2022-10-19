@@ -128,6 +128,28 @@ def excecuteMLPClassifier(cfg: DictConfig):
     print("Fitting ")
     mlpc.fitMLPClassifier()
     # mlpc.plotLossBehaviour()  
+
+    readPath = 'datasets/RFDatasets/'
+    trainingPath = readPath + 'basin3_Training.csv'
+    validation = readPath + 'basin3_Test.csv'
+    # dataset = pd.read_csv(trainingPath, index_col = None)
+    params = {'random_state':50, 'hidden_layer_sizes': 2,
+                    'early_stopping':True,'max_iter':200,'verbose':False,
+                    'tol':0.00010,'validation_fraction':0.1,'warm_start':False}
+    mlpc = md.implementingMLPCalssifier(trainingPath,'percentage',params)
+
+    x_val,Y_val = ms.importDataSet(validation, 'percentage')
+    X = x_val.copy()
+    X.drop(['x_coord','y_coord'], axis=1, inplace=True)
+    firstInterval = np.arange(100,1001,10)
+    with timeit():
+        betsHLS = betHiddenLayerSize = mlpc.explore4BestHLSize(X,Y_val,firstInterval,'class_5',2)
+    params['verbose'] = True
+    params['hidden_layer_sizes'] = betsHLS
+    print(params)
+    mlpc.restartMLPCalssifier(params)
+    mlpc.fitMLPClassifier()
+    print(mlpc.get_logsDic())
    
 
 
