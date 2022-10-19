@@ -2,7 +2,6 @@
 Aqui vamos a poner 
 todo lo necesario para hacer fincionet RF a ppartir de competition 2
 '''
-from re import L
 import warnings
 import numpy as np
 import pandas as pd
@@ -145,69 +144,79 @@ class implementRandomForestRegressor():
         return best_estimator, bestParameters
      
 class implementingMLPCalssifier():
-    def __init__(self, dataSet, targetCol, params):
-        self.seedRF = 50
-        self.params = params
-        self.logsDic = {}
-        print(dataSet)
-        print(targetCol)
-        self.x_train, self.y_train= ms.importDataSet(dataSet, targetCol)
-        self.mlpClassifier = implementingMLPCalssifier.createMLPClassifier(self)
-        ### Report ###
-        print(self.x_train.head())
-        print("Train balance")
-        print(listClassCountPercent(self.y_train))
-
-    def createMLPClassifier(self):
+    def __init__(self, trainingSet, targetCol, params):
         '''
-        defoult parameters: MLPClassifier(hidden_layer_sizes=(100,), activation=['relu'/ 'logistic’], *, solver='adam', alpha=0.0001,
+        default parameters: MLPClassifier(hidden_layer_sizes=(100,), activation=['relu'/ 'logistic’], *, solver='adam', alpha=0.0001,
         batch_size='auto',learning_rate='constant'({‘constant’, ‘invscaling’, ‘adaptive’}, learning_rate_init=0.001, default=’constant’)
         power_t=0.5, max_iter=200, shuffle=True, random_state=None, tol=0.0001, verbose=False, warm_start=False, momentum=0.9, nesterovs_momentum=True, 
         early_stopping=False, validation_fraction=0.1, beta_1=0.9, beta_2=0.999, epsilon=1e-08, n_iter_no_change=10, max_fun=15000)[source]
         '''
-        mlpClassifier = MLPClassifier(**self.params)
-        return mlpClassifier
+        self.params = params
+        self.logsDic = {}
+        self.x_train, self.y_train= ms.importDataSet(trainingSet, targetCol)
+        self.mlpClassifier = MLPClassifier(**self.params)
+        ### Report ###
+        self.scoreRecord = implementingMLPCalssifier.newScoreRecordDF(self)
+        print(self.x_train.head())
+        print("Train balance")
+        print(listClassCountPercent(self.y_train))
 
     def fitMLPClassifier(self):
         #  with warnings.catch_warnings():
         #     warnings.filterwarnings(
         #         "ignore", category=ConvergenceWarning, module="sklearn"
         #     )
-        self.mlpClassifier.fit(self.x_train.values, self.y_train.values)
+        y_train = self.y_train.copy()
+        x_trains = self.x_train.copy()
+        self.mlpClassifier.fit(x_trains.values,y_train.values)
         implementingMLPCalssifier.logMLPClassifier(self)
         return 
-
-    def getMLPClassifier(self):
-        return self.mlpClassifier
-
-    def plotLossBehaviour(self):
-        lossList = self.mlpClassifier.loss_curve_
-        iters = np.arange(1,self.mlpClassifier.n_iter_+1)
-        plt.rcParams.update({'font.size': 14})
-        plt.ylabel('Loss', fontsize=16)
-        plt.xlabel('Iterations', fontsize=16)
-        plt.plot(iters,lossList)
-    
-    def explore4BestHLSize(self,X_val,Y_val):
+ 
+    def explore4BestHLSize(self,X_val,Y_val,firstInterval,classOfInterest,loops):
         '''
         This function implements a cyclic exploration to find the best hidden layer size   
-        '''
-        params = {'random_state':50, 
-          'hidden_layer_sizes':(10),
-          'early_stopping':True,
-          'verbose':True,
-          'tol':0.00010,
-          'validation_fraction':0.1,
-          'warm_start':True} 
-        mlpc = implementingMLPCalssifier.createMLPClassifier(self)
-        lag = np.linspace(100,1000,100)
-        bestSize = 0
-        record = []
-        for i in lag:
-            mlpc.fitMLPClassifier(self) 
-
-
-        return bestSize, 
+        ''' 
+        def helperTrain(i):
+            self.params['hidden_layer_sizes']=i
+            implementingMLPCalssifier.restartMLPCalssifier(self,self.params)
+            implementingMLPCalssifier.fitMLPClassifier(self)
+            y_hat = self.mlpClassifier.predict(X_val.values)
+            ROC_AUC_multiClass = roc_auc_score_multiclass(Y_val,y_hat)
+            scoreList = []
+            keysROC = list(ROC_AUC_multiClass.keys())
+            keysROC.sort()
+            for k in keysROC:
+                scoreList.append(ROC_AUC_multiClass[k])
+            scoreList.append(i)
+            self.scoreRecord.loc[len(self.scoreRecord)]= scoreList
+            hypParam, bestScore = implementingMLPCalssifier.getHyperParamOfBestClassScoreRecorded(self,classOfInterest)
+            # print('ROC_AUC_multiClass __', ROC_AUC_multiClass )
+            print(scoreList)
+            print("current center__: ",hypParam, ' corrent best score__:', bestScore)
+            return hypParam
+        
+        def iters(X,firstInterval):
+            '''
+            function@: A function that returns as last element an integer, 
+            corresponding to the center of next intervale to explore or the optimal value from the last iteration.  
+            '''
+            print("X = ", X)
+            if X>1:
+                X-=1
+                for i in firstInterval:
+                    center = helperTrain(i)
+                interval = buildInterval(X,center)
+                print("loop____",X ,' newInterval____: ', interval)
+                iters(X,interval)
+            else:
+                for j in firstInterval:
+                    center = helperTrain(j)
+            print('Final loop')
+            return center 
+        bestSize:int
+        bestSize = iters(loops,firstInterval)
+        print(self.scoreRecord)
+        return bestSize 
 
     def logMLPClassifier(self):
         self.logsDic['optimizer'] = self.mlpClassifier._optimizer
@@ -216,9 +225,41 @@ class implementingMLPCalssifier():
         self.logsDic['n_iter'] = self.mlpClassifier.n_iter_
         # self.logsDic['lossCurve'] = self.mlpClassifier.loss_curve_
     
+    def plotLossBehaviour(self):
+        lossList = self.mlpClassifier.loss_curve_
+        epochs = np.arange(1,self.mlpClassifier.n_iter_+1)
+        plt.rcParams.update({'font.size': 14})
+        plt.ylabel('Loss', fontsize=16)
+        plt.xlabel('Iterations', fontsize=16)
+        plt.plot(epochs,lossList)
+    
+    def newScoreRecordDF(self):
+        recordDF = pd.DataFrame()
+        classList = (self.y_train.unique()).tolist()
+        classList.sort()
+        for i in classList:
+            className = 'class_'+str(i)
+            recordDF[className] = 0
+        recordDF['hyperParam'] = 0
+        print('New Score recorder ready: ', recordDF)
+        return recordDF
+    
+    def getHyperParamOfBestClassScoreRecorded(self,classOfInterest):
+        bestScore = self.scoreRecord[classOfInterest].max()
+        newCenter = self.scoreRecord.loc[self.scoreRecord[classOfInterest].idxmax(),'hyperParam']
+        return newCenter, bestScore
+
+    def restartMLPCalssifier(self, params):
+        self.mlpClassifier = MLPClassifier(**params)
+
+    def getMLPClassifier(self):
+        return self.mlpClassifier
+
     def get_logsDic(self):
         return self.logsDic
 
+
+### Helper functions
 
 def split(x,y,TestPercent = 0.2):
     x_train, x_validation, y_train, y_validation = train_test_split( x,y, test_size=TestPercent)
@@ -241,7 +282,7 @@ def listClassCountPercent(array):
     result = [(i/total) for i in count]
     listClassCountPercent = {}
     for i in range(len(unique)):
-        listClassCountPercent[unique[i]] = str(f"Class_count: {count[i]}  for  %.4f  percent" %(result[i]))
+        listClassCountPercent[unique[i]] = str(f"Class_count: {count[i]} (%.4f percent)" %(result[i]))
     return total, listClassCountPercent
    
 def predictOnFeaturesSet(model, featuresSet):
@@ -266,9 +307,9 @@ def computeClassificationMetrics(model, x_validation, y_validation):
     macro_averaged_f1 = metrics.f1_score(y_validation, y_hat, average = 'macro') # Better for multiclass
     micro_averaged_f1 = metrics.f1_score(y_validation, y_hat, average = 'micro')
     ROC_AUC_multiClass = roc_auc_score_multiclass(y_validation,y_hat)
-    print('Accuraci_score: ', accScore)  
-    print('F1_macroAverage: ', macro_averaged_f1)  
-    print('F1_microAverage: ', micro_averaged_f1)
+    # print('Accuraci_score: ', accScore)  
+    # print('F1_macroAverage: ', macro_averaged_f1)  
+    # print('F1_microAverage: ', micro_averaged_f1)
     print('ROC_AUC one_vs_all: ', ROC_AUC_multiClass)
     return accScore, macro_averaged_f1, micro_averaged_f1, ROC_AUC_multiClass
 
@@ -318,7 +359,6 @@ def roc_auc_score_multiclass(y_validation, y_hat):
         From: https://www.kaggle.com/code/nkitgupta/evaluation-metrics-for-multi-class-classification/notebook
         '''
         unique_class = y_validation.unique()
-        print("UNIQUE CLASSES: ", unique_class)
         roc_auc_dict = {}
         for per_class in unique_class:
             other_class = [x for x in unique_class if x != per_class]
@@ -326,6 +366,9 @@ def roc_auc_score_multiclass(y_validation, y_hat):
             new_y_hat = [0 if x in other_class else 1 for x in y_hat]
             roc_auc = roc_auc_score(new_y_validation, new_y_hat, average = "macro")
             roc_auc_dict[per_class] = roc_auc
+        # lisOfClasses = unique_class.tolist()
+        # lisOfClasses.sort()
+        # print("UNIQUE CLASSES: ", lisOfClasses)
         return roc_auc_dict
 
 def plot_ROC_AUC_OneVsRest(classifier, x_test, y_test):
@@ -363,10 +406,6 @@ def plot_ROC_AUC_OneVsRest(classifier, x_test, y_test):
         i+=1
     return roc_auc_dict
 
-def plotLostCurve(lossList):
-
-    pass
-
 
 def createSearshGrid(arg):
     param_grid = {
@@ -397,3 +436,32 @@ def quadraticRechapeLabes(x, a, b):
     x = np.array(x.copy())
     v = (a*x*x) + (b*x) 
     return v.ravel()
+
+
+def buildInterval(loop,center):
+    '''
+    Useful for cyclical calls for intervals creation
+    n = number of times the function has been called. 
+    center = center of interval
+    '''
+    start:np.int16
+    end:np.int16
+    if loop > 1:
+        if center >=100:
+                start = center-40
+                end = center+50
+                stepSize = 10  
+        else:
+            start = center-10
+            end = center+11
+            stepSize = 2
+            if center <= 10 : start = 1
+            return np.arange(start,end,stepSize).astype(int)
+    else:
+            start = center-10
+            end = center+11
+            stepSize = 2
+            if center <= 10 : start = 1
+    
+    return np.arange(start,end,stepSize).astype(int)  
+    

@@ -123,7 +123,6 @@ def excecuteMLPClassifier(cfg: DictConfig):
     local = cfg.local
     pathTrainingDataset = cfg['pathTrainingDataset']
     pathValidationDataset = cfg['pathValidationDataset']
-    
     params = cfg.parameters
     mlpc = m.implementingMLPCalssifier(pathTrainingDataset,'percentage',params)
     print("Fitting ")

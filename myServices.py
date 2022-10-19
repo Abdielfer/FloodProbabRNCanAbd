@@ -168,45 +168,7 @@ def pritnAccuracy(y_predic, y_val):
 
 
 
-class searchHiddenLayerSizeMLP():
-    def __init__(self, model, params, trainSetPath, testSetPath) -> None:
-        self.params = params
-        self.model = model
-        self.trainSetPath = trainSetPath 
-        self.testSetPath = testSetPath
-        pass
 
-    def buildInterval(n, center):
-        '''
-        n = number of times the function has been called. 
-        center = center of interval
-        '''
-        if n>1:
-                start = center-50
-                end = center+60
-                stepSize = 10  
-        else:
-            start = center-10
-            end = center+11
-            stepSize = 2
-            if start < 0 : start = 0
-        return np.arange(start,end,stepSize)  
-    
-    def iters(X,interval,function:function):
-        print("X = ", X)
-        if X>1:
-            for i in interval:
-                function()
-            X-=1
-            newCenterIdx = np.random.choice(len(interval), size=1, replace=False)
-            center = interval[newCenterIdx]
-            interval = searchHiddenLayerSizeMLP.buildInterval(X,center)
-            searchHiddenLayerSizeMLP.iters(X,interval)
-        else:
-            for i in interval:
-                function()
-        print('Final loop')
-        return 
 
 
 
