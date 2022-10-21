@@ -2,12 +2,14 @@
 defaults:
   - parameters: paramMLPClassifier
 
-local: /Users/abdielfer/DESS/Internship2022/RNCanWork/FloodProbabRNCanAbd/datasets/
-pathTrainingDataset: '[basin3_Training.csv, basin4_Training.csv]'
-pathTestDataset: '[basin3_Test.csv, basin4_Test.csv]'
+local: /Users/abdielfer/DESS/Internship2022/RNCanWork/FloodProbabRNCanAbd/datasets/dataset4MLP/
+pathValidationDataset: MLP_basin3_Test.csv
+pathTrainingDataset: MLP_basin3_Training.csv
+clasOfInterest: class_5
 weightPenalty: 0.01
 targetColName: percentage
+firstInterval: 'list(np.arange(100,1001,10))'
 
-### src/config/parameters/paramClassifier.yaml
+### src/config/parameters/paramMLPClassifier.yaml
 # @package _group_
 name: param

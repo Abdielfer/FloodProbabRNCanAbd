@@ -177,8 +177,9 @@ class implementingMLPCalssifier():
         '''
         This function implements a cyclic exploration to find the best hidden layer size   
         ''' 
+        print('firstInterval_____:', firstInterval)
         def helperTrain(i):
-            self.params['hidden_layer_sizes']=i
+            self.params['hidden_layer_sizes']=int(i)
             implementingMLPCalssifier.restartMLPCalssifier(self,self.params)
             implementingMLPCalssifier.fitMLPClassifier(self)
             y_hat = self.mlpClassifier.predict(X_val.values)

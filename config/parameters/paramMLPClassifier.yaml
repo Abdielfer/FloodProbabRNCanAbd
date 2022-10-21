@@ -1,7 +1,8 @@
-params: '[{'random_state':50, 
-          'hidden_layer_sizes':(10),
-          'early_stopping':True,
-          'verbose':True,
-          'tol':0.00010,
-          'validation_fraction':0.1,
-          'warm_start':True}]'
+### config/parameters/param.yaml  
+random_state: 50
+hidden_layer_sizes: []
+early_stopping: True
+verbose: False
+tol: 0.00010
+validation_fraction: 0.1
+warm_start: True

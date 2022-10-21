@@ -1,12 +1,9 @@
-from numpy import msort
+import numpy as np
 import pandas as pd
 import myServices as ms
 import models as m
 import hydra
 from omegaconf import DictConfig
-from sklearn import metrics
-from sklearn.multiclass import OneVsRestClassifier
-from sklearn.ensemble import RandomForestClassifier
 
 
 def executeRFRegressor(cfg: DictConfig):
@@ -120,46 +117,40 @@ def executeOneVsAll(cfg: DictConfig):
 
 def excecuteMLPClassifier(cfg: DictConfig):
     name = ms.makeNameByTime()
-    local = cfg.local
-    pathTrainingDataset = cfg['pathTrainingDataset']
-    pathValidationDataset = cfg['pathValidationDataset']
-    params = cfg.parameters
-    mlpc = m.implementingMLPCalssifier(pathTrainingDataset,'percentage',params)
-    print("Fitting ")
-    mlpc.fitMLPClassifier()
-    # mlpc.plotLossBehaviour()  
-
-    readPath = 'datasets/RFDatasets/'
-    trainingPath = readPath + 'basin3_Training.csv'
-    validation = readPath + 'basin3_Test.csv'
-    # dataset = pd.read_csv(trainingPath, index_col = None)
-    params = {'random_state':50, 'hidden_layer_sizes': 2,
-                    'early_stopping':True,'max_iter':200,'verbose':False,
-                    'tol':0.00010,'validation_fraction':0.1,'warm_start':False}
-    mlpc = md.implementingMLPCalssifier(trainingPath,'percentage',params)
-
-    x_val,Y_val = ms.importDataSet(validation, 'percentage')
+    modelParams = cfg.parameters 
+    pathTrainingDataset = cfg.local + cfg['pathTrainingDataset']
+    pathValidationDataset = cfg.local + cfg['pathValidationDataset']
+    mlpc = m.implementingMLPCalssifier(pathTrainingDataset,cfg['targetColName'], modelParams)
+    print("Exploring best Hyper parameter >>>>>>>>>>> ")
+    firstInterval =  eval(cfg['firstInterval'])
+    x_val,Y_val = ms.importDataSet(pathValidationDataset, cfg['targetColName'])
     X = x_val.copy()
     X.drop(['x_coord','y_coord'], axis=1, inplace=True)
-    firstInterval = np.arange(100,1001,10)
-    with timeit():
-        betsHLS = betHiddenLayerSize = mlpc.explore4BestHLSize(X,Y_val,firstInterval,'class_5',2)
-    params['verbose'] = True
-    params['hidden_layer_sizes'] = betsHLS
-    print(params)
-    mlpc.restartMLPCalssifier(params)
+    betsHLS = mlpc.explore4BestHLSize(X,Y_val,firstInterval,cfg['clasOfInterest'],2)
+    ## Evaluating best parametere..
+    modelParams['verbose'] = True
+    modelParams['hidden_layer_sizes'] = betsHLS
+    print(modelParams)
+    mlpc.restartMLPCalssifier(modelParams)
+    print("Training with best Hyper parameter >>>>>>>>>>> ")
     mlpc.fitMLPClassifier()
-    print(mlpc.get_logsDic())
-   
+    bestMLPC = mlpc.getMLPClassifier()
+    y_hat = bestMLPC.predict(X.values)
+    ROC_AUC_multiClass = ms.roc_auc_score_multiclass(Y_val,y_hat)
+    mlpc.logsDic({'ROC_AUC_multiClass':ROC_AUC_multiClass})
+    logs = mlpc.get_logsDic()
+    print(logs)
+    prediction = ms.makePredictionToImportAsSHP(bestMLPC, x_val,Y_val, cfg['targetColName'])
+    return bestMLPC, name , prediction, logs
 
 
-@hydra.main(config_path=f"config", config_name="configClassifier.yaml")
+@hydra.main(config_path=f"config", config_name="configMLPClassifier.yaml")
 def main(cfg: DictConfig):
-    best_estimator,name,log, prediction = executeRFCalssifier(cfg)
+    best_estimator, name, prediction, logs= excecuteMLPClassifier(cfg)
     ms.saveModel(best_estimator, name)
     predictionName = name + "_prediction_" + cfg['pathTrainingDataset']
     prediction.to_csv(predictionName,index = True, header=True)  
-    logToSave = pd.DataFrame.from_dict(log, orient='index')
+    logToSave = pd.DataFrame.from_dict(logs, orient='index')
     logToSave.to_csv(name +'.csv',index = True, header=True) 
 
 if __name__ == "__main__":
