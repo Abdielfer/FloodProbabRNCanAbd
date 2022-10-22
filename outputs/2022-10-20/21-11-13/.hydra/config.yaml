@@ -1,6 +1,0 @@
-parameters:
-  n_estimators: np.linspace(80,250,20).astype(int)
-  max_depth: '[None]'
-  max_features: '[0.6,0.7,0.8,0.9]'
-  max_leaf_nodes: '[None]'
-  bootstrap: '[False]'

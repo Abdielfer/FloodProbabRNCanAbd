@@ -119,14 +119,15 @@ def excecuteMLPClassifier(cfg: DictConfig):
     name = ms.makeNameByTime()
     modelParams = cfg.parameters 
     pathTrainingDataset = cfg.local + cfg['pathTrainingDataset']
-    pathValidationDataset = cfg.local + cfg['pathValidationDataset']
+    pathValidationDataset = cfg.local + cfg['pathTestDataset']
     mlpc = m.implementingMLPCalssifier(pathTrainingDataset,cfg['targetColName'], modelParams)
     print("Exploring best Hyper parameter >>>>>>>>>>> ")
     firstInterval =  eval(cfg['firstInterval'])
     x_val,Y_val = ms.importDataSet(pathValidationDataset, cfg['targetColName'])
     X = x_val.copy()
     X.drop(['x_coord','y_coord'], axis=1, inplace=True)
-    betsHLS = mlpc.explore4BestHLSize(X,Y_val,firstInterval,cfg['clasOfInterest'],2)
+    betsHLS = int(mlpc.explore4BestHLSize(X,Y_val,firstInterval,cfg['clasOfInterest'],2))
+    print('bestHLT ---- : ', betsHLS)
     ## Evaluating best parametere..
     modelParams['verbose'] = True
     modelParams['hidden_layer_sizes'] = betsHLS
@@ -136,20 +137,20 @@ def excecuteMLPClassifier(cfg: DictConfig):
     mlpc.fitMLPClassifier()
     bestMLPC = mlpc.getMLPClassifier()
     y_hat = bestMLPC.predict(X.values)
-    ROC_AUC_multiClass = ms.roc_auc_score_multiclass(Y_val,y_hat)
-    mlpc.logsDic({'ROC_AUC_multiClass':ROC_AUC_multiClass})
+    ROC_AUC_multiClass = m.roc_auc_score_multiclass(Y_val,y_hat)
+    mlpc.logMLPClassifier({'ROC_AUC_multiClass': ROC_AUC_multiClass})
     logs = mlpc.get_logsDic()
     print(logs)
     prediction = ms.makePredictionToImportAsSHP(bestMLPC, x_val,Y_val, cfg['targetColName'])
-    return bestMLPC, name , prediction, logs
+    return bestMLPC, name, prediction,logs
 
 
 @hydra.main(config_path=f"config", config_name="configMLPClassifier.yaml")
 def main(cfg: DictConfig):
-    best_estimator, name, prediction, logs= excecuteMLPClassifier(cfg)
+    best_estimator, name, prediction, logs = excecuteMLPClassifier(cfg)
     ms.saveModel(best_estimator, name)
     predictionName = name + "_prediction_" + cfg['pathTrainingDataset']
-    prediction.to_csv(predictionName,index = True, header=True)  
+    prediction.to_csv(predictionName, index = True, header=True)  
     logToSave = pd.DataFrame.from_dict(logs, orient='index')
     logToSave.to_csv(name +'.csv',index = True, header=True) 
 

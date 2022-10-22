@@ -231,8 +231,7 @@ class implementingMLPCalssifier():
         self.logsDic['lossCurve'] = self.mlpClassifier.loss_curve_
         for k in newFeatureDic.keys():
             self.logsDic[k] = newFeatureDic[k]
-        
-    
+     
     def plotLossBehaviour(self):
         lossList = self.mlpClassifier.loss_curve_
         epochs = np.arange(1,self.mlpClassifier.n_iter_+1)
@@ -247,8 +246,8 @@ class implementingMLPCalssifier():
         classList.sort()
         for i in classList:
             className = 'class_'+str(i)
-            recordDF[className] = 0
-        recordDF['hyperParam'] = 0
+            recordDF[className] = pd.Series(dtype=float)
+        recordDF['hyperParam'] = pd.Series(dtype='int16')
         print('New Score recorder ready: ', recordDF)
         return recordDF
     
