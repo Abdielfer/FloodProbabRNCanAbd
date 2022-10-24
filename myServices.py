@@ -87,34 +87,43 @@ def removeCoordinatesFromDataSet(dataSet):
       print("DataSet has no coordinates to remove")
     return DSNoCoord
 
-def pseudoClassCreation(dataset, conditionVariable, threshold, pseudoClass, targetClassName):
+### Modifie class domain
+def pseudoClassCreation(dataset, conditionVariable, threshold, pseudoClass, targetColumnName):
     '''
     Replace <targetClass> by  <pseudoClass> where <conditionVariable >= threshold>. 
     Return:
       dataset with new classes group. 
     '''
-    datsetReclassified = dataset.copy()
-    actualTarget = (np.array(dataset[targetClassName])).ravel()
+    datasetReclassified = dataset.copy()
+    actualTarget = (np.array(dataset[targetColumnName])).ravel()
     conditionVar = (np.array(dataset[conditionVariable])).ravel()
-    datsetReclassified[targetClassName] = [ pseudoClass if conditionVar[j] >= threshold 
+    datasetReclassified[targetColumnName] = [ pseudoClass if conditionVar[j] >= threshold 
                                            else actualTarget[j]
                                            for j in range(len(actualTarget))]
-    print(Counter(datsetReclassified[targetClassName]))
-    return  datsetReclassified
+    print(Counter(datasetReclassified[targetColumnName]))
+    return  datasetReclassified
 
-def revertPseudoClassCreation(dataset, originalClass, pseudoClass, targetClassName):
+def revertPseudoClassCreation(dataset, originalClass, pseudoClass, targetColumnName):
     '''
-    Restablich  <targetClass> with <originalClass> where <targetClassName == pseudoClass>. 
+    Restablich  <targetClass> with <originalClass> where <targetColumnName == pseudoClass>. 
     Return:
       dataset with original classes group. 
     '''
-    datsetReclassified = dataset.copy()
-    actualTarget = (np.array(dataset[targetClassName])).ravel()
-    datsetReclassified[targetClassName] = [ originalClass if actualTarget[j] == pseudoClass
+    datasetReclassified = dataset.copy()
+    actualTarget = (np.array(dataset[targetColumnName])).ravel()
+    datasetReclassified[targetColumnName] = [ originalClass if actualTarget[j] == pseudoClass
                                            else actualTarget[j]
                                            for j in range(len(actualTarget))]
-    print(Counter(datsetReclassified[targetClassName]))
-    return  datsetReclassified
+    print(Counter(datasetReclassified[targetColumnName]))
+    return  datasetReclassified
+
+def makeBinary(dataset,targetColumn,classToKeep):
+    binaryClass = 0
+    if classToKeep == 0:
+        binaryClass = 1
+    repalcer  = dataset[targetColumn].to_numpy()
+    dataset[targetColumn] = [binaryClass if repalcer[j] != classToKeep else repalcer[j] for j in range(len(repalcer))]  
+    return dataset
 
 ### Configurations And file management
 def importConfig():
