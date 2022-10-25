@@ -183,12 +183,13 @@ class implementingMLPCalssifier():
             implementingMLPCalssifier.restartMLPCalssifier(self,self.params)
             implementingMLPCalssifier.fitMLPClassifier(self)
             y_hat = self.mlpClassifier.predict(X_val.values)
-            ROC_AUC_multiClass = roc_auc_score_calculation(Y_val,y_hat)
+            ROC_AUC_calculation = roc_auc_score_calculation(Y_val,y_hat)
             scoreList = []
-            keysROC = list(ROC_AUC_multiClass.keys())
+            keysROC = list(ROC_AUC_calculation.keys())
             keysROC.sort()
+            # print('self.scoreRecord___', self.scoreRecord)
             for k in keysROC:
-                scoreList.append(ROC_AUC_multiClass[k])
+                scoreList.append(ROC_AUC_calculation[k])
             scoreList.append(i)
             self.scoreRecord.loc[len(self.scoreRecord)]= scoreList
             hypParam, bestScore = implementingMLPCalssifier.getHyperParamOfBestClassScoreRecorded(self,classOfInterest)
@@ -244,9 +245,12 @@ class implementingMLPCalssifier():
         recordDF = pd.DataFrame()
         classList = (self.y_train.unique()).tolist()
         classList.sort()
-        for i in classList:
-            className = 'class_'+str(i)
-            recordDF[className] = pd.Series(dtype=float)
+        if len(classList)<=2:
+            recordDF['Metric'] = pd.Series(dtype=float)
+        else: 
+            for i in classList:
+                className = 'class_'+str(i)
+                recordDF[className] = pd.Series(dtype=float)
         recordDF['hyperParam'] = pd.Series(dtype='int16')
         print('New Score recorder ready: ', recordDF)
         return recordDF
@@ -368,11 +372,11 @@ def roc_auc_score_calculation(y_validation, y_hat):
         unique_class = y_validation.unique()
         roc_auc_dict = {}
         if len(unique_class)<=2:
-            roc_auc = roc_auc_score(new_y_validation, new_y_hat, average = "macro")
-            for i in range(len(unique_class)):
-                roc_auc_dict[unique_class(i)] = roc_auc(i)  
-            return roc_auc_dict  
-
+            rocBinary = roc_auc_score(y_validation, y_hat, average = "macro")
+            print(rocBinary)
+            roc_auc_dict['ROC'] = rocBinary
+            return roc_auc_dict
+            
         for per_class in unique_class:
             other_class = [x for x in unique_class if x != per_class]
             new_y_validation = [0 if x in other_class else 1 for x in y_validation]
@@ -403,20 +407,25 @@ def plot_ROC_AUC_OneVsRest(classifier, x_test, y_test):
     plt.figure(0).clf()
     roc_auc_dict = {}
     i = 0
-    for per_class in unique_class:
-        y_testInLoop = y_test.copy()
-        other_class = [x for x in unique_class if x != per_class]
-        print(f"actual class: {per_class} vs rest {other_class}")
-        new_y_validation = [0 if x in other_class else 1 for x in y_testInLoop]
-        new_y_hat = [0 if x in other_class else 1 for x in y_hat]
-        print(f"Class {per_class} balance vs rest")
-        listClassCountPercent(new_y_validation)
-        roc_auc = roc_auc_score(new_y_validation, new_y_hat, average = "macro")
-        roc_auc_dict[per_class] = roc_auc
-        fpr, tpr, _ = metrics.roc_curve(new_y_validation, y_prob[:,i])  ### TODO Results doen't match roc_auc_score..
-        axs.plot(fpr,tpr,label = "Class "+ str(per_class) + " AUC : " + format(roc_auc,".4f")) 
-        axs.legend()
-        i+=1
+    if len(unique_class)<=2:
+            fpr, tpr, _ = metrics.roc_curve(y_test, y_prob)  ### TODO Results doen't match roc_auc_score..
+            axs.plot(fpr,tpr,label = "Class "+ str(per_class) + " AUC : " + format(roc_auc,".4f")) 
+            axs.legend()
+    else: 
+        for per_class in unique_class:
+            y_testInLoop = y_test.copy()
+            other_class = [x for x in unique_class if x != per_class]
+            print(f"actual class: {per_class} vs rest {other_class}")
+            new_y_validation = [0 if x in other_class else 1 for x in y_testInLoop]
+            new_y_hat = [0 if x in other_class else 1 for x in y_hat]
+            print(f"Class {per_class} balance vs rest")
+            listClassCountPercent(new_y_validation)
+            roc_auc = roc_auc_score(new_y_validation, new_y_hat, average = "macro")
+            roc_auc_dict[per_class] = roc_auc
+            fpr, tpr, _ = metrics.roc_curve(new_y_validation, y_prob[:,i])  ### TODO Results doen't match roc_auc_score..
+            axs.plot(fpr,tpr,label = "Class "+ str(per_class) + " AUC : " + format(roc_auc,".4f")) 
+            axs.legend()
+            i+=1
     return roc_auc_dict
 
 
