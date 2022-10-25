@@ -183,7 +183,7 @@ class implementingMLPCalssifier():
             implementingMLPCalssifier.restartMLPCalssifier(self,self.params)
             implementingMLPCalssifier.fitMLPClassifier(self)
             y_hat = self.mlpClassifier.predict(X_val.values)
-            ROC_AUC_multiClass = roc_auc_score_multiclass(Y_val,y_hat)
+            ROC_AUC_multiClass = roc_auc_score_calculation(Y_val,y_hat)
             scoreList = []
             keysROC = list(ROC_AUC_multiClass.keys())
             keysROC.sort()
@@ -313,7 +313,7 @@ def computeClassificationMetrics(model, x_validation, y_validation):
     accScore = metrics.accuracy_score(y_validation, y_hat)
     macro_averaged_f1 = metrics.f1_score(y_validation, y_hat, average = 'macro') # Better for multiclass
     micro_averaged_f1 = metrics.f1_score(y_validation, y_hat, average = 'micro')
-    ROC_AUC_multiClass = roc_auc_score_multiclass(y_validation,y_hat)
+    ROC_AUC_multiClass = roc_auc_score_calculation(y_validation,y_hat)
     # print('Accuraci_score: ', accScore)  
     # print('F1_macroAverage: ', macro_averaged_f1)  
     # print('F1_microAverage: ', micro_averaged_f1)
@@ -360,13 +360,19 @@ def investigateFeatureImportance(bestModel, x_train, printed = True):
 
     return featuresInModel
 
-def roc_auc_score_multiclass(y_validation, y_hat):
+def roc_auc_score_calculation(y_validation, y_hat):
         '''
         Compute one-vs-all for every single class in the dataset
         From: https://www.kaggle.com/code/nkitgupta/evaluation-metrics-for-multi-class-classification/notebook
         '''
         unique_class = y_validation.unique()
         roc_auc_dict = {}
+        if len(unique_class)<=2:
+            roc_auc = roc_auc_score(new_y_validation, new_y_hat, average = "macro")
+            for i in range(len(unique_class)):
+                roc_auc_dict[unique_class(i)] = roc_auc(i)  
+            return roc_auc_dict  
+
         for per_class in unique_class:
             other_class = [x for x in unique_class if x != per_class]
             new_y_validation = [0 if x in other_class else 1 for x in y_validation]

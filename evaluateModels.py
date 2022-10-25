@@ -23,7 +23,7 @@ class getEstimatorMetric():
         accScore = metrics.accuracy_score(self.y_validation, y_hat)
         macro_averaged_f1 = metrics.f1_score(self.y_validation, y_hat, average = 'macro') # Better for multiclass
         micro_averaged_f1 = metrics.f1_score(self.y_validation, y_hat, average = 'micro')
-        ROC_AUC_multiClass = r.roc_auc_score_multiclass(self.y_validation,y_hat)
+        ROC_AUC_multiClass = r.roc_auc_score_calculation(self.y_validation,y_hat)
         metric = {}
         metric['accScore'] = accScore
         metric['macro_averaged_f1'] = macro_averaged_f1

@@ -137,7 +137,8 @@ def excecuteMLPClassifier(cfg: DictConfig):
     mlpc.fitMLPClassifier()
     bestMLPC = mlpc.getMLPClassifier()
     y_hat = bestMLPC.predict(X.values)
-    ROC_AUC_multiClass = m.roc_auc_score_multiclass(Y_val,y_hat)
+
+    ROC_AUC_multiClass = m.roc_auc_score_calculation(Y_val,y_hat)  ### Apply for binary if needed.
     mlpc.logMLPClassifier({'ROC_AUC_multiClass': ROC_AUC_multiClass})
     logs = mlpc.get_logsDic()
     print(logs)
