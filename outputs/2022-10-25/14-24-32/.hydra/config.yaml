@@ -7,10 +7,11 @@ parameters:
   validation_fraction: 0.1
   warm_start: true
 local: /Users/abdielfer/DESS/Internship2022/RNCanWork/FloodProbabRNCanAbd/datasets/datasets4MLP_Binary/
-pathTrainingDataset: MLPBimary_basin2_Training.csv
-pathTestDataset: MLPBimary_basin2_Test.csv
-clasOfInterest: class_5
+pathTrainingDataset: MLPBinary_allVs_basin1Light_Clean_Training.csv
+pathTestDataset: MLP_basin1Light_Clean_VsAll_Test.csv
+clasOfInterest: Metric
 weightPenalty: 0.01
 targetColName: percentage
-firstInterval: list(np.arange(10,1001,10))
+firstInterval: list(np.arange(50,1001,50))
+loops: 3
 name: param

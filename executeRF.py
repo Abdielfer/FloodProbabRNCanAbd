@@ -126,7 +126,7 @@ def excecuteMLPClassifier(cfg: DictConfig):
     x_val,Y_val = ms.importDataSet(pathValidationDataset, cfg['targetColName'])
     X = x_val.copy()
     X.drop(['x_coord','y_coord'], axis=1, inplace=True)
-    betsHLS = int(mlpc.explore4BestHLSize(X,Y_val,firstInterval,cfg['clasOfInterest'],2))
+    betsHLS = int(mlpc.explore4BestHLSize(X,Y_val,firstInterval,cfg['clasOfInterest'],cfg['loops']))
     print('bestHLT ---- : ', betsHLS)
     ## Evaluating best parametere..
     modelParams['verbose'] = True

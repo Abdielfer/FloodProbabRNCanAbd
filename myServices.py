@@ -117,7 +117,7 @@ def revertPseudoClassCreation(dataset, originalClass, pseudoClass, targetColumnN
     print(Counter(datasetReclassified[targetColumnName]))
     return  datasetReclassified
 
-def makeBinary(dataset,targetColumn,classToKeep, replacerClassName):
+def makeBinary(dataset,targetColumn,classToKeep:int, replacerClassName:int):
     '''
     makeBinary(dataset,targetColumn,classToKeep, replacerClassName)
     @classToKeep @input: Class name to conserv. All different classes will be repleced by <replacerClassName>

@@ -4,5 +4,5 @@ hidden_layer_sizes: []
 early_stopping: True
 verbose: False
 tol: 0.00010
-validation_fraction: 0.1
+validation_fraction: 0.2
 warm_start: True

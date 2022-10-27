@@ -1,0 +1,17 @@
+parameters:
+  random_state: 50
+  hidden_layer_sizes: []
+  early_stopping: true
+  verbose: false
+  tol: 0.0001
+  validation_fraction: 0.2
+  warm_start: true
+local: /Users/abdielfer/DESS/Internship2022/RNCanWork/FloodProbabRNCanAbd/datasets/datasets4MLP/
+pathTrainingDataset: MLP_basin1Light_Clean_Training.csv
+pathTestDataset: MLP_basin1Light_Clean_Test.csv
+clasOfInterest: class_5
+weightPenalty: 0.01
+targetColName: percentage
+firstInterval: list(np.arange(50,1001,10))
+loops: 3
+name: param

@@ -193,7 +193,7 @@ class implementingMLPCalssifier():
             scoreList.append(i)
             self.scoreRecord.loc[len(self.scoreRecord)]= scoreList
             hypParam, bestScore = implementingMLPCalssifier.getHyperParamOfBestClassScoreRecorded(self,classOfInterest)
-            # print('ROC_AUC_multiClass __', ROC_AUC_multiClass )
+            print('ROC_AUC_multiClass __', ROC_AUC_calculation )
             # print(scoreList)
             print("current center__: ",hypParam, ' corrent best score__:', bestScore)
             return hypParam
