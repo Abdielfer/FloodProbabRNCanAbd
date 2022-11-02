@@ -147,7 +147,7 @@ class implementRandomForestRegressor():
 class implementingMLPCalssifier():
     def __init__(self, trainingSet, targetCol, params):
         '''
-        default parameters: MLPClassifier(hidden_layer_sizes=(100,), activation=['relu'/ 'logistic’], *, solver='adam', alpha=0.0001,
+        @MLPClassifier >> default parameters: MLPClassifier(hidden_layer_sizes=(100,), activation=['relu'/ 'logistic’], *, solver='adam', alpha=0.0001,
         batch_size='auto',learning_rate='constant'({‘constant’, ‘invscaling’, ‘adaptive’}, learning_rate_init=0.001, default=’constant’)
         power_t=0.5, max_iter=200, shuffle=True, random_state=None, tol=0.0001, verbose=False, warm_start=False, momentum=0.9, nesterovs_momentum=True, 
         early_stopping=False, validation_fraction=0.1, beta_1=0.9, beta_2=0.999, epsilon=1e-08, n_iter_no_change=10, max_fun=15000)[source]
@@ -187,30 +187,29 @@ class implementingMLPCalssifier():
             scoreList = []
             keysROC = list(ROC_AUC_calculation.keys())
             keysROC.sort()
-            # print('self.scoreRecord___', self.scoreRecord)
             for k in keysROC:
                 scoreList.append(ROC_AUC_calculation[k])
             scoreList.append(i)
             self.scoreRecord.loc[len(self.scoreRecord)]= scoreList
             hypParam, bestScore = implementingMLPCalssifier.getHyperParamOfBestClassScoreRecorded(self,classOfInterest)
-            print('ROC_AUC_multiClass __', ROC_AUC_calculation )
+            print('ROC_AUC___ HiperParam: ', scoreList)
             # print(scoreList)
             print("current center__: ",hypParam, ' corrent best score__:', bestScore)
             return hypParam
         
-        def iters(X,firstInterval):
+        def iters(loops,firstInterval):
             '''
             function@: A function that returns as last element an integer, 
             corresponding to the center of next intervale to explore or the optimal value from the last iteration.  
             '''
-            print("X = ", X)
-            if X>1:
-                X-=1
+            print("Loops to go >>>",loops)
+            if loops>1:
+                loops-=1
                 for i in firstInterval:
                     center = helperTrain(i)
-                interval = buildInterval(X,center)
-                print("loop____",X ,' newInterval____: ', interval)
-                iters(X,interval)
+                interval = buildInterval(loops,center)
+                print("loop____",loops ,' newInterval____: ', interval)
+                iters(loops,interval)
             else:
                 for j in firstInterval:
                     center = helperTrain(j)
@@ -339,7 +338,6 @@ def reportErrors(model, x_test, y_test):
     print('Mean Squared Error: ', mse)  
     print('Root Mean Squared Error: ',r_mse)
     
-
 def investigateFeatureImportance(bestModel, x_train, printed = True):
     '''
     DEFAULT Path to save: "./models/rwReg/" 
@@ -373,19 +371,14 @@ def roc_auc_score_calculation(y_validation, y_hat):
         roc_auc_dict = {}
         if len(unique_class)<=2:
             rocBinary = roc_auc_score(y_validation, y_hat, average = "macro")
-            print(rocBinary)
             roc_auc_dict['ROC'] = rocBinary
-            return roc_auc_dict
-            
+            return roc_auc_dict   
         for per_class in unique_class:
             other_class = [x for x in unique_class if x != per_class]
             new_y_validation = [0 if x in other_class else 1 for x in y_validation]
             new_y_hat = [0 if x in other_class else 1 for x in y_hat]
             roc_auc = roc_auc_score(new_y_validation, new_y_hat, average = "macro")
             roc_auc_dict[per_class] = roc_auc
-        # lisOfClasses = unique_class.tolist()
-        # lisOfClasses.sort()
-        # print("UNIQUE CLASSES: ", lisOfClasses)
         return roc_auc_dict
 
 def plot_ROC_AUC_OneVsRest(classifier, x_test, y_test):
@@ -459,7 +452,6 @@ def quadraticRechapeLabes(x, a, b):
     v = (a*x*x) + (b*x) 
     return v.ravel()
 
-
 def buildInterval(loop,center):
     '''
     Useful for cyclical calls for intervals creation
@@ -483,7 +475,6 @@ def buildInterval(loop,center):
             start = center-10
             end = center+11
             stepSize = 2
-            if center <= 10 : start = 1
-    
+            if center <= 10 : start = 1  
     return np.arange(start,end,stepSize).astype(int)  
     
