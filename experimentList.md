@@ -7,6 +7,9 @@ I - to compare with RF (MLPMulticlass, trainning/test(80/20), original data
         basin 4 (Done_ 2210211057)
         basin 5 (Done_ 2210221619)
 
+
+
+### BINARY
     Intra Basin Binary
         basin 1 (Done_ 2211011051)
         basin 2 (Done_ 2210251041)

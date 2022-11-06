@@ -381,11 +381,12 @@ def roc_auc_score_calculation(y_validation, y_hat):
             roc_auc_dict[per_class] = roc_auc
         return roc_auc_dict
 
-def plot_ROC_AUC_OneVsRest(classifier, x_test, y_test):
+def plot_ROC_AUC(classifier, x_test, y_test):
     '''
     Allows to plot multiclass classification ROC_AUC by computing tpr and fpr of each calss by One vs Rest. 
     '''
     unique_class = y_test.unique()
+    unique_class.sort()
     print("UNIQUE CLASSES: ", unique_class)
     y_hat = classifier.predict(x_test)
     print("Test Set balance:" )
@@ -401,8 +402,10 @@ def plot_ROC_AUC_OneVsRest(classifier, x_test, y_test):
     roc_auc_dict = {}
     i = 0
     if len(unique_class)<=2:
-            fpr, tpr, _ = metrics.roc_curve(y_test, y_prob)  ### TODO Results doen't match roc_auc_score..
-            axs.plot(fpr,tpr,label = "Class "+ str(per_class) + " AUC : " + format(roc_auc,".4f")) 
+            fpr,tpr,thresholds = metrics.roc_curve(y_test, y_prob[:,1], drop_intermediate=False)  ### TODO Results doen't match roc_auc_score..
+            print(thresholds)
+            roc_auc = roc_auc_score(y_test, y_hat, average = "macro")
+            axs.plot(fpr,tpr,label = "Class "+ str(classifier.classes_[1]) + " AUC : " + format(roc_auc,".4f")) 
             axs.legend()
     else: 
         for per_class in unique_class:
@@ -415,7 +418,7 @@ def plot_ROC_AUC_OneVsRest(classifier, x_test, y_test):
             listClassCountPercent(new_y_validation)
             roc_auc = roc_auc_score(new_y_validation, new_y_hat, average = "macro")
             roc_auc_dict[per_class] = roc_auc
-            fpr, tpr, _ = metrics.roc_curve(new_y_validation, y_prob[:,i])  ### TODO Results doen't match roc_auc_score..
+            fpr, tpr, _ = metrics.roc_curve(new_y_validation, y_prob[:,i],drop_intermediate=False)  ### TODO Results doen't match roc_auc_score..
             axs.plot(fpr,tpr,label = "Class "+ str(per_class) + " AUC : " + format(roc_auc,".4f")) 
             axs.legend()
             i+=1
