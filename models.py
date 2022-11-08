@@ -58,8 +58,7 @@ class implementRandomForestCalssifier():
 
 class implementOneVsRestClassifier():
     '''
-    Class implementing all necessary steps for a ranom Forest 
-    regression with sklearn
+    Class implementing all necessary steps for a ranom multiclass classification with RF Classifier
     @imput:
       @ dataset: The full path to a *.csv file containing the dataSet.
       @ targetCol: The name of the column in the dataSet containig the target values.
