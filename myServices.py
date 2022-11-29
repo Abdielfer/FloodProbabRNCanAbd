@@ -141,7 +141,7 @@ def makePath(str1,str2):
 
 def ensureDirectory(pathToCheck):
     if os.path.isdir(pathToCheck): 
-        return
+        return True
     else:
         os.mkdir(pathToCheck)
         print(f"Created directory at path: {pathToCheck} ")
@@ -158,7 +158,7 @@ def importDataSet(dataSetName, targetCol: str):
     x.drop([targetCol], axis=1, inplace = True)
     return x, y
 
-   
+ ### Metrics ####  
 def accuracyFromConfisionMatrix(confusion_matrix):
     '''
     Only for binary
