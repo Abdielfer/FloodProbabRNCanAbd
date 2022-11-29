@@ -147,6 +147,32 @@ def ensureDirectory(pathToCheck):
         print(f"Created directory at path: {pathToCheck} ")
         return True
 
+def createListFromCSV(excell_file_location,Sheet_id, col_id):  
+    '''
+    @return: list from <col_id> in <excell_file_location>.
+    Argument:
+    @excell_file_location: full path file location and name.
+    @col_id : number of the desired collumn to extrac info from (Conside index 0 for the first column)
+    '''       
+    x=[]
+    df = pd.ExcelFile(excell_file_location).parse(Sheet_id)
+    for i in df[col_id]:
+        x.append(i)
+    return x
+
+def createListFromExelCol(excell_file_location,Sheet_id, col_id):  
+    '''
+    @return: list from <col_id> in <excell_file_location>.
+    Argument:
+    @excell_file_location: full path file location and name.
+    @col_id : number of the desired collumn to extrac info from (Conside index 0 for the first column)
+    '''       
+    x=[]
+    df = pd.ExcelFile(excell_file_location).parse(Sheet_id)
+    for i in df[col_id]:
+        x.append(i)
+    return x
+
 def importDataSet(dataSetName, targetCol: str):
     '''
     Import datasets and filling NaN values          
@@ -157,6 +183,9 @@ def importDataSet(dataSetName, targetCol: str):
     y = x[targetCol]
     x.drop([targetCol], axis=1, inplace = True)
     return x, y
+
+
+
 
  ### Metrics ####  
 def accuracyFromConfisionMatrix(confusion_matrix):
@@ -198,19 +227,6 @@ def makePredictionToImportAsSHP(model, x_test, y_test, targetColName):
     return ds_toSHP
 
 
-
-def importListFromExelCol(excell_file_location,Shet_id, col_id):  
-    '''
-    @return: list from <col_id> in <excell_file_location>.
-    Argument:
-    @excell_file_location: full path file location and name.
-    @col_id : number of the desired collumn to extrac info from (Conside index 0 for the first column)
-    '''       
-    x=[]
-    df = pd.ExcelFile(excell_file_location).parse(Shet_id)
-    for i in df[col_id]:
-        x.append(i)
-    return x
 
 def clipRasterWithPoligon(rastPath, polygonPath,outputPath):
     '''
