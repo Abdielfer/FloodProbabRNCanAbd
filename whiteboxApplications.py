@@ -26,23 +26,6 @@ class dtmTransformer():
             if myServices.ensureDirectory(self.workingDir):
                 wbt.set_working_dir(self.workingDir)
         
-    def computeMosaic(self, outpouFileName = "None"):
-        ''' 
-        @return: Return True if mosaic succeed, False otherwise. Result is saved to wbt.work_dir. 
-        Argument
-        @outpouFileName: The output file name. IMPORTANT: include the extention (e.i. .tif ) 
-        '''
-        if ".tif" not in outpouFileName:
-            outpouFileName = input("enter a valid file name with the '.tif' extention")
-        self.mainFileName = outpouFileName
-        outFilePathAndName = os.path.join(wbt.work_dir,outpouFileName)
-        if wbt.mosaic(
-            output=outFilePathAndName, 
-            method = "nn"  # Calls mosaic tool with nearest neighbour as the resampling method ("nn")
-            ) != 0:
-            print('ERROR running mosaic')  # Non-zero returns indicate an error.
-            return False
-        return True
     
     def fixNoDataAndfillDTM(self, inDTMName, eraseIntermediateRasters = True):
         '''
@@ -207,9 +190,30 @@ class rasterTools():
             if myServices.ensureDirectory(self.workingDir):
                 wbt.set_working_dir(self.workingDir)
 
+    def computeMosaic(self, outpouFileName = "None"):
+        ''' 
+        @return: Return True if mosaic succeed, False otherwise. Result is saved to wbt.work_dir. 
+        Argument
+        @outpouFileName: The output file name. IMPORTANT: include the extention (e.i. .tif ) 
+        '''
+        if ".tif" not in outpouFileName:
+            outpouFileName = input("enter a valid file name with the '.tif' extention")
+        self.mainFileName = outpouFileName
+        outFilePathAndName = os.path.join(wbt.work_dir,outpouFileName)
+        if wbt.mosaic(
+            output=outFilePathAndName, 
+            method = "nn"  # Calls mosaic tool with nearest neighbour as the resampling method ("nn")
+            ) != 0:
+            print('ERROR running mosaic')  # Non-zero returns indicate an error.
+            return False
+        return True
+
+
     def rasterResampler(sefl, inputRaster, resampledRaster, outputCellSize, resampleMethod:str):
         '''
-        @arguments: putRaster, resampledRaster, outputCellSize:int, resampleMethod:str
+        wbt.Resampler ref: https://www.whiteboxgeo.com/manual/wbt_book/available_tools/image_processing_tools.html#Resample
+        NOTE: It performes Mosaic if several inputs are provided, in addition to resampling. See refference for details. 
+        @arguments: inputRaster, resampledRaster, outputCellSize:int, resampleMethod:str
         Resampling method; options include 'nn' (nearest neighbour), 'bilinear', and 'cc' (cubic convolution)
         '''
         wbt.resample(
