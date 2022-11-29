@@ -209,7 +209,7 @@ class rasterTools():
         return True
 
 
-    def rasterResampler(sefl, inputRaster, resampledRaster, outputCellSize, resampleMethod:str):
+    def rasterResampler(sefl, inputRaster, resampledRaster, outputCellSize, resampleMethod = 'cc'):
         '''
         wbt.Resampler ref: https://www.whiteboxgeo.com/manual/wbt_book/available_tools/image_processing_tools.html#Resample
         NOTE: It performes Mosaic if several inputs are provided, in addition to resampling. See refference for details. 
