@@ -207,6 +207,20 @@ class rasterTools():
             if myServices.ensureDirectory(self.workingDir):
                 wbt.set_working_dir(self.workingDir)
 
+    def rasterResampler(sefl, inputRaster, resampledRaster, outputCellSize, resampleMethod:str):
+        '''
+        @arguments: putRaster, resampledRaster, outputCellSize:int, resampleMethod:str
+        Resampling method; options include 'nn' (nearest neighbour), 'bilinear', and 'cc' (cubic convolution)
+        '''
+        wbt.resample(
+            inputRaster, 
+            resampledRaster, 
+            cell_size=outputCellSize, 
+            base=None, 
+            method= resampleMethod, 
+            callback=default_callback
+            )
+    
     def rasterToVectorLine(sefl, inputRaster, outputVector):
         wbt.raster_to_vector_lines(
             inputRaster, 
