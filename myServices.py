@@ -1,4 +1,5 @@
 import os
+import glob
 import joblib
 import time
 import pandas as pd
@@ -87,7 +88,7 @@ def removeCoordinatesFromDataSet(dataSet):
       print("DataSet has no coordinates to remove")
     return DSNoCoord
 
-### Modifie class domain
+### Modifying class domain
 def pseudoClassCreation(dataset, conditionVariable, threshold, pseudoClass, targetColumnName):
     '''
     Replace <targetClass> by  <pseudoClass> where <conditionVariable >= threshold>. 
@@ -147,25 +148,44 @@ def ensureDirectory(pathToCheck):
         print(f"Created directory at path: {pathToCheck} ")
         return True
 
-def createListFromCSV(excell_file_location,Sheet_id, col_id):  
+def createTransintFolder(parent_dir_path):
+    path = os.path.join(parent_dir_path, 'TransinDir')
+    ensureDirectory(path)
+    return path
+
+def clearTransitFolderContent(path, filetype = '/*'):
     '''
-    @return: list from <col_id> in <excell_file_location>.
+    NOTE: This well clear dir without removing the parent dir itself. 
+    We can replace '*' for an specific condition ei. '.tif' for specific fileType deletion if needed. 
+    @Arguments:
+    @path: Parent directory path
+    @filetype: file type toi delete. @default ='/*' delete all files. 
+    '''
+
+    files = glob.glob(path + filetype)
+    for f in files:
+        os.remove(f)
+    return True
+
+def createListFromCSVColumn(csv_file_location, col_id:str):  
+    '''
+    @return: list from <col_id> in <csv_file_location>.
     Argument:
-    @excell_file_location: full path file location and name.
-    @col_id : number of the desired collumn to extrac info from (Conside index 0 for the first column)
+    @csv_file_location: full path file location and name.
+    @col_id : number of the desired collumn to extrac info from (Consider index 0 for the first column)
     '''       
     x=[]
-    df = pd.ExcelFile(excell_file_location).parse(Sheet_id)
+    df = pd.read_csv(csv_file_location, index_col = None)
     for i in df[col_id]:
         x.append(i)
     return x
 
-def createListFromExelCol(excell_file_location,Sheet_id, col_id):  
+def createListFromExelColumn(excell_file_location,Sheet_id:str, col_id:str):  
     '''
     @return: list from <col_id> in <excell_file_location>.
     Argument:
     @excell_file_location: full path file location and name.
-    @col_id : number of the desired collumn to extrac info from (Conside index 0 for the first column)
+    @col_id : number of the desired collumn to extrac info from (Consider index 0 for the first column)
     '''       
     x=[]
     df = pd.ExcelFile(excell_file_location).parse(Sheet_id)
@@ -183,8 +203,6 @@ def importDataSet(dataSetName, targetCol: str):
     y = x[targetCol]
     x.drop([targetCol], axis=1, inplace = True)
     return x, y
-
-
 
 
  ### Metrics ####  
@@ -227,7 +245,7 @@ def makePredictionToImportAsSHP(model, x_test, y_test, targetColName):
     return ds_toSHP
 
 
-
+## From here on NOT READY !!!
 def clipRasterWithPoligon(rastPath, polygonPath,outputPath):
     '''
     Clip a raster (*.GTiff) with a single polygon feature 

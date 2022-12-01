@@ -275,7 +275,7 @@ class dtmTailImporter():
                 download_url(path, self.localPath)
             print(f"Tails dawnloaded to: {self.localPath}")  
         else:
-            outputPath = input('Enter a destiny path to download:')
+            outputPath = input('Enter folder path to download tails:')
             print(outputPath)
             if ms.ensureDirectory(outputPath):
                 for path in self.tail_URL_NamesList:
