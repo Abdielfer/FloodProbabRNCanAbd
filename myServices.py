@@ -172,7 +172,6 @@ def clearTransitFolderContent(path, filetype = '/*'):
     @path: Parent directory path
     @filetype: file type toi delete. @default ='/*' delete all files. 
     '''
-
     files = glob.glob(path + filetype)
     for f in files:
         os.remove(f)
