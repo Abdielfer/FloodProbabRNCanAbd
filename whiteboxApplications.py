@@ -182,7 +182,6 @@ class dtmTransformer():
 
 class rasterTools():
     def __init__(self, workingDir):
-        self.mainFileName = " "
         if os.path.isdir(workingDir): # Creates output dir, if it does not already exist. 
             self.workingDir = workingDir
             wbt.set_working_dir(workingDir)
@@ -191,8 +190,9 @@ class rasterTools():
             if ms.ensureDirectory(self.workingDir):
                 wbt.set_working_dir(self.workingDir)
 
-    def computeMosaic(self, outpouFileName = "None"):
-        ''' 
+    def computeMosaic(self, outpouFileName:str):
+        '''
+        Compute wbt.mosaic across all .tif files into the workingDir.  
         @return: Return True if mosaic succeed, False otherwise. Result is saved to wbt.work_dir. 
         Argument
         @verifiedOutpouFileName: The output file name. IMPORTANT: include the "*.tif" extention.
@@ -204,10 +204,10 @@ class rasterTools():
             method = "nn"  # Calls mosaic tool with nearest neighbour as the resampling method ("nn")
             ) != 0:
             print('ERROR running mosaic')  # Non-zero returns indicate an error.
-            return False
+            return False 
         return True
 
-    def rasterResampler(sefl, inputRaster, resampledRaster, outputCellSize, resampleMethod = 'cc'):
+    def rasterResampler(sefl, inputRaster, resampledRaster, outputCellSize:int, resampleMethod = 'bilinear'):
         '''
         wbt.Resampler ref: https://www.whiteboxgeo.com/manual/wbt_book/available_tools/image_processing_tools.html#Resample
         NOTE: It performes Mosaic if several inputs are provided, in addition to resampling. See refference for details. 
@@ -258,33 +258,21 @@ class rasterTools():
 ## importing section 
 class dtmTailImporter():
     '''
-    This is a class to import DTM's from the URL.
+    This is a class to import DTM's from the URL to some local path.
     Arguments at creation:
      @tail_URL_NamesList : list of url for the tail to import
     '''
     def __init__(self, tail_URL_NamesList, localPath):
         self.tail_URL_NamesList = tail_URL_NamesList
-        self.localPath = localPath
+        self.localPath = ms.ensureDirectory(localPath)
 
     def downloadTailsToLocalDir(self):
         '''
         import the tails in the url <tail_URL_NamesList> to the local directory defined in <localPath> 
         '''
-        if os.path.isfile(self.localPath): 
-            for path in self.tail_URL_NamesList:
-                download_url(path, self.localPath)
-            print(f"Tails dawnloaded to: {self.localPath}")  
-        else:
-            outputPath = input('Enter folder path to download tails:')
-            print(outputPath)
-            if ms.ensureDirectory(outputPath):
-                for path in self.tail_URL_NamesList:
-                    download_url(path, outputPath)
-                print(f"Tails dawnloaded to: {outputPath}")      
-            else:
-                for path in self.tail_URL_NamesList:
-                    download_url(path, currentDirectory)
-                print(f"Tails dawnloaded to: {currentDirectory}") 
+        for url in self.tail_URL_NamesList:
+            download_url(url, self.localPath)
+        print(f"Tails downloaded to: {self.localPath}")
    
 
 # Helpers
@@ -293,9 +281,10 @@ def setWBTWorkingDir(workingDir):
 
 def sheckTifExtention(fileName):
     if ".tif" not in fileName:
-            newFileName = input("enter a valid file name with the '.tif' extention")
-    return newFileName
-
+        newFileName = input("enter a valid file name with the '.tif' extention")
+        return newFileName
+    else:
+        return fileName
 
 
 #### Exceutable 

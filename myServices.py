@@ -1,5 +1,7 @@
 import os
 import glob
+import pathlib
+import shutil
 import joblib
 import time
 import pandas as pd
@@ -142,14 +144,23 @@ def makePath(str1,str2):
 
 def ensureDirectory(pathToCheck):
     if os.path.isdir(pathToCheck): 
-        return True
+        return pathToCheck
     else:
         os.mkdir(pathToCheck)
-        print(f"Created directory at path: {pathToCheck} ")
-        return True
+        print(f"Confirmed directory at: {pathToCheck} ")
+        return pathToCheck
+
+def relocateFile(inputFilePath, outputFilePath):
+    '''
+    NOTE: @outputFilePath ust contain the complete filename
+    Sintax:
+     @shutil.move("path/to/current/file.foo", "path/to/new/destination/for/file.foo")
+    '''
+    shutil.move(inputFilePath, outputFilePath)
+    return True
 
 def createTransintFolder(parent_dir_path):
-    path = os.path.join(parent_dir_path, 'TransinDir')
+    path = os.path.join(parent_dir_path, 'TransitDir')
     ensureDirectory(path)
     return path
 
@@ -193,9 +204,15 @@ def createListFromExelColumn(excell_file_location,Sheet_id:str, col_id:str):
         x.append(i)
     return x
 
+def splitFilenameAndExtention(file_path):
+    fpath = pathlib.Path(file_path)
+    extention = fpath.suffix
+    name = fpath.stem
+    return name, extention 
+
 def importDataSet(dataSetName, targetCol: str):
     '''
-    Import datasets and filling NaN values          
+    Import datasets and return         
     @input: DataSetName => The dataset path. 
     @Output: Features(x) and tragets(y) 
     ''' 
@@ -206,7 +223,7 @@ def importDataSet(dataSetName, targetCol: str):
 
 
  ### Metrics ####  
-def accuracyFromConfisionMatrix(confusion_matrix):
+def accuracyFromConfusionMatrix(confusion_matrix):
     '''
     Only for binary
     '''
@@ -219,7 +236,7 @@ def pritnAccuracy(y_predic, y_val):
     Only for binary
     '''
     cm = confusion_matrix(y_predic, y_val) 
-    print("Accuracy of MLPClassifier : ", accuracyFromConfisionMatrix(cm)) 
+    print("Accuracy of MLPClassifier : ", accuracyFromConfusionMatrix(cm)) 
 
             ###########            
             ### GIS ###
