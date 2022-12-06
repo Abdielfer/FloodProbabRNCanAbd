@@ -41,7 +41,7 @@ class dtmTransformer():
         -inDTMName: Input DTM name
         -eraseIntermediateRasters(default = False): Erase intermediate results to save storage space. 
         @Return: True if all process happened successfully, EROR messages otherwise. 
-        @OUTPUT: DTM <filled_ inDTMName> Corrected DTM without depressions. 
+        @OUTPUT: DTM <filled_ inDTMName> Corrected DTM with wang_and_liu method. 
         '''
         dtmNoDataValueSetted = "noDataOK_"+inDTMName
         wbt.set_nodata_value(
@@ -59,15 +59,17 @@ class dtmTransformer():
             no_edges=True, 
             callback=default_callback
             )
-        output = "filled_" + inDTMName
-        wbt.fill_depressions(
+        
+        name,_ = ms.splitFilenameAndExtention(inDTMName)
+
+        output = name + "_filled.tif"
+        wbt.fill_depressions_wang_and_liu(
             dtmMissingDataFilled, 
             output, 
             fix_flats=True, 
             flat_increment=None, 
-            max_depth=None, 
             callback=default_callback
-            )  
+            )
         if eraseIntermediateRasters:
             try:
                 os.remove(os.path.join(wbt.work_dir,dtmNoDataValueSetted))

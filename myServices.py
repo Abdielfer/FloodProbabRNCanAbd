@@ -159,7 +159,7 @@ def relocateFile(inputFilePath, outputFilePath):
     shutil.move(inputFilePath, outputFilePath)
     return True
 
-def createTransintFolder(parent_dir_path):
+def createTransitFolder(parent_dir_path):
     path = os.path.join(parent_dir_path, 'TransitDir')
     ensureDirectory(path)
     return path
@@ -176,6 +176,16 @@ def clearTransitFolderContent(path, filetype = '/*'):
     for f in files:
         os.remove(f)
     return True
+
+def listFilesInDirByExt(cwd, ext = '.csv'):
+    '''
+    Options:  for (root, dirs, file) in os.walk(cwd):
+    '''
+    files_list =[]
+    for (_, _, file) in os.walk(cwd):
+        files_list = [i for i in file if ext in i]
+    return files_list
+
 
 def createListFromCSVColumn(csv_file_location, col_id:str):  
     '''
@@ -204,6 +214,9 @@ def createListFromExelColumn(excell_file_location,Sheet_id:str, col_id:str):
     return x
 
 def splitFilenameAndExtention(file_path):
+    '''
+    pathlib.Path Options: 
+    '''
     fpath = pathlib.Path(file_path)
     extention = fpath.suffix
     name = fpath.stem
