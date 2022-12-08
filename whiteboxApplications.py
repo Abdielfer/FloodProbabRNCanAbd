@@ -14,7 +14,7 @@ wbt.set_compress_rasters(True) # compress the rasters map. Just ones in the code
 class dtmTransformer():
     '''
      This class contain some functions to generate geomorphological and hydrological features from DTM.
-    Functions are mostly based on Whitebox libraries. For optimal functionality DTM’s most be high resolution, 
+    Functions are mostly based on WhiteBoxTools libraries. For optimal functionality DTM’s most be high resolution, 
     ideally Lidar 1 m or < 2m. 
     '''
     def __init__(self, workingDir):
@@ -226,7 +226,40 @@ class rasterTools():
             method= resampleMethod, 
             callback=default_callback
             )
-    
+    def mosaikAndResampling(self,csvName, outputResolution: int, csvColumn:str):
+        '''
+        Just to make things easier, this function use both mosaik and resampling at once. 
+        NOTE: If only one DTM is provided, mosaik is not applyed. 
+        Steps:
+        1- create TransitFolder
+        2- instantiate wbtapp.rasterTools(TransitFolder Path)
+        3- For *.csv in the nameList:
+             - create Folder csv name. 
+             - import DTM into TransitFolder
+             - mosaik DTM in TransitFoldes if more than is downloaded.
+             - resample mosaik to <outputResolution> argument
+             - clear TransitFolder
+        '''
+        transitFolderPath = ms.createTransitFolder(self.workingDir)
+        sourcePath_dtm_ftp = self.workingDir + csvName 
+        name,ext = ms.splitFilenameAndExtention(csvName)
+        print('filename :', name, ' ext: ',ext)
+        destinationFolder = ms.makePath(self.workingDir,name)
+        ms.ensureDirectory(destinationFolder)
+        dtmFtpList = ms.createListFromCSVColumn(sourcePath_dtm_ftp,csvColumn)
+        importer = dtmTailImporter(dtmFtpList,transitFolderPath)
+        importer.downloadTailsToLocalDir()
+        rasterTool = rasterTools.rasterTools(transitFolderPath)
+        if len(dtmFtpList)>1:
+            mosaikFileNamePermanent = ms.makePath(destinationFolder,(name +'.tif'))
+            rasterTool.computeMosaic(mosaikFileNamePermanent)
+        else:
+            dtmTail = os.listdir(transitFolderPath)
+            mosaikFileNamePermanent = ms.makePath(transitFolderPath,dtmTail[0])
+        resampledFileNamePermanent = ms.makePath(destinationFolder,(name +'_5m.tif'))   
+        rasterTool.rasterResampler(mosaikFileNamePermanent,resampledFileNamePermanent,outputResolution)
+        ms.clearTransitFolderContent(transitFolderPath)
+
     def rasterToVectorLine(sefl, inputRaster, outputVector):
         wbt.raster_to_vector_lines(
             inputRaster, 

@@ -177,14 +177,19 @@ def clearTransitFolderContent(path, filetype = '/*'):
         os.remove(f)
     return True
 
-def listFilesInDirByExt(cwd, ext = '.csv'):
+def listFreeFilesInDirByExt(cwd, ext = '.csv'):
     '''
     Options:  for (root, dirs, file) in os.walk(cwd):
+    NOTE:  THIS function list only files that are directly into <cwd> path. 
     '''
     files_list =[]
-    for (_, _, file) in os.walk(cwd):
-        files_list = [i for i in file if ext in i]
-    return files_list
+    print(cwd)
+    data = os.walk(cwd)
+    for i in data:
+        print(i)
+    # for files in data:
+    #     files_list = [i for i in files if ext in i]
+    return data
 
 
 def createListFromCSVColumn(csv_file_location, col_id:str):  
