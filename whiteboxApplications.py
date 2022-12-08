@@ -249,15 +249,14 @@ class rasterTools():
         dtmFtpList = ms.createListFromCSVColumn(sourcePath_dtm_ftp,csvColumn)
         importer = dtmTailImporter(dtmFtpList,transitFolderPath)
         importer.downloadTailsToLocalDir()
-        rasterTool = rasterTools.rasterTools(transitFolderPath)
         if len(dtmFtpList)>1:
             mosaikFileNamePermanent = ms.makePath(destinationFolder,(name +'.tif'))
-            rasterTool.computeMosaic(mosaikFileNamePermanent)
+            rasterTools.computeMosaic(self, mosaikFileNamePermanent)
         else:
-            dtmTail = os.listdir(transitFolderPath)
+            dtmTail = os.listdir(self, transitFolderPath)
             mosaikFileNamePermanent = ms.makePath(transitFolderPath,dtmTail[0])
         resampledFileNamePermanent = ms.makePath(destinationFolder,(name +'_5m.tif'))   
-        rasterTool.rasterResampler(mosaikFileNamePermanent,resampledFileNamePermanent,outputResolution)
+        rasterTools.rasterResampler(self,mosaikFileNamePermanent,resampledFileNamePermanent,outputResolution)
         ms.clearTransitFolderContent(transitFolderPath)
 
     def rasterToVectorLine(sefl, inputRaster, outputVector):
