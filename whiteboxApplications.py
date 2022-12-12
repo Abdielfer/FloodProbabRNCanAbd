@@ -191,7 +191,8 @@ class rasterTools():
             self.workingDir = input('Enter working directory')
             if ms.ensureDirectory(self.workingDir):
                 wbt.set_working_dir(self.workingDir)
-
+        print(self.workingDir)
+    
     def computeMosaic(self, outpouFileName:str):
         '''
         Compute wbt.mosaic across all .tif files into the workingDir.  
@@ -232,16 +233,15 @@ class rasterTools():
         NOTE: If only one DTM is provided, mosaik is not applyed. 
         Steps:
         1- create TransitFolder
-        2- instantiate wbtapp.rasterTools(TransitFolder Path)
-        3- For *.csv in the nameList:
-             - create Folder csv name. 
+        2- For *.csv in the nameList:
+             - create destination Folder with csv name. 
              - import DTM into TransitFolder
              - mosaik DTM in TransitFoldes if more than is downloaded.
              - resample mosaik to <outputResolution> argument
              - clear TransitFolder
         '''
         transitFolderPath = ms.createTransitFolder(self.workingDir)
-        sourcePath_dtm_ftp = self.workingDir + csvName 
+        sourcePath_dtm_ftp = os.path.join(self.workingDir, csvName) 
         name,ext = ms.splitFilenameAndExtention(csvName)
         print('filename :', name, ' ext: ',ext)
         destinationFolder = ms.makePath(self.workingDir,name)
@@ -250,11 +250,15 @@ class rasterTools():
         importer = dtmTailImporter(dtmFtpList,transitFolderPath)
         importer.downloadTailsToLocalDir()
         if len(dtmFtpList)>1:
+            saveWDir = self.workingDir
             mosaikFileNamePermanent = ms.makePath(destinationFolder,(name +'.tif'))
+            setWBTWorkingDir(transitFolderPath)
             rasterTools.computeMosaic(self, mosaikFileNamePermanent)
+            setWBTWorkingDir(saveWDir)
         else:
             dtmTail = os.listdir(self, transitFolderPath)
-            mosaikFileNamePermanent = ms.makePath(transitFolderPath,dtmTail[0])
+            mosaikFileNamePermanent = ms.makePath(transitFolderPath,dtmTail)
+            print('mosaikFileNamePermanent :', mosaikFileNamePermanent)
         resampledFileNamePermanent = ms.makePath(destinationFolder,(name +'_5m.tif'))   
         rasterTools.rasterResampler(self,mosaikFileNamePermanent,resampledFileNamePermanent,outputResolution)
         ms.clearTransitFolderContent(transitFolderPath)
@@ -310,6 +314,7 @@ class dtmTailImporter():
    
 
 # Helpers
+
 def setWBTWorkingDir(workingDir):
     wbt.set_working_dir(workingDir)
 
@@ -320,6 +325,14 @@ def sheckTifExtention(fileName):
     else:
         return fileName
 
+def downloadTailsToLocalDir(tail_URL_NamesList, localPath):
+        '''
+        Import the tails in the url <tail_URL_NamesList>, 
+          to the local directory defined in <localPath>.
+        '''
+        for url in tail_URL_NamesList:
+            download_url(url, localPath)
+        print(f"Tails downloaded to: {localPath}")
 
 #### Exceutable 
 def main():
