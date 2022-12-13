@@ -59,7 +59,6 @@ class dtmTransformer():
             no_edges=True, 
             callback=default_callback
             )
-        
         name,_ = ms.splitFilenameAndExtention(inDTMName)
 
         output = name + "_filled.tif"
