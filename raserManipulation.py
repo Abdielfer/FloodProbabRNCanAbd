@@ -1,7 +1,10 @@
 import os
 import myServices as ms
 from whitebox.whitebox_tools import WhiteboxTools, default_callback
+import whitebox_workflows as wbw   
 from torchgeo.datasets.utils import download_url
+import rasterio
+from rasterio.crs import CRS
 
 ## LocalPaths and global variables: to be adapted to your needs ##
 currentDirectory = os.getcwd()
@@ -181,7 +184,7 @@ class dtmTransformer():
                 callback=default_callback
                 )
 
-class rasterTools():
+class generalRasterTools():
     def __init__(self, workingDir):
         if os.path.isdir(workingDir): # Creates output dir, if it does not already exist. 
             self.workingDir = workingDir
@@ -190,7 +193,7 @@ class rasterTools():
             self.workingDir = input('Enter working directory')
             if ms.ensureDirectory(self.workingDir):
                 wbt.set_working_dir(self.workingDir)
-        print(self.workingDir)
+        print('Current working directory : ', self.workingDir)
     
     def computeMosaic(self, outpouFileName:str):
         '''
@@ -199,7 +202,7 @@ class rasterTools():
         Argument
         @verifiedOutpouFileName: The output file name. IMPORTANT: include the "*.tif" extention.
         '''
-        verifiedOutpouFileName = sheckTifExtention(outpouFileName)
+        verifiedOutpouFileName = checkTifExtention(outpouFileName)
         outFilePathAndName = os.path.join(wbt.work_dir,verifiedOutpouFileName)
         if wbt.mosaic(
             output=outFilePathAndName, 
@@ -209,26 +212,31 @@ class rasterTools():
             return False 
         return True
 
-    def rasterResampler(sefl, inputRaster, resampledRaster, outputCellSize:int, resampleMethod = 'bilinear'):
+    def rasterResampler(sefl,inputRaster, outputRaster, outputCellSize:int,resampleMethod = 'bilinear'):
         '''
         wbt.Resampler ref: https://www.whiteboxgeo.com/manual/wbt_book/available_tools/image_processing_tools.html#Resample
         NOTE: It performes Mosaic if several inputs are provided, in addition to resampling. See refference for details. 
         @arguments: inputRaster, resampledRaster, outputCellSize:int, resampleMethod:str
         Resampling method; options include 'nn' (nearest neighbour), 'bilinear', and 'cc' (cubic convolution)
         '''
-        verifiedOutpouFileName = sheckTifExtention(resampledRaster)
-        outFilePathAndName = os.path.join(wbt.work_dir,verifiedOutpouFileName)
+        verifiedOutpouFileName = checkTifExtention(outputRaster)
+        outputFilePathAndName = os.path.join(wbt.work_dir,verifiedOutpouFileName)
+        if isinstance(inputRaster, list):
+            inputs = generalRasterTools.prepareInputForResampler(inputRaster)
+        else: 
+            inputs = inputRaster        
         wbt.resample(
-            inputRaster, 
-            outFilePathAndName, 
+            inputs, 
+            outputFilePathAndName, 
             cell_size=outputCellSize, 
             base=None, 
             method= resampleMethod, 
             callback=default_callback
             )
-    def mosaikAndResampling(self,csvName, outputResolution: int, csvColumn:str):
+    def mosaikAndResamplingFromCSV(self,csvName, outputResolution: int, csvColumn:str, crearTransitDir = True):
         '''
-        Just to make things easier, this function use both mosaik and resampling at once. 
+        Just to make things easier, this function download from *csv with list of dtm_url,
+         do mosaik and resampling at once. 
         NOTE: If only one DTM is provided, mosaik is not applyed. 
         Steps:
         1- create TransitFolder
@@ -246,21 +254,15 @@ class rasterTools():
         destinationFolder = ms.makePath(self.workingDir,name)
         ms.ensureDirectory(destinationFolder)
         dtmFtpList = ms.createListFromCSVColumn(sourcePath_dtm_ftp,csvColumn)
-        importer = dtmTailImporter(dtmFtpList,transitFolderPath)
-        importer.downloadTailsToLocalDir()
-        if len(dtmFtpList)>1:
-            saveWDir = self.workingDir
-            mosaikFileNamePermanent = ms.makePath(destinationFolder,(name +'.tif'))
-            setWBTWorkingDir(transitFolderPath)
-            rasterTools.computeMosaic(self, mosaikFileNamePermanent)
-            setWBTWorkingDir(saveWDir)
-        else:
-            dtmTail = os.listdir(self, transitFolderPath)
-            mosaikFileNamePermanent = ms.makePath(transitFolderPath,dtmTail)
-            print('mosaikFileNamePermanent :', mosaikFileNamePermanent)
-        resampledFileNamePermanent = ms.makePath(destinationFolder,(name +'_5m.tif'))   
-        rasterTools.rasterResampler(self,mosaikFileNamePermanent,resampledFileNamePermanent,outputResolution)
-        ms.clearTransitFolderContent(transitFolderPath)
+        downloadTailsToLocalDir(dtmFtpList,transitFolderPath)
+        savedWDir = self.workingDir
+        resamplerOutput = ms.makePath(destinationFolder,(name +'_'+str(outputResolution)+'m.tif'))
+        setWBTWorkingDir(transitFolderPath)
+        dtmTail = ms.listFreeFilesInDirByExt(transitFolderPath, ext = '.tif')
+        generalRasterTools.rasterResampler(self,dtmTail,resamplerOutput,outputResolution)
+        setWBTWorkingDir(savedWDir)
+        if crearTransitDir: 
+            ms.clearTransitFolderContent(transitFolderPath)
 
     def rasterToVectorLine(sefl, inputRaster, outputVector):
         wbt.raster_to_vector_lines(
@@ -291,33 +293,22 @@ class rasterTools():
         sigma = sigma, 
         callback=default_callback
         )
+    
+    def prepareInputForResampler(nameList):
+        inputStr = ''   
+        if len(nameList)>1:
+            for i in range(len(nameList)-1):
+                inputStr += nameList[i]+';'
+            inputStr += nameList[-1]
+            return inputStr
+        return str(*nameList)
 
-## importing section 
-class dtmTailImporter():
-    '''
-    This is a class to import DTM's from the URL to some local path.
-    Arguments at creation:
-     @tail_URL_NamesList : list of url for the tail to import
-    '''
-    def __init__(self, tail_URL_NamesList, localPath):
-        self.tail_URL_NamesList = tail_URL_NamesList
-        self.localPath = ms.ensureDirectory(localPath)
-
-    def downloadTailsToLocalDir(self):
-        '''
-        import the tails in the url <tail_URL_NamesList> to the local directory defined in <localPath> 
-        '''
-        for url in self.tail_URL_NamesList:
-            download_url(url, self.localPath)
-        print(f"Tails downloaded to: {self.localPath}")
-   
 
 # Helpers
-
 def setWBTWorkingDir(workingDir):
     wbt.set_working_dir(workingDir)
 
-def sheckTifExtention(fileName):
+def checkTifExtention(fileName):
     if ".tif" not in fileName:
         newFileName = input("enter a valid file name with the '.tif' extention")
         return newFileName
@@ -329,18 +320,15 @@ def downloadTailsToLocalDir(tail_URL_NamesList, localPath):
         Import the tails in the url <tail_URL_NamesList>, 
           to the local directory defined in <localPath>.
         '''
+        confirmedLocalPath = ms.ensureDirectory(localPath)
         for url in tail_URL_NamesList:
-            download_url(url, localPath)
-        print(f"Tails downloaded to: {localPath}")
+            download_url(url, confirmedLocalPath)
+        print(f"Tails downloaded to: {confirmedLocalPath}")
 
 #### Exceutable 
 def main():
-    # list = ms.importListFromExelCol('/Users/abdielfer/DESS/Internship2022/RNCanWork/FloodProbabRNCanAbd/saint_john_NFL_DTM.xlsx','Feuil1','ftp_dtm')
-    # importer = dtmTailImporter(list, '/Users/abdielfer/DESS/Internship2022/RNCanWork/FloodMaps/testZone')
-    # importer.impotTailToLocalDir()
-    setWBTWorkingDir('/Users/abdielfer/DESS/Internship2022/RNCanWork/FloodMaps/testZone')
-    transformer = dtmTransformer('/Users/abdielfer/DESS/Internship2022/RNCanWork/FloodMaps/testZone')
-    transformer.computeMosaic()
+    wbe = wbw.WbEnvironment()
+    print(wbe.version())
     
 if __name__ == "__main__":
     main()
