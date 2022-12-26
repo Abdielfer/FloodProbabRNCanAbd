@@ -3,7 +3,7 @@ import myServices as ms
 from whitebox.whitebox_tools import WhiteboxTools, default_callback
 import whitebox_workflows as wbw   
 from torchgeo.datasets.utils import download_url
-import rasterio
+import rasterio as rst
 from rasterio.crs import CRS
 
 ## LocalPaths and global variables: to be adapted to your needs ##
@@ -303,6 +303,34 @@ class generalRasterTools():
             return inputStr
         return str(*nameList)
 
+    def getCRSAndTransfFromGTIFF(input_gtiff):
+        '''
+         @input_gtiff = "path/to/input.tif"
+        '''
+        original_img = rst.open(input_gtiff)
+        # Extract spatial metadata
+        input_crs = original_img.crs
+        input_gt  = original_img.transform
+        return input_crs, input_gt  
+
+    def setCRSAndTransformFromGTIF(input, output_tif, input_crs, input_gt):
+        '''
+        @output_tif = 'path/to/output.tif'
+        count = 1,
+            height = processed_img.shape[0],
+            width  = processed_img.shape[1],
+            dtype  = processed_img.dtype,        
+        '''
+        with rst.open(
+            output_tif,
+            'w',
+            driver = 'GTiff',
+            crs    = input_crs,
+            transform = input_gt  
+            ) as output:
+            output.write(processed_img)
+        
+        return
 
 # Helpers
 def setWBTWorkingDir(workingDir):
