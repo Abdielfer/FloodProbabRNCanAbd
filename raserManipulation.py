@@ -315,28 +315,27 @@ class generalRasterTools():
             src.close()
             return input_crs, input_gt  
 
-    def set_CRSAndTranslation_GTIF(self,input_gtif, output_tif, input_crs, input_gt):
-        '''
-        @output_tif = 'path/to/output.tif'  NOTE: @putput_tif must alredy exist before call the function!! 
-        @input_cr &  @input_gt are the properties to assign to @output_tiff
-        '''
-        with rst.open(input_gtif) as src: 
-            kwds = src.profile
-            print('This is a profile :', kwds)
-            arr = src.read()
-            src.close() 
-        print('#######  set_CRSAndTranslation_GTIF  ##########')
-        print('original kwds :', kwds)
-        kwds.update(
-            crs=input_crs,
-            transform=input_gt,
-            compress='lzw')
-        
-        print('Modified kwds :', kwds)
+    def set_CRS_GTIF(self,input_gtif, output_tif, in_crs):
+        arr, kwds = generalRasterTools.separate_array_profile(self, input_gtif)
+        kwds.update(crs=in_crs)
         with rst.open(output_tif,'w', **kwds) as output:
             output.write(arr)
-            return True
+        return output_tif
 
+    def set_Tanslation_GTIF(self, input_gtif, output_tif, in_gt):
+        arr, kwds = generalRasterTools.separate_array_profile(self, input_gtif)
+        kwds.update(transform=in_gt)
+        with rst.open(output_tif,'w', **kwds) as output:
+            output.write(arr)
+        return output_tif
+
+    def separate_array_profile(self, input_gtif):
+        with rst.open(input_gtif) as src: 
+            profile = src.profile
+            print('This is a profile :', profile)
+            arr = src.read()
+            src.close() 
+        return arr, profile
 
     def ensureTranslationResolution(self, rstTransf:rst.Affine, desiredResolution: int):
         '''
