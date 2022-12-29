@@ -1,4 +1,5 @@
 import os
+import numpy as np
 import myServices as ms
 from whitebox.whitebox_tools import WhiteboxTools, default_callback
 import whitebox_workflows as wbw   
@@ -303,34 +304,63 @@ class generalRasterTools():
             return inputStr
         return str(*nameList)
 
-    def getCRSAndTransfFromGTIFF(input_gtiff):
+    def get_CRSAndTranslation_GTIFF(self,input_gtif):
         '''
-         @input_gtiff = "path/to/input.tif"
+         @input_gtif = "path/to/input.tif"
         '''
-        original_img = rst.open(input_gtiff)
+        with rst.open(input_gtif) as src:
         # Extract spatial metadata
-        input_crs = original_img.crs
-        input_gt  = original_img.transform
-        return input_crs, input_gt  
+            input_crs = src.crs
+            input_gt  = src.transform
+            src.close()
+            return input_crs, input_gt  
 
-    def setCRSAndTransformFromGTIF(input, output_tif, input_crs, input_gt):
+    def set_CRSAndTranslation_GTIF(self,input_gtif, output_tif, input_crs, input_gt):
         '''
-        @output_tif = 'path/to/output.tif'
-        count = 1,
-            height = processed_img.shape[0],
-            width  = processed_img.shape[1],
-            dtype  = processed_img.dtype,        
+        @output_tif = 'path/to/output.tif'  NOTE: @putput_tif must alredy exist before call the function!! 
+        @input_cr &  @input_gt are the properties to assign to @output_tiff
         '''
-        with rst.open(
-            output_tif,
-            'w',
-            driver = 'GTiff',
-            crs    = input_crs,
-            transform = input_gt  
-            ) as output:
-            output.write(processed_img)
+        with rst.open(input_gtif) as src: 
+            kwds = src.profile
+            print('This is a profile :', kwds)
+            arr = src.read()
+            src.close() 
+        print('#######  set_CRSAndTranslation_GTIF  ##########')
+        print('original kwds :', kwds)
+        kwds.update(
+            crs=input_crs,
+            transform=input_gt,
+            compress='lzw')
         
-        return
+        print('Modified kwds :', kwds)
+        with rst.open(output_tif,'w', **kwds) as output:
+            output.write(arr)
+            return True
+
+
+    def ensureTranslationResolution(self, rstTransf:rst.Affine, desiredResolution: int):
+        '''
+        NOTE: For now it works for square pixels ONLY!!
+        Compare the translation values for X and Y transformation with @desiredResolution. 
+        If different, the values are replaced by the desired one. 
+        return:
+         @rstAfine:rst.profiles with the new resolution
+        '''
+        if rstTransf[0] != desiredResolution:
+            newTrans = rst.Affine(desiredResolution,
+                                rstTransf[1],
+                                rstTransf[2],
+                                rstTransf[3],
+                                -1*desiredResolution,
+                                rstTransf[5])
+        return newTrans
+
+    def get_rasterResolution(self, inRaster):
+        with rst.open(inRaster) as src:
+            profile = src.profile
+            transformation = profile['transform']
+            res = int(transformation[0])
+        return res
 
 # Helpers
 def setWBTWorkingDir(workingDir):
