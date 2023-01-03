@@ -179,6 +179,7 @@ def clearTransitFolderContent(path, filetype = '/*'):
 
 def listFreeFilesInDirByExt(cwd, ext = '.csv'):
     '''
+    @ext = *.csv by default.
     NOTE:  THIS function list only files that are directly into <cwd> path. 
     '''
     for (root, dirs, file) in os.walk(cwd):
@@ -187,7 +188,8 @@ def listFreeFilesInDirByExt(cwd, ext = '.csv'):
 
 def listALLFilesInDirByExt(cwd, ext = '.csv'):
     '''
-    NOTE:  THIS function list ALL files that are directly into <cwd> path and childrens folders. 
+    @ext = *.csv by default.
+    NOTE:  THIS function list ALL files that are directly into <cwd> path and children folders. 
     '''
     FILE_LIST = []
     for (root, dirs, file) in os.walk(cwd):

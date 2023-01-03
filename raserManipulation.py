@@ -234,7 +234,7 @@ class generalRasterTools():
             method= resampleMethod, 
             callback=default_callback
             )
-    def mosaikAndResamplingFromCSV(self,csvName, outputResolution: int, csvColumn:str, crearTransitDir = True):
+    def mosaikAndResamplingFromCSV(self,csvName, outputResolution: int, csvColumn:str, clearTransitDir = True):
         '''
         Just to make things easier, this function download from *csv with list of dtm_url,
          do mosaik and resampling at once. 
@@ -258,11 +258,14 @@ class generalRasterTools():
         downloadTailsToLocalDir(dtmFtpList,transitFolderPath)
         savedWDir = self.workingDir
         resamplerOutput = ms.makePath(destinationFolder,(name +'_'+str(outputResolution)+'m.tif'))
+        resamplerOutput_CRS_OK = ms.makePath(destinationFolder,(name +'_'+str(outputResolution)+'m_CRS_OK.tif'))
         setWBTWorkingDir(transitFolderPath)
         dtmTail = ms.listFreeFilesInDirByExt(transitFolderPath, ext = '.tif')
+        crs,_ = generalRasterTools.get_CRSAndTranslation_GTIFF(self,dtmFtpList[0])
         generalRasterTools.rasterResampler(self,dtmTail,resamplerOutput,outputResolution)
+        generalRasterTools.set_CRS_GTIF(self,resamplerOutput, resamplerOutput_CRS_OK, crs)
         setWBTWorkingDir(savedWDir)
-        if crearTransitDir: 
+        if clearTransitDir: 
             ms.clearTransitFolderContent(transitFolderPath)
 
     def rasterToVectorLine(sefl, inputRaster, outputVector):
@@ -307,6 +310,7 @@ class generalRasterTools():
     def get_CRSAndTranslation_GTIFF(self,input_gtif):
         '''
          @input_gtif = "path/to/input.tif"
+         NOTE: Accept URL as input. 
         '''
         with rst.open(input_gtif) as src:
         # Extract spatial metadata
