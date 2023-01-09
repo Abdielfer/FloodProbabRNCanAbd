@@ -2,8 +2,6 @@
 Aqui vamos a poner 
 todo lo necesario para hacer fincionet RF a ppartir de competition 2
 '''
-from audioop import add
-import warnings
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -358,7 +356,6 @@ def investigateFeatureImportance(bestModel, x_train, printed = True):
                        'display.precision', 4,
                        ):
             print(featuresInModel)
-
     return featuresInModel
 
 def roc_auc_score_calculation(y_validation, y_hat):
@@ -382,7 +379,8 @@ def roc_auc_score_calculation(y_validation, y_hat):
 
 def plot_ROC_AUC(classifier, x_test, y_test):
     '''
-    Allows to plot multiclass classification ROC_AUC by computing tpr and fpr of each calss by One vs Rest. 
+    Allows to plot multiclass classification ROC_AUC (One vs Rest), by computing tpr and fpr of each calss respect the rest. 
+    The simplest application is the binary classification.
     '''
     unique_class = y_test.unique()
     unique_class.sort()
@@ -400,14 +398,14 @@ def plot_ROC_AUC(classifier, x_test, y_test):
     plt.figure(0).clf()
     roc_auc_dict = {}
     i = 0
-    if len(unique_class)<=2:
+    if len(unique_class)<=2:  ## Binary case
             fpr,tpr,thresholds = metrics.roc_curve(y_test, y_prob[:,1], drop_intermediate=False)  ### TODO Results doen't match roc_auc_score..
             print(thresholds)
             roc_auc = roc_auc_score(y_test, y_hat, average = "macro")
             axs.plot(fpr,tpr,label = "Class "+ str(classifier.classes_[1]) + " AUC : " + format(roc_auc,".4f")) 
             axs.legend()
     else: 
-        for per_class in unique_class:
+        for per_class in unique_class:  # Multiclass
             y_testInLoop = y_test.copy()
             other_class = [x for x in unique_class if x != per_class]
             print(f"actual class: {per_class} vs rest {other_class}")
@@ -422,7 +420,6 @@ def plot_ROC_AUC(classifier, x_test, y_test):
             axs.legend()
             i+=1
     return roc_auc_dict
-
 
 def createSearshGrid(arg):
     param_grid = {
@@ -454,15 +451,17 @@ def quadraticRechapeLabes(x, a, b):
     v = (a*x*x) + (b*x) 
     return v.ravel()
 
-def buildInterval(loop,center):
+def buildInterval(loops,center):
     '''
-    Useful for cyclical calls for intervals creation
+    Helper function for cyclical searching. The function creates intervals arround some <center>, periodically reducing 
+    the step size. 
+    @start and @end can be customized into the function. 
     n = number of times the function has been called. 
     center = center of interval
     '''
     start:np.int16
     end:np.int16
-    if loop > 1:
+    if loops > 1:
         if center >=100:
                 start = center-40
                 end = center+50
