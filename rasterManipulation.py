@@ -13,7 +13,8 @@ wbt = WhiteboxTools()
 wbt.set_working_dir(currentDirectory)
 wbt.set_verbose_mode(True)
 wbt.set_compress_rasters(True) # compress the rasters map. Just ones in the code is needed
-       
+
+
 ## Pretraitment #
 class dtmTransformer():
     '''
@@ -28,8 +29,8 @@ class dtmTransformer():
             wbt.set_working_dir(workingDir)
         else:
             self.workingDir = input('Enter working directory')
-            if ms.ensureDirectory(self.workingDir):
-                wbt.set_working_dir(self.workingDir)
+            ms.ensureDirectory(self.workingDir)
+            wbt.set_working_dir(self.workingDir)
         
     
     def fixNoDataAndfillDTM(self, inDTMName, eraseIntermediateRasters = True):
@@ -184,6 +185,11 @@ class dtmTransformer():
                 zfactor=None, 
                 callback=default_callback
                 )
+    def get_WorkingDir(self):
+        return str(self.workingDir)
+
+
+
 
 class generalRasterTools():
     def __init__(self, workingDir):
@@ -192,8 +198,8 @@ class generalRasterTools():
             wbt.set_working_dir(workingDir)
         else:
             self.workingDir = input('Enter working directory')
-            if ms.ensureDirectory(self.workingDir):
-                wbt.set_working_dir(self.workingDir)
+            ms.ensureDirectory(self.workingDir)
+            wbt.set_working_dir(self.workingDir)
         print('Current working directory : ', self.workingDir)
     
     def computeMosaic(self, outpouFileName:str):
@@ -275,7 +281,7 @@ class generalRasterTools():
             callback=default_callback
             )
 
-    def rasterVisibility_index(sefl, inputDTM, outputVisIdx):
+    def rasterVisibility_index(sefl, inputDTM, outputVisIdx, resFator = 2.0):
         '''
         Both, input and output are raster. 
         '''
@@ -283,7 +289,7 @@ class generalRasterTools():
                 inputDTM, 
                 outputVisIdx, 
                 height=2.0, 
-                res_factor=2, 
+                res_factor=resFator, 
                 callback=default_callback
                 )           
 
@@ -364,6 +370,11 @@ class generalRasterTools():
             transformation = profile['transform']
             res = int(transformation[0])
         return res
+    
+    def get_WorkingDir(self):
+        return str(self.workingDir)
+
+
 
 # Helpers
 def setWBTWorkingDir(workingDir):
