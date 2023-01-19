@@ -14,7 +14,6 @@ wbt.set_working_dir(currentDirectory)
 wbt.set_verbose_mode(True)
 wbt.set_compress_rasters(True) # compress the rasters map. Just ones in the code is needed
 
-
 ## Pretraitment #
 class dtmTransformer():
     '''
@@ -169,8 +168,7 @@ class dtmTransformer():
             )
 
     ### Ready  ####
-    def computeSlope(self,inDTMName):
-        outSlope = 'slope_'+ inDTMName
+    def computeSlope(self,inDTMName,outSlope):
         wbt.slope(inDTMName,
                 outSlope, 
                 zfactor=None, 
@@ -188,9 +186,6 @@ class dtmTransformer():
     def get_WorkingDir(self):
         return str(self.workingDir)
 
-
-
-
 class generalRasterTools():
     def __init__(self, workingDir):
         if os.path.isdir(workingDir): # Creates output dir, if it does not already exist. 
@@ -200,7 +195,7 @@ class generalRasterTools():
             self.workingDir = input('Enter working directory')
             ms.ensureDirectory(self.workingDir)
             wbt.set_working_dir(self.workingDir)
-        print('Current working directory : ', self.workingDir)
+        # print('Current working directory : ', self.workingDir)
     
     def computeMosaic(self, outpouFileName:str):
         '''
