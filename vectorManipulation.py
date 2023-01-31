@@ -5,7 +5,6 @@ from shapely.geometry import shape
 class importSHPFIles():
     def __init__(self, pathSHP:str) -> None:
         self.SHPObject = readSHP(pathSHP)
-        
         pass
     
     def print_headAttributeTable(self):
@@ -16,6 +15,12 @@ class importSHPFIles():
 
     def getGeometryType(self):
         return self.SHPObject.geom_type
+    
+    def getGPDObject(self):
+        return self.SHPObject
+
+
+
 
 
 #### General use functions    ####
@@ -25,3 +30,6 @@ def readSHP(pathSHP:str):
 
 def computePolygonArea(polygon):
     return shape(polygon).area
+
+def addAreaColum():
+    
