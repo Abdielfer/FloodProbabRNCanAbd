@@ -20,4 +20,5 @@ pacages:
   - torchmetrics
   - torchvision
   - tqdm
+  - utm
   - whitebox

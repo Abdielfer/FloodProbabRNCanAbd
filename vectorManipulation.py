@@ -1,6 +1,5 @@
 import geopandas as gpd
-from shapely.geometry import shape
-
+from shapely.geometry import shape, Polygon
 
 class importSHPFIles():
     def __init__(self, pathSHP:str) -> None:
@@ -29,7 +28,19 @@ def readSHP(pathSHP:str):
     return shpFile
 
 def computePolygonArea(polygon):
+    '''
+        You must extrac de polygon from the GeoDataFrame befor passing to the function.
+    '''
     return shape(polygon).area
 
-def addAreaColum():
+def addAreaColum(gpdFrame: gpd.geodataframe.GeoDataFrame, factor = 1) -> None:
+    '''
+    Add a new column to the GeoDataFrame with the area of features
+     The defoult result is in CSR units. YOu can use <factor> to maninipulate the area units.
+    '''
+    for i in range(len(gpdFrame)):
+
     
+
+    
+        pass 
