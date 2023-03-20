@@ -198,7 +198,7 @@ def listALLFilesInDirByExt(cwd, ext = '.csv'):
                 FILE_LIST.append(i)
     return FILE_LIST
 
-def createListFromCSVColumn(csv_file_location, col_id:str):  
+def createListFromCSVColumn(csv_file_path, col_id:str):  
     '''
     @return: list from <col_id> in <csv_file_location>.
     Argument:
@@ -206,7 +206,7 @@ def createListFromCSVColumn(csv_file_location, col_id:str):
     @col_id : number of the desired collumn to extrac info from (Consider index 0 for the first column)
     '''       
     x=[]
-    df = pd.read_csv(csv_file_location, index_col = None)
+    df = pd.read_csv(csv_file_path, index_col = None)
     for i in df[col_id]:
         x.append(i)
     return x
