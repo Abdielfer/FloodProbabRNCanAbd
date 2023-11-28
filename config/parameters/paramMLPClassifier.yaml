@@ -3,8 +3,13 @@ epochs : 150
 testSize : 0.2
 batchSize : 100
 random_state: 50
-hidden_layer_sizes: []
+hidden_layer_sizes: [16,16,16,8,4] # from [2*input_shape, 2*input_shape, 2*input_shape, input_shape, 4]
 early_stopping: True
+solver: 'adam'
+alpha: 0.0001
+learning_rate_init: 0.001
+learning_rate: adaptive # Literal['constant', 'invscaling', 'adaptive'] = "constant",
+n_iter_no_change: 10
 verbose: False
 modelsFolder: C:\Users\abfernan\CrossCanFloodMapping\FloodMappingProjData\HRDTMByAOI\MLP_Models\
 colsToDrop : ['x_coord','y_coord']  #,'FloodOrd','d8fllowAcc'
