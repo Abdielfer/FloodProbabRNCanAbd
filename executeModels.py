@@ -165,15 +165,16 @@ def excecuteMLPClassifier(cfg: DictConfig):
     # prediction = ms.makePredictionToImportAsSHP(bestMLPC, x_val,Y_val, cfg['targetColName'])
     return model, name, logs
 
-@hydra.main(config_path=f"config", config_name="configMLPClassifier.yaml")
+@hydra.main(version_base=None,config_path=f"config", config_name="configMLPClassifier.yaml")
 def main(cfg: DictConfig):
-    best_estimator,name,logs = excecuteMLPClassifier(cfg)
-    ms.saveModel(best_estimator,name)
-    # predictionName = name + "_prediction_" + cfg['pathTrainingDataset']
-    # prediction.to_csv(predictionName, index = True, header=True)  
+    model,name,logs = excecuteMLPClassifier(cfg)
+    ms.saveModel(model,name)
+    # # predictionName = name + "_prediction_" + cfg['pathTrainingDataset']
+    # # prediction.to_csv(predictionName, index = True, header=True)  
     logToSave = pd.DataFrame.from_dict(logs, orient='index')
     logToSave.to_csv(name +'.csv',index = True, header=True) 
-
+    
+    
 if __name__ == "__main__":
     with ms.timeit():
         main()

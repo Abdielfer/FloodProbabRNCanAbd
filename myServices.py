@@ -28,6 +28,33 @@ def makeNameByTime():
     name = time.strftime("%y%m%d%H%M")
     return name
 
+def get_parenPath_name_ext(filePath):
+    '''
+    Ex: user/folther/file.txt
+    parentPath = pathlib.PurePath('/src/goo/scripts/main.py').parent 
+    parentPath => '/src/goo/scripts/'
+    parentPath: can be instantiated.
+         ex: parentPath[0] => '/src/goo/scripts/'; parentPath[1] => '/src/goo/', etc...
+    '''
+    parentPath = pathlib.PurePath(filePath).parent
+    fpath = pathlib.Path(filePath)
+    ext = fpath.suffix
+    name = fpath.stem
+    return parentPath, name, ext
+  
+def addSubstringToName(path, subStr: str, destinyPath = None) -> os.path:
+    '''
+    @path: Path to the raster to read. 
+    @subStr:  String o add at the end of the origial name
+    @destinyPath (default = None)
+    '''
+    parentPath,name,ext= get_parenPath_name_ext(path)
+    if destinyPath != None: 
+        return os.path.join(destinyPath,(name+subStr+ext))
+    else: 
+        return os.path.join(parentPath,(name+subStr+ ext))
+
+
 ## modeling manipulation
 def saveModel(estimator, id):
     name = id + ".pkl" 
@@ -129,6 +156,33 @@ def makeBinary(dataset,targetColumn,classToKeep:int, replacerClassName:int):
     dataset[targetColumn] = [replacerClassName if repalcer[j] != classToKeep else repalcer[j] for j in range(len(repalcer))]  
     return dataset
 
+### Pretreatment. 
+def extractFloodClassForMLP(csvPath):
+    '''
+    THis function asume the last colum of the dataset are the lables
+    
+    The goal is to create separated Datasets with classes 1 and 5 from the input csv. 
+    The considered rule is: 
+        Class_5: all class 5.
+        Class_1: All classes, since they are inclusive. All class 5 are also class 5. 
+    '''
+    df = pd.read_csv(csvPath)
+    print(df.head())
+    labels= df.iloc[:,-1]
+    uniqueClasses = pd.unique(labels)
+    if 1 in uniqueClasses:
+        class1_Col = [1 if i!= 0 else i for i in labels]
+        df['labels'] = class1_Col
+        dfOutput = addSubstringToName(csvPath,'_Class1')
+        df.to_csv(dfOutput)
+
+    if 5 in uniqueClasses:
+        class5_Col = [5 if i == 5 else 0 for i in labels]
+        df['labels'] = class5_Col
+        dfOutput = addSubstringToName(csvPath,'_Class5')
+        df.to_csv(dfOutput)
+
+ 
 ### Configurations And file management
 def importConfig():
     with open('./config.txt') as f:
@@ -291,7 +345,6 @@ def clipRasterWithPoligon(rastPath, polygonPath,outputPath):
     Clip a raster (*.GTiff) with a single polygon feature 
     '''
     os.system("gdalwarp -datnodata -9999 -q -cutline" + polygonPath + " crop_to_cutline" + " -of GTiff" + rastPath + " " + outputPath)
-   
    
 def separateClippingPolygonss(inPath,field, outPath = "None"):
     '''

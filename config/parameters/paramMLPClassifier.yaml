@@ -1,6 +1,6 @@
 ### config/parameters/param.yaml  
-epochs : 1000
-lr : 0.001
+epochs : 100
+lr : 0.01
 testSize : 0.2
 batchSize : 64
 random_state: 50

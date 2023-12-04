@@ -1,0 +1,21 @@
+parameters:
+  epochs: 1000
+  lr: 0.001
+  testSize: 0.2
+  batchSize: 64
+  random_state: 50
+  hidden_layer_sizes: []
+  early_stopping: true
+  verbose: false
+  tol: 0.0001
+  validation_fraction: 0.1
+  warm_start: false
+local: /Users/abdielfer/DESS/Internship2022/RNCanWork/FloodProbabRNCanAbd/datasets/datasets4MLP_Binary/
+pathTrainingDataset: MLPBinary_basin5_Training.csv
+pathTestDataset: MLPBinary_basin5_Test.csv
+clasOfInterest: Metric
+weightPenalty: 0.01
+targetColName: percentage
+firstInterval: list(np.arange(50,1001,10))
+loops: 2
+name: param
