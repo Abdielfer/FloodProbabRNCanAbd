@@ -141,7 +141,7 @@ class implementRandomForestRegressor():
         print(f"The best parameters: {bestParameters}")
         return best_estimator, bestParameters
      
-class implementingMLPCalssifier():
+class implementingMLPCalssifierOneHLayer():
     def __init__(self, trainingSet, targetCol, params):
         '''
         @MLPClassifier >> default parameters: MLPClassifier(hidden_layer_sizes=(100,), activation=['relu'/ 'logistic’], *, solver='adam', alpha=0.0001,
@@ -154,7 +154,7 @@ class implementingMLPCalssifier():
         self.x_train, self.y_train= ms.importDataSet(trainingSet, targetCol)
         self.mlpClassifier = MLPClassifier(**self.params)
         ### Report ###
-        self.scoreRecord = implementingMLPCalssifier.newScoreRecordDF(self)
+        self.scoreRecord = newScoreRecordDF(self)
         print(self.x_train.head())
         print("Train balance")
         print(listClassCountPercent(self.y_train))
