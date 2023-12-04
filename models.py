@@ -6,6 +6,10 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
+import torch
+from torch import nn
+from torch.utils.data import DataLoader, TensorDataset
+
 from sklearn.model_selection import train_test_split, GridSearchCV
 from sklearn import metrics 
 from sklearn.metrics import roc_auc_score
@@ -13,6 +17,7 @@ from sklearn.multiclass import OneVsRestClassifier
 from sklearn.ensemble import RandomForestRegressor, RandomForestClassifier
 from sklearn.neural_network import MLPClassifier
 from sklearn.exceptions import ConvergenceWarning
+from sklearn.preprocessing import StandardScaler
 import myServices as ms
 
 class implementRandomForestCalssifier():
@@ -154,7 +159,7 @@ class implementingMLPCalssifierOneHLayer():
         self.x_train, self.y_train= ms.importDataSet(trainingSet, targetCol)
         self.mlpClassifier = MLPClassifier(**self.params)
         ### Report ###
-        self.scoreRecord = newScoreRecordDF(self)
+        self.scoreRecord = self.newScoreRecordDF(self)
         print(self.x_train.head())
         print("Train balance")
         print(listClassCountPercent(self.y_train))
@@ -167,7 +172,7 @@ class implementingMLPCalssifierOneHLayer():
         y_train = self.y_train.copy()
         x_trains = self.x_train.copy()
         self.mlpClassifier.fit(x_trains.values,y_train.values)
-        implementingMLPCalssifier.logMLPClassifier(self)
+        self.logMLPClassifier(self)
         return 
  
     def explore4BestHLSize(self,X_val,Y_val,firstInterval,classOfInterest,loops):
@@ -177,8 +182,8 @@ class implementingMLPCalssifierOneHLayer():
         print('firstInterval_____:', firstInterval)
         def helperTrain(i):
             self.params['hidden_layer_sizes']=int(i)
-            implementingMLPCalssifier.restartMLPCalssifier(self,self.params)
-            implementingMLPCalssifier.fitMLPClassifier(self)
+            self.restartMLPCalssifier(self,self.params)
+            self.fitMLPClassifier(self)
             y_hat = self.mlpClassifier.predict(X_val.values)
             ROC_AUC_calculation = roc_auc_score_calculation(Y_val,y_hat)
             scoreList = []
@@ -188,7 +193,7 @@ class implementingMLPCalssifierOneHLayer():
                 scoreList.append(ROC_AUC_calculation[k])
             scoreList.append(i)
             self.scoreRecord.loc[len(self.scoreRecord)]= scoreList
-            hypParam, bestScore = implementingMLPCalssifier.getHyperParamOfBestClassScoreRecorded(self,classOfInterest)
+            hypParam, bestScore = self.getHyperParamOfBestClassScoreRecorded(self,classOfInterest)
             print('ROC_AUC___ HiperParam: ', scoreList)
             # print(scoreList)
             print("current center__: ",hypParam, ' corrent best score__:', bestScore)
@@ -265,9 +270,187 @@ class implementingMLPCalssifierOneHLayer():
     def get_logsDic(self):
         return self.logsDic
 
+class implementingMLPCalssifier():
+    def __init__(self, trainingSet, targetCol, params):
+        '''
+        @MLPClassifier >> default parameters: MLPClassifier(hidden_layer_sizes=(100,), activation=['relu'/ 'logistic’], *, solver='adam', alpha=0.0001,
+        batch_size='auto',learning_rate='constant'({‘constant’, ‘invscaling’, ‘adaptive’}, learning_rate_init=0.001, default=’constant’)
+        power_t=0.5, max_iter=200, shuffle=True, random_state=None, tol=0.0001, verbose=False, warm_start=False, momentum=0.9, nesterovs_momentum=True, 
+        early_stopping=False, validation_fraction=0.1, beta_1=0.9, beta_2=0.999, epsilon=1e-08, n_iter_no_change=10, max_fun=15000)[source]
+        '''
+        self.params = params
+        self.logsDic = {}
+        self.x_train, self.y_train= ms.importDataSet(trainingSet, targetCol)
+        self.mlpClassifier = MLPClassifier(**self.params)
+        ### Report ###
+        self.scoreRecord = self.newScoreRecordDF(self)
+        print(self.x_train.head())
+        print("Train balance")
+        print(listClassCountPercent(self.y_train))
+
+    def fitMLPClassifier(self):
+        #  with warnings.catch_warnings():
+        #     warnings.filterwarnings(
+        #         "ignore", category=ConvergenceWarning, module="sklearn"
+        #     )
+        y_train = self.y_train.copy()
+        x_trains = self.x_train.copy()
+        self.mlpClassifier.fit(x_trains.values,y_train.values)
+        self.logMLPClassifier(self)
+        return 
+ 
+    def logMLPClassifier(self):
+        self.logsDic['optimizer'] = self.mlpClassifier._optimizer
+        self.logsDic['activation'] = self.mlpClassifier.activation
+        self.logsDic['hidden_layer_sizes'] = self.mlpClassifier.hidden_layer_sizes
+        self.logsDic['n_iter'] = self.mlpClassifier.n_iter_
+        self.logsDic['lossCurve'] = self.mlpClassifier.loss_curve_
+        
+     
+    def plotLossBehaviour(self):
+        lossList = self.mlpClassifier.loss_curve_
+        epochs = np.arange(1,self.mlpClassifier.n_iter_+1)
+        plt.rcParams.update({'font.size': 14})
+        plt.ylabel('Loss', fontsize=16)
+        plt.xlabel('Iterations', fontsize=16)
+        plt.plot(epochs,lossList)
+    
+    def newScoreRecordDF(self):
+        recordDF = pd.DataFrame()
+        classList = (self.y_train.unique()).tolist()
+        classList.sort()
+        if len(classList)<=2:
+            recordDF['Metric'] = pd.Series(dtype=float)
+        else: 
+            for i in classList:
+                className = 'class_'+str(i)
+                recordDF[className] = pd.Series(dtype=float)
+        recordDF['hyperParam'] = pd.Series(dtype='int16')
+        print('New Score recorder ready: ', recordDF)
+        return recordDF
+    
+    def getHyperParamOfBestClassScoreRecorded(self,classOfInterest):
+        bestScore = self.scoreRecord[classOfInterest].max()
+        newCenter = self.scoreRecord.loc[self.scoreRecord[classOfInterest].idxmax(),'hyperParam']
+        return newCenter, bestScore
+
+    def restartMLPCalssifier(self, params):
+        self.mlpClassifier = MLPClassifier(**params)
+
+    def getMLPClassifier(self):
+        return self.mlpClassifier
+
+    def get_logsDic(self):
+        return self.logsDic
+
+class MLPModel:
+    def __init__(self, dataset_path,trainingParams):
+        self.dataset_path = dataset_path
+        self.model = None
+        self.logs = {}
+
+        self.params = trainingParams
+        self.epochs = self.params['epochs']
+        self.lr = self.params['lr']
+        self.splitProportion = self.params['testSize']
+        self.batchSize = self.params['batchSize']
+
+    def load_data(self):
+        # Load the dataset
+        data = pd.read_csv(self.dataset_path)
+        
+        # Assuming the last column is the target variable
+        X = data.iloc[:, :-1].values
+        y = data.iloc[:, -1].values
+        listClassCountPercent(y)
+
+        # Split the data into training and test sets
+        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size= self.splitProportion, random_state=42)
+        printDataBalace(X_train, X_test, y_train, y_test)
+
+        # Standardize the features
+        scaler = StandardScaler()
+        X_train = scaler.fit_transform(X_train)
+        X_test = scaler.transform(X_test)
+        
+        return torch.tensor(X_train, dtype=torch.float), torch.tensor(X_test, dtype=torch.float), torch.tensor(y_train, dtype=torch.long), torch.tensor(y_test, dtype=torch.long)
+
+    def train(self):
+        # Load the data
+        X_train, X_test, y_train, y_test = self.load_data()
+        
+        # Get the input size
+        input_size = X_train.shape[1]
+        
+        # Define the hidden layer sizes
+        hidden_layer_sizes = [int(1.5*input_size)]*3 + [input_size] + [int(input_size/2)]+[1]
+        
+        # Initialize the MLPClassifier
+        self.model = nn.Sequential(
+            nn.Linear(input_size, hidden_layer_sizes[0]),
+            nn.ReLU(),
+            nn.Linear(hidden_layer_sizes[0], hidden_layer_sizes[1]),
+            nn.ReLU(),
+            nn.Linear(hidden_layer_sizes[1], hidden_layer_sizes[2]),
+            nn.ReLU(),
+            nn.Linear(hidden_layer_sizes[2], hidden_layer_sizes[3]),
+            nn.ReLU(),
+            nn.Linear(hidden_layer_sizes[3], hidden_layer_sizes[4]),
+            nn.ReLU(),
+            nn.Linear(hidden_layer_sizes[4], len(torch.unique(y_train))),
+            nn.ReLU(),
+            nn.Linear(hidden_layer_sizes[5], len(torch.unique(y_train))),
+            nn.Sigmoid(),
+        )
+        
+        # Define the loss function and the optimizer
+        criterion = nn.NLLLoss()
+        optimizer = torch.optim.Adam(self.model.parameters(), lr=self.learning_rate)
+        
+        # Convert the training set into torch tensors
+        train_data = TensorDataset(X_train, y_train)
+        train_loader = DataLoader(train_data, batch_size=self.batchSize, shuffle=True)
+        
+        # Train the model
+        for e in range(self.epochs):
+            for inputs, labels in train_loader:
+                optimizer.zero_grad()
+                log_probs = self.model(inputs)
+                loss = criterion(log_probs, labels)
+                loss.backward()
+                optimizer.step()
+
+        # Print the accuracy on the test set
+        with torch.no_grad():
+            output = self.model(X_test)
+            threshold = 0.5
+            y_hat = (output > threshold).float()
+            correct = (y_hat == y_test).sum().item()
+            print("Test set accuracy: ", correct / len(y_test))
+            roc_auc_score_calculation(y_test,y_hat)
+
+        investigateFeatureImportance(self.model,X_test)
+        self.logMLP()
+        
+        return self.model, self.logs 
+
+    def getModel(self):
+        return self.model
+    
+    def logMLP(self):
+        '''
+        @newFeatureDic : is a dictionary of features to add
+        '''
+        self.logs['optimizer'] = self.model._optimizer
+        self.logs['activation'] = self.model.activation
+        self.logs['hidden_layer_sizes'] = self.model.hidden_layer_sizes
+        self.logs['n_iter'] = self.model.n_iter_
+        self.logs['lossCurve'] = self.model.loss_curve_
+       
+
+
 
 ### Helper functions
-
 def split(x,y,TestPercent = 0.2):
     x_train, x_validation, y_train, y_validation = train_test_split( x,y, test_size=TestPercent)
     return x_train, x_validation, y_train, y_validation 

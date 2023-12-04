@@ -17,7 +17,7 @@ def executeRFRegressor(cfg: DictConfig):
     rForestReg = m.implementRandomForestRegressor(pathDataset,cfg['targetColName'], percentOfValidation, arg)
     best_estimator, bestParameters, r2_validation= rForestReg.fitRFRegressorGSearch()
     m.saveModel(best_estimator,name)
-    _, featureImportance = m.investigateFeatureImportance(best_estimator,name,x_validation)
+    _, featureImportance = m.investigateFeatureImportance(best_estimator,name)
     print(r2_validation)
     # Fill Log
     log['dataset'] = cfg['pathTrainingDataset']
@@ -146,40 +146,31 @@ def excecuteMLPClassifierOneHLayer(cfg: DictConfig):
 
 def excecuteMLPClassifier(cfg: DictConfig):
     name = ms.makeNameByTime()
-    modelParams = cfg.parameters 
     pathTrainingDataset = cfg.local + cfg['pathTrainingDataset']
-    pathValidationDataset = cfg.local + cfg['pathTestDataset']
-    mlpc = m.implementingMLPCalssifier(pathTrainingDataset,cfg['targetColName'], modelParams)
-    print("Exploring best Hyper parameter >>>>>>>>>>> ")
-    firstInterval =  eval(cfg['firstInterval'])
-    x_val,Y_val = ms.importDataSet(pathValidationDataset, cfg['targetColName'])
-    X = x_val.copy()
-    X.drop(['x_coord','y_coord'], axis=1, inplace=True)
-    betsHLS = int(mlpc.explore4BestHLSize(X,Y_val,firstInterval,cfg['clasOfInterest'],cfg['loops']))
-    print('bestHLT ---- : ', betsHLS)
-    ## Evaluating best parametere..
-    modelParams['verbose'] = True
-    modelParams['hidden_layer_sizes'] = betsHLS
-    print(modelParams)
-    mlpc.restartMLPCalssifier(modelParams)
-    print("Training with best Hyper parameter >>>>>>>>>>> ")
-    mlpc.fitMLPClassifier()
-    bestMLPC = mlpc.getMLPClassifier()
-    y_hat = bestMLPC.predict(X.values)
+    traningParams = cfg['parameters']
+    mlpc = m.MLPModel(pathTrainingDataset,traningParams)
+    model,logs = mlpc.train()
 
-    ROC_AUC_multiClass = m.roc_auc_score_calculation(Y_val,y_hat)  ### Apply for binary if needed.
-    mlpc.logMLPClassifier({'ROC_AUC_multiClass': ROC_AUC_multiClass})
-    logs = mlpc.get_logsDic()
-    print(logs)
-    prediction = ms.makePredictionToImportAsSHP(bestMLPC, x_val,Y_val, cfg['targetColName'])
-    return bestMLPC, name, prediction,logs
+     #####  Uncomment to evaluate in test set
+    
+     ### Uncomment to remove coordinates
+    # x_val,Y_val = ms.importDataSet(pathValidationDataset, cfg['targetColName'])
+    # X = x_val.copy()
+    # X.drop(['x_coord','y_coord'], axis=1, inplace
+    
+    # ROC_AUC_multiClass = m.roc_auc_score_calculation(Y_val,y_hat)  ### Apply for binary if needed.
+    # mlpc.logMLPClassifier({'ROC_AUC_multiClass': ROC_AUC_multiClass})
+    # logs = mlpc.get_logsDic()
+    # print(logs)
+    # prediction = ms.makePredictionToImportAsSHP(bestMLPC, x_val,Y_val, cfg['targetColName'])
+    return model, name, logs
 
 @hydra.main(config_path=f"config", config_name="configMLPClassifier.yaml")
 def main(cfg: DictConfig):
-    best_estimator, name, prediction, logs = excecuteMLPClassifier(cfg)
+    best_estimator,name,logs = excecuteMLPClassifier(cfg)
     ms.saveModel(best_estimator,name)
-    predictionName = name + "_prediction_" + cfg['pathTrainingDataset']
-    prediction.to_csv(predictionName, index = True, header=True)  
+    # predictionName = name + "_prediction_" + cfg['pathTrainingDataset']
+    # prediction.to_csv(predictionName, index = True, header=True)  
     logToSave = pd.DataFrame.from_dict(logs, orient='index')
     logToSave.to_csv(name +'.csv',index = True, header=True) 
 

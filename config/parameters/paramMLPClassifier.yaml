@@ -1,4 +1,8 @@
 ### config/parameters/param.yaml  
+epochs : 1000
+lr : 0.001
+testSize : 0.2
+batchSize : 64
 random_state: 50
 hidden_layer_sizes: []
 early_stopping: True
