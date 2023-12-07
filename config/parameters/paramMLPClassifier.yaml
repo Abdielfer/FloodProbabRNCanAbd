@@ -1,12 +1,43 @@
 ### config/parameters/param.yaml  
-epochs : 100
-lr : 0.01
+epochs : 11
 testSize : 0.2
-batchSize : 64
+batchSize : 100
 random_state: 50
 hidden_layer_sizes: []
 early_stopping: True
 verbose: False
-tol: 0.00010
-validation_fraction: 0.1
-warm_start: False
+
+### Training configuration
+init_weight:
+ _partial_: True 
+ _target_: torch.nn.init.normal_
+# torch.nn.init.kaiming_normal_  -->> initWeightParams: {mode:'fan_out', nonlinearity :'leaky_relu'} #Options : nonlinearity :'leaky_relu' or 'relu' 
+  # torch.nn.init.normal_  -->> initWeightParams:{mean:0.0, std : 0.01}
+initWeightParams: [0.0,0.01] # {mean: 0.0, std : 0.01} 
+
+model:
+  _partial_: True 
+  _target_: models.MLP_1
+
+criterion:
+  _partial_: True 
+  _target_: torch.nn.BCELoss
+  reduction : 'mean'
+
+optimizer:
+  _partial_: True 
+  _target_: torch.optim.Adam
+  maximize : False
+  lr: 0.001
+  #weight_decay : 0.1
+
+scheduler:
+ _partial_: True 
+ _target_ : torch.optim.lr_scheduler.LinearLR
+#  optimizer: None
+ start_factor: 1.0
+ end_factor : 0.3
+ total_iters : 10
+
+kFold: False
+n_folds : 5

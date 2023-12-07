@@ -2,6 +2,9 @@
 Aqui vamos a poner 
 todo lo necesario para hacer fincionet RF a ppartir de competition 2
 '''
+import time
+from datetime import datetime
+
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -9,15 +12,18 @@ import matplotlib.pyplot as plt
 import torch
 from torch import nn
 from torch.utils.data import DataLoader, TensorDataset
+import torch.optim.lr_scheduler as lr_scheduler
+from sklearn.model_selection import KFold
 
 from sklearn.model_selection import train_test_split, GridSearchCV
 from sklearn import metrics 
-from sklearn.metrics import roc_auc_score
+from sklearn.metrics import roc_auc_score,accuracy_score
 from sklearn.multiclass import OneVsRestClassifier
 from sklearn.ensemble import RandomForestRegressor, RandomForestClassifier
 from sklearn.neural_network import MLPClassifier
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.preprocessing import StandardScaler
+
 import myServices as ms
 
 class implementRandomForestCalssifier():
@@ -344,109 +350,182 @@ class implementingMLPCalssifier():
         return self.logsDic
 
 class MLPModel:
-    def __init__(self, dataset_path,trainingParams):
-        self.dataset_path = dataset_path
-        self.model = None
+    def __init__(self,model,loss_fn,optimizer,pathTrainingDataset,trainingParams, scheduler = None, initWeightfunc= None, initWeightParams= None, removeCoordinates = True):
+        self.dataset_path = pathTrainingDataset
+        self.model = model
         self.logs = {}
+        self.trainLosses = []
+        self.valLosses = []
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        print(f' The device : {self.device}')
+        self.colsToDrop=['x_coord','y_coord']
+        self.NoCoordinates = removeCoordinates
 
-        self.params = trainingParams
-        self.epochs = self.params['epochs']
-        self.lr = self.params['lr']
-        self.splitProportion = self.params['testSize']
-        self.batchSize = self.params['batchSize']
 
-    def load_data(self):
+        ## Setting Parameters
+        trainingParams
+        self.epochs = trainingParams['epochs']
+        self.splitProportion = trainingParams['testSize']
+        self.batchSize = trainingParams['batchSize']
+        self.criterion = loss_fn()
+        self.initWeightParams = initWeightParams
+        self.initWeightFunc = initWeightfunc  
+        self.optimizer = optimizer
+        if scheduler is not None:
+            self.scheduler = scheduler
+
+    def load_data_asTensors(self):
         # Load the dataset
         data = pd.read_csv(self.dataset_path)
-        
+        labelsName = data.columns[-1]
+        data = None
         # Assuming the last column is the target variable
-        X = data.iloc[:, :-1].values
-        y = data.iloc[:, -1].values
-        listClassCountPercent(y)
+        if self.NoCoordinates:
+            self.X, self.Y = ms.importDataSet(self.dataset_path, labelsName, self.colsToDrop)
+        else: 
+            self.X, self.Y = ms.importDataSet(self.dataset_path, labelsName)
+        # listClassCountPercent(self.Y)
 
         # Split the data into training and test sets
-        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size= self.splitProportion, random_state=42)
+        X_train, X_test, y_train, y_test = train_test_split(self.X.values, self.Y.values, test_size= self.splitProportion, random_state=42)
         printDataBalace(X_train, X_test, y_train, y_test)
 
-        # Standardize the features
-        scaler = StandardScaler()
-        X_train = scaler.fit_transform(X_train)
-        X_test = scaler.transform(X_test)
-        
-        return torch.tensor(X_train, dtype=torch.float), torch.tensor(X_test, dtype=torch.float), torch.tensor(y_train, dtype=torch.long), torch.tensor(y_test, dtype=torch.long)
+        return torch.tensor(X_train, dtype=torch.float), torch.tensor(X_test, dtype=torch.float), torch.tensor(y_train, dtype=torch.float), torch.tensor(y_test, dtype=torch.float)
 
-    def train(self):
-        # Load the data
-        X_train, X_test, y_train, y_test = self.load_data()
-        
+    def setTraining(self):
+        '''
+        Place the necesary information together to set the training.
+        '''
+        # Load the data as tensors
+        X_train, X_test, y_train, y_test = self.load_data_asTensors()
         # Get the input size
         input_size = X_train.shape[1]
+        # Define Models's hidden layer sizes
+        self.model = self.model(input_size)
+        self.optimizer  = self.optimizer(self.model.parameters())
+        print(self.optimizer) 
+        if self.scheduler is not None:
+            self.scheduler = self.scheduler(self.optimizer)
+            self.Sched = True    
         
-        # Define the hidden layer sizes
-        hidden_layer_sizes = [int(1.5*input_size)]*3 + [input_size] + [int(input_size/2)]+[1]
-        
-        # Initialize the MLPClassifier
-        self.model = nn.Sequential(
-            nn.Linear(input_size, hidden_layer_sizes[0]),
-            nn.ReLU(),
-            nn.Linear(hidden_layer_sizes[0], hidden_layer_sizes[1]),
-            nn.ReLU(),
-            nn.Linear(hidden_layer_sizes[1], hidden_layer_sizes[2]),
-            nn.ReLU(),
-            nn.Linear(hidden_layer_sizes[2], hidden_layer_sizes[3]),
-            nn.ReLU(),
-            nn.Linear(hidden_layer_sizes[3], hidden_layer_sizes[4]),
-            nn.ReLU(),
-            nn.Linear(hidden_layer_sizes[4], len(torch.unique(y_train))),
-            nn.ReLU(),
-            nn.Linear(hidden_layer_sizes[5], len(torch.unique(y_train))),
-            nn.Sigmoid(),
-        )
-        
-        # Define the loss function and the optimizer
-        criterion = nn.NLLLoss()
-        optimizer = torch.optim.Adam(self.model.parameters(), lr=self.learning_rate)
-        
-        # Convert the training set into torch tensors
+        ### Init model parameters.
+        if self.initWeightFunc  is not None:
+                init_params(self.model, self.initWeightFunc, *self.initWeightParams) 
+
+        return X_train, y_train, X_test, y_test
+
+    def modelTrainer(self, kFold:bool = False, nSplits:int = 1):
+        if kFold:
+            return self.train_KFold(nSplits)
+        else:
+            X_train, y_train, X_test, y_test = self.setTraining()
+          # Convert the training set into torch tensors
+            return self.train(X_train, y_train,X_test, y_test)
+                       
+    def train(self, X_train, y_train, X_test, y_test)->[nn.Sequential,dict]:
         train_data = TensorDataset(X_train, y_train)
         train_loader = DataLoader(train_data, batch_size=self.batchSize, shuffle=True)
-        
         # Train the model
-        for e in range(self.epochs):
+        startTime = datetime.now()
+        self.model.to(self.device)
+        # print('Model deivice',  next(self.model.parameters()).device)
+        actual_lr = self.optimizer.param_groups[0]["lr"]
+        for e in range(1,self.epochs):
+            loopLoss = []
+            valLoss = []
+            self.model.train()
             for inputs, labels in train_loader:
-                optimizer.zero_grad()
+                inputs = inputs.to(self.device)
+                labels = labels.to(self.device)
+                self.optimizer.zero_grad()
                 log_probs = self.model(inputs)
-                loss = criterion(log_probs, labels)
+                loss = self.criterion(log_probs,labels.unsqueeze(1))
                 loss.backward()
-                optimizer.step()
-
-        # Print the accuracy on the test set
-        with torch.no_grad():
-            output = self.model(X_test)
+                self.optimizer.step()
+                if self.Sched:   
+                    self.scheduler.step()
+                    actual_lr = self.optimizer.param_groups[0]["lr"]
+                loopLoss.append(loss.item())
+            self.trainLosses.append(np.mean(loopLoss))
             threshold = 0.5
-            y_hat = (output > threshold).float()
-            correct = (y_hat == y_test).sum().item()
-            print("Test set accuracy: ", correct / len(y_test))
-            roc_auc_score_calculation(y_test,y_hat)
+            ## Evaluate in the test Set:
+            with torch.no_grad():
+                self.model.eval()
+                inputs, labels = X_test.to(self.device), y_test.to(self.device)
+                output = self.model(inputs)
+                valLoss = self.criterion(output,labels.unsqueeze(1))
+                self.valLosses.append(valLoss.item())
+                y_hat = (output > threshold).float()
+                accScore, macro_averaged_f1, micro_averaged_f1  = computeClassificationMetrics(y_test.cpu(),y_hat.cpu())
+            
+            if e%10 ==0:
+                elapsed_time = datetime.now() - startTime
+                avg_time_per_epoch = elapsed_time.total_seconds() / e
+                remaining_epochs = self.epochs - e
+                estimated_time = remaining_epochs * avg_time_per_epoch
+                print(f"Elapsed Time after {e} epochs : {elapsed_time} ->> Estimated Time to End: {ms.seconds_to_datetime(estimated_time)}",' ->actual loss %.4f' %(self.trainLosses[-1]), '-> actual lr = %.4f' %(actual_lr))
+                print(' -- Last validation metrics: accScore: %.4f '%(accScore), 'macro_averaged_f1 : %.4f'%(macro_averaged_f1), 'micro_averaged_f1 $.4f:' %(micro_averaged_f1))
+              
+        ###  Return the final metrics
+        metrics = {'accScore':accScore, 'macro_averaged_f1' : macro_averaged_f1, 
+                'micro_averaged_f1' : micro_averaged_f1}
+        print(' Final validation metrics: accScore: %.4f '%(accScore), 'macro_averaged_f1 : %.4f'%(macro_averaged_f1), 'micro_averaged_f1 $.4f:' %(micro_averaged_f1))
+        # self.logMLP()
+        return self.model, metrics 
 
-        investigateFeatureImportance(self.model,X_test)
-        self.logMLP()
-        
-        return self.model, self.logs 
+    def train_KFold(self,nSplits):
+        # Define the KFold cross-validator
+        kf = KFold(n_splits=nSplits)
+        # Perform cross-validation
+        for train_index, test_index in kf.split(self.X):
+            X_train, X_test = self.X[train_index], self.X[test_index]
+            y_train, y_test = self.Y[train_index], self.Y[test_index]
+            self.model, metrics = self.train(self, X_train, y_train, X_test, y_test)
+
+        return self.model, metrics
+
+    def plotLosses(self):
+        epochs = range(len(self.trainLosses))
+        plt.figure(figsize=(10,5))
+        plt.plot(epochs, self.trainLosses, 'r-', label='Training loss')
+        plt.plot(epochs, self.valLosses, 'b-', label='Validation loss')
+        plt.title('Training loss vs Epochs')
+        plt.xlabel('Epochs')
+        plt.ylabel('Loss')
+        plt.legend()
+        plt.show()
+
 
     def getModel(self):
         return self.model
     
-    def logMLP(self):
-        '''
-        @newFeatureDic : is a dictionary of features to add
-        '''
-        self.logs['optimizer'] = self.model._optimizer
-        self.logs['activation'] = self.model.activation
-        self.logs['hidden_layer_sizes'] = self.model.hidden_layer_sizes
-        self.logs['n_iter'] = self.model.n_iter_
-        self.logs['lossCurve'] = self.model.loss_curve_
-       
+    def getLosses(self):
+        return self.trainLosses
+
+
+
+#### MODELS List
+class MLP_1(nn.Module):
+    def __init__(self, input_size, num_classes:int = 1):
+        super(MLP_1, self).__init__()
+        self.model = nn.Sequential(
+            nn.Linear(input_size, input_size),
+            nn.ReLU(),
+            nn.Linear(input_size, input_size),
+            nn.ReLU(),
+            nn.Linear(input_size, input_size),
+            nn.ReLU(),
+            nn.Linear(input_size, int(input_size/2)),
+            nn.ReLU(),
+            nn.Linear(int(input_size/2), num_classes),
+            nn.Sigmoid(),
+        )
+
+    def get_weights(self):
+        return self.weight
+    
+    def forward(self,x):
+        return self.model(x)
 
 
 
@@ -455,11 +534,13 @@ def split(x,y,TestPercent = 0.2):
     x_train, x_validation, y_train, y_validation = train_test_split( x,y, test_size=TestPercent)
     return x_train, x_validation, y_train, y_validation 
 
-def printDataBalace(x_train, x_validation, y_train, y_validation, targetCol: str):
+def printDataBalace(x_train, x_validation, y_train, y_validation):
     ## Data shape exploration
     print("",np.shape(x_train),"  :",np.shape(x_validation) )
-    print("Label balance on Training set: ", "\n", y_train[targetCol].value_counts())
-    print("Label balance on Validation set: ", "\n", y_validation[targetCol].value_counts())
+    unique, counts = np.unique(y_train, return_counts=True)
+    print("Label balance on Training set: ", "\n",unique,"\n",counts)
+    unique, counts = np.unique(y_validation, return_counts=True)
+    print("Label balance on Validation set: ","\n",unique,"\n",counts)
 
 def listClassCountPercent(array):
     '''
@@ -488,21 +569,19 @@ def validateWithR2(model, x_test, y_test, dominantValue:float, dominantValuePena
         r2 = metrics.r2_score(y_test, y_hate)
     return r2
 
-def computeClassificationMetrics(model, x_validation, y_validation):
+def computeClassificationMetrics(y_validation,y_hat):
     '''
     Ref: https://www.kaggle.com/code/nkitgupta/evaluation-metrics-for-multi-class-classification/notebook
     '''
-    y_hat = model.predict(x_validation)
     accScore = metrics.accuracy_score(y_validation, y_hat)
     macro_averaged_f1 = metrics.f1_score(y_validation, y_hat, average = 'macro') # Better for multiclass
     micro_averaged_f1 = metrics.f1_score(y_validation, y_hat, average = 'micro')
-    ROC_AUC_multiClass = roc_auc_score_calculation(y_validation,y_hat)
+    # ROC_AUC_multiClass = roc_auc_score_calculation(y_validation,y_hat)
     # print('Accuraci_score: ', accScore)  
     # print('F1_macroAverage: ', macro_averaged_f1)  
     # print('F1_microAverage: ', micro_averaged_f1)
-    print('ROC_AUC one_vs_all: ', ROC_AUC_multiClass)
-    return accScore, macro_averaged_f1, micro_averaged_f1, ROC_AUC_multiClass
-
+    # print('ROC_AUC one_vs_all: ', ROC_AUC_multiClass)
+    return accScore, macro_averaged_f1, micro_averaged_f1 #, ROC_AUC_multiClass
 
 def computeMainErrors(model, x_test, y_test ):
     y_test  = (np.array(y_test).astype('float')).ravel()
@@ -560,7 +639,7 @@ def roc_auc_score_calculation(y_validation, y_hat):
             roc_auc_dict[per_class] = roc_auc
         return roc_auc_dict
 
-def plot_ROC_AUC(classifier, x_test, y_test):
+def plot_ROC_AUC(y_test, y_hat, y_prob):
     '''
     Allows to plot multiclass classification ROC_AUC (One vs Rest), by computing tpr and fpr of each calss respect the rest. 
     The simplest application is the binary classification.
@@ -568,12 +647,10 @@ def plot_ROC_AUC(classifier, x_test, y_test):
     unique_class = y_test.unique()
     unique_class.sort()
     print("UNIQUE CLASSES: ", unique_class)
-    y_hat = classifier.predict(x_test)
     print("Test Set balance:" )
     listClassCountPercent(y_test)
     print("Prediction balance:")
-    listClassCountPercent(y_hat)
-    y_prob = classifier.predict_proba(x_test)   
+    listClassCountPercent(y_hat)  
     fig, axs = plt.subplots(1,figsize=(13,4), sharey=True)
     plt.rcParams.update({'font.size': 14})
     plt.ylabel('True Positive Rate', fontsize=16)
@@ -585,7 +662,7 @@ def plot_ROC_AUC(classifier, x_test, y_test):
             fpr,tpr,thresholds = metrics.roc_curve(y_test, y_prob[:,1], drop_intermediate=False)  ### TODO Results doen't match roc_auc_score..
             print(thresholds)
             roc_auc = roc_auc_score(y_test, y_hat, average = "macro")
-            axs.plot(fpr,tpr,label = "Class "+ str(classifier.classes_[1]) + " AUC : " + format(roc_auc,".4f")) 
+            axs.plot(fpr,tpr,label = "Class "+ unique_class[1] + " AUC : " + format(roc_auc,".4f")) 
             axs.legend()
     else: 
         for per_class in unique_class:  # Multiclass
@@ -661,4 +738,33 @@ def buildInterval(loops,center):
             stepSize = 2
             if center <= 10 : start = 1  
     return np.arange(start,end,stepSize).astype(int)  
-    
+
+def feature_importance_torch(model, dataloader, device):
+    model.eval()
+    feature_importances = []
+
+    for i, (inputs, labels) in enumerate(dataloader):
+        inputs, labels = inputs.to(device), labels.to(device)
+        outputs = model(inputs)
+        _, preds = torch.max(outputs, 1)
+        acc = accuracy_score(labels.cpu(), preds.cpu())
+
+        for j in range(inputs.shape[1]):  # iterate over each feature
+            inputs_clone = inputs.clone()
+            inputs_clone[:, j] = torch.rand_like(inputs_clone[:, j])  # permute feature values
+            outputs = model(inputs_clone)
+            _, preds = torch.max(outputs, 1)
+            acc_permuted = accuracy_score(labels.cpu(), preds.cpu())
+            feature_importances.append(acc - acc_permuted)  # importance is decrease in accuracy
+
+    return feature_importances
+
+def init_params(model, init_func, *params, **kwargs):
+        '''
+        Methode to initialize the model's parameters, according a function <init_func>,
+            and the necessary arguments <*params, **kwargs>. 
+        Change the type of <p> in <if type(p) == torch.nn.Conv2d:> for a different behavior. 
+        '''
+        for p in model.parameters():
+            # if type(p) == (torch.nn.Conv2d or torch.nn.Conv1d) :   # Add a condition as needed. 
+            init_func(p, *params)

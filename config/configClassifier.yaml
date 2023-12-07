@@ -6,7 +6,8 @@ local: /Users/abdielfer/DESS/Internship2022/RNCanWork/FloodProbabRNCanAbd/datase
 pathTrainingDataset: basin3_Training.csv
 pathTestDataset: basin3_Test.csv
 weightPenalty: 0.01
-targetColName: percentage
+targetColName: Labels
+datasetsList : C:\Users\abfernan\CrossCanFloodMapping\FloodMappingProjData\HRDTMByAOI\FullDatasetsList.csv
 
 ### src/config/parameters/paramClassifier.yaml
 # @package _group_

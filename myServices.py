@@ -11,6 +11,9 @@ from sklearn.model_selection import StratifiedShuffleSplit
 from sklearn.metrics import confusion_matrix
 from collections import Counter
 from imblearn.under_sampling import RandomUnderSampler 
+import logging
+import hydra
+from hydra.core.hydra_config import HydraConfig
 
 ### General applications ##
 class timeit(): 
@@ -23,6 +26,11 @@ class timeit():
         self.tic = datetime.now()
     def __exit__(self, *args, **kwargs):
         print('runtime: {}'.format(datetime.now() - self.tic))
+
+def seconds_to_datetime(seconds):
+    hours, remainder = divmod(seconds, 3600)
+    minutes, seconds = divmod(remainder, 60)
+    return f'{hours}:{minutes}:{seconds}'
 
 def makeNameByTime():
     name = time.strftime("%y%m%d%H%M")
@@ -54,10 +62,20 @@ def addSubstringToName(path, subStr: str, destinyPath = None) -> os.path:
     else: 
         return os.path.join(parentPath,(name+subStr+ ext))
 
+def createListFromCSV(csv_file_location: os.path, delim:str =',')->list:  
+    '''
+    @return: list from a <csv_file_location>.
+    Argument:
+    @csv_file_location: full path file location and name.
+    '''       
+    df = pd.read_csv(csv_file_location, index_col= None, header=None, delimiter=delim)
+    out = []
+    for i in range(0,df.shape[0]):
+        out.append(df.iloc[i][0])
+    return out
 
 ## modeling manipulation
-def saveModel(estimator, id):
-    name = id + ".pkl" 
+def saveModel(estimator, name):
     _ = joblib.dump(estimator, name, compress=9)
 
 def loadModel(modelName):
@@ -117,6 +135,30 @@ def removeCoordinatesFromDataSet(dataSet):
       print("DataSet has no coordinates to remove")
     return DSNoCoord
 
+def transformDatasets(cfg):
+    '''
+    This fucntion takes a list of dataset as *csv paths and apply a transformation in loop. You can custom your transformation to cover your needs. 
+    @cfg:DictConfig: The input must be a Hydra configuration lile, containing the key = datasetsList to a csv with the addres of all *.cvs file to process.  
+    '''
+    DatasetsPath = cfg.datasetsList
+    listOfDatsets = createListFromCSV(DatasetsPath)
+    for file in listOfDatsets:
+        X,Y = importDataSet(file, targetCol='Labels')
+        x_dsUndSamp, Y_dsUndSamp = randomUndersampling(X,Y)
+        x_dsUndSamp['Labels'] = Y_dsUndSamp.values
+        NewFile = addSubstringToName(file,'_balanced')
+        x_dsUndSamp.to_csv(NewFile, index=None)
+    pass
+
+def DFOperation_removeNegative(DF:pd.DataFrame,colName):
+    '''
+    NOTE: OPPERATIONS ARE MADE IN PLACE!!!
+    Remove all row index in the collumn <colName> if the value is negative
+    '''
+    DF = DF[DF.colName>=0]
+    return DF
+
+    
 ### Modifying class domain
 def pseudoClassCreation(dataset, conditionVariable, threshold, pseudoClass, targetColumnName):
     '''
@@ -166,23 +208,25 @@ def extractFloodClassForMLP(csvPath):
         Class_5: all class 5.
         Class_1: All classes, since they are inclusive. All class 5 are also class 5. 
     '''
-    df = pd.read_csv(csvPath)
+    df = pd.read_csv(csvPath,index_col = None)
     print(df.head())
+    labelsName = df.columns[-1]
     labels= df.iloc[:,-1]
     uniqueClasses = pd.unique(labels)
     if 1 in uniqueClasses:
-        class1_Col = [1 if i!= 0 else i for i in labels]
-        df['labels'] = class1_Col
-        dfOutput = addSubstringToName(csvPath,'_Class1')
-        df.to_csv(dfOutput)
+        class1_Col = [1 if i!= 0 else 0 for i in labels]
+        df[labelsName] = class1_Col
+        dfOutputC1 = addSubstringToName(csvPath,'_Class1')
+        df.to_csv(dfOutputC1,index=None)
 
     if 5 in uniqueClasses:
-        class5_Col = [5 if i == 5 else 0 for i in labels]
-        df['labels'] = class5_Col
-        dfOutput = addSubstringToName(csvPath,'_Class5')
-        df.to_csv(dfOutput)
+        class5_Col = [1 if i == 5 else 0 for i in labels]
+        df[labelsName] = class5_Col
+        dfOutputC5 = addSubstringToName(csvPath,'_Class5')
+        df.to_csv(dfOutputC5,index=None)
+    
+    return dfOutputC1,dfOutputC5
 
- 
 ### Configurations And file management
 def importConfig():
     with open('./config.txt') as f:
@@ -287,19 +331,32 @@ def splitFilenameAndExtention(file_path):
     name = fpath.stem
     return name, extention 
 
-def importDataSet(dataSetName, targetCol: str):
+def importDataSet(csvPath, targetCol: str, colsToDrop:list=None):
     '''
     Import datasets and return         
-    @input: DataSetName => The dataset path. 
+    @csvPath: DataSetName => The dataset path as *csv file. 
     @Output: Features(x) and tragets(y) 
     ''' 
-    x  = pd.read_csv(dataSetName, index_col = None)
+    x  = pd.read_csv(csvPath, index_col = None)
+    # print(x.columns)
     y = x[targetCol]
     x.drop([targetCol], axis=1, inplace = True)
+    if colsToDrop is not None:
+        # print(x.columns)
+        x.drop(colsToDrop, axis=1, inplace = True)
+        # print(x.columns)
     return x, y
 
+def concatDatasets(datsetList_csv, outPath):
+    outDataSet = pd.DataFrame()
+    for file in datsetList_csv:
+        df = pd.read_csv(file,index_col = None)
+        outDataSet = pd.concat([outDataSet,df], ignore_index=True)
+    outDataSet.to_csv(outPath, index=None)
+    pass
 
- ### Metrics ####  
+
+### Metrics ####  
 def accuracyFromConfusionMatrix(confusion_matrix):
     '''
     Only for binary
@@ -339,61 +396,62 @@ def makePredictionToImportAsSHP(model, x_test, y_test, targetColName):
     return ds_toSHP
 
 
-## From here on NOT READY !!!
-def clipRasterWithPoligon(rastPath, polygonPath,outputPath):
-    '''
-    Clip a raster (*.GTiff) with a single polygon feature 
-    '''
-    os.system("gdalwarp -datnodata -9999 -q -cutline" + polygonPath + " crop_to_cutline" + " -of GTiff" + rastPath + " " + outputPath)
-   
-def separateClippingPolygonss(inPath,field, outPath = "None"):
-    '''
-    Crete individial *.shp for each Clip in individual directories. 
-    @input: 
-       @field: Flield in the input *.shp to chose.
-       @inPath: The path to the original *.shp.
-    '''
-    if outPath != "None":
-        ensureDirectory(outPath)
-        os.mkdir(os.path.join(outPath,"/clipingPolygons"))
-        saveingPath = os.path.join(outPath,"/clipingPolygons") 
-    else: 
-        ensureDirectory(os.path.join(getLocalPath(),"/clipingPolygons"))
-        saveingPath = os.path.join(outPath,"/clipingPolygons")
 
-    driverSHP = ogr.GetDriverByName("ESRI Shapefile")
-    ds = driverSHP.Open(inPath)
-    if ds in None:
-        print("Layer not found")
-        return False
-    lyr = ds.GetLayer()
-    spatialRef = lyr.GetSpatialRef()
-    for feautre in lyr:
-        fieldValue = feautre.GetField(field)
-        os.mkdir(os.path.join(saveingPath,str(fieldValue)))
-        outName = str(fieldValue)+"Clip.shp"
-        outds = driverSHP.CreateDataSorce("clipingPolygons/" + str(fieldValue) + "/" + outName)
-        outLayer = outds.CreateLayer(outName, srs=spatialRef,geo_type = ogr.wkbPolygon)
-        outDfn = outLayer.GetLayerDef()
-        inGeom = feautre.GetGeometryRef()
-        outFeature = ogr.Feature(outDfn)
-        outFeature.SetGeometry(inGeom)
-        outLayer.CreateFeature(outFeature)
-    
-    return True
+##### Logging
 
-def clipRaster(rasterPath,polygonPath,field, outputPath):
-    ''' 
+class logg_Manager:
     '''
-    driverSHP = ogr.GetDriverByName("ESRI Shapefile")
-    ds = driverSHP.Open(polygonPath)
-    if ds in None:
-        print("Layer not found")
-        return False
-    lyr = ds.GetLayer()
-    spatialRef = lyr.GetSpatialRef()
-    for feautre in lyr:
-        fieldValue = feautre.GetField(field)
-        clipRasterWithPoligon(rasterPath, polygonPath, outputPath)
-    return True
+    This class creates a logger object that writes logs to both a file and the console. 
+    @log_name: lLog_name. Logged at the info level by default.
+    @log_dict: Dictionary, Set the <attributes> with <values> in the dictionary. 
+    The logger can be customized by modifying the logger.setLevel and formatter attributes.
+
+    The update_logs method takes a dictionary as input and updates the attributes of the class to the values in the dictionary. The method also takes an optional level argument that determines the severity level of the log message. 
+    '''
+    def __init__(self,log_dict:dict=None):# log_name, 
+        self.HydraOutputDir = hydra.core.hydra_config.HydraConfig.get()['runtime']['output_dir']  
+        self.logger = logging.getLogger(HydraConfig.get().job.name)
+        logerName = self.logger.name
+        # Log some messages
+        # logpath = os.path.join(self.HydraOutputDir,logerName)
+        # self.logger.setLevel(logging.INFO)  ## Default Level
+        # self.formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+        # self.file_handler = logging.FileHandler(logpath)
+        # self.file_handler.setLevel(logging.DEBUG)
+        # self.file_handler.setFormatter(self.formatter)
+        # self.stream_handler = logging.StreamHandler()
+        # self.stream_handler.setLevel(logging.ERROR)
+        # self.stream_handler.setFormatter(self.formatter)
+        # self.logger.addHandler(self.file_handler)
+        # self.logger.addHandler(self.stream_handler)
+        
+        ### Fill the logger at creation with a dictionary.
+        if log_dict is not None:
+            for key, value in log_dict.items():
+                setattr(self, key, value)
+                self.logger.info(f'{key} - {value}')
+        
+    def update_logs(self, log_dict, level=None):
+        for key, value in log_dict.items():
+            setattr(self, key, value)
+            if level == logging.DEBUG:
+                self.logger.debug(f'{key} - {value}')
+            elif level == logging.WARNING:
+                self.logger.warning(f'{key} - {value}')
+            elif level == logging.ERROR:
+                self.logger.error(f'{key} - {value}')
+            else:
+                self.logger.info(f'{key} - {value}')
     
+    # def saveLogsAsTxt(self):
+    #     '''
+    #     Save the hydra default logger as txt file. 
+    #     '''
+    #     # Create a file handler
+    #     handler = logging.FileHandler(self.HydraOutputDir + self.logger.name + '.txt')
+    #     # Set the logging format
+    #     formatter = logging.Formatter('%(name)s - %(message)s')
+    #     handler.setFormatter(formatter)
+    #     # Add the file handler to the logger
+    #     self.logger.addHandler(handler)
+
