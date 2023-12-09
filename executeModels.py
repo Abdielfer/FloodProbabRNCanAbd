@@ -6,9 +6,9 @@ import hydra
 from hydra.utils import instantiate
 
 from omegaconf import DictConfig,OmegaConf
-import logging
+# import logging
 
-def excecuteMLPClassifier(cfg: DictConfig):
+def excecuteMLPClassifier(cfg: DictConfig,logManager:ms.logg_Manager):
     modelName = ms.makeNameByTime()
     pathTrainingDataset = cfg.externalBaseLocation + cfg['pathTrainingDataset']
     initWeightFunc = instantiate(OmegaConf.create(cfg.parameters['init_weight']))
@@ -23,7 +23,7 @@ def excecuteMLPClassifier(cfg: DictConfig):
     schedulOptions = OmegaConf.create(cfg.parameters['scheduler'])
     scheduler = instantiate(schedulOptions)
     #model,loss_fn,optimizer,pathTrainingDataset,trainingParams, scheduler = None, initWeightfunc= None, initWeightParams= None, removeCoordinates = True
-    mlpc = m.MLPModel(model,loss_fn,optimizer,pathTrainingDataset,trainingParams,scheduler=scheduler,initWeightfunc=initWeightFunc, initWeightParams= initWeightParams)
+    mlpc = m.MLPModel(model,modelName, loss_fn,optimizer,pathTrainingDataset,trainingParams,scheduler=scheduler,initWeightfunc=initWeightFunc, initWeightParams= initWeightParams,logger=logManager)
     kFold = cfg.parameters['kFold']
     if kFold:
         nSplits = cfg.parameters['n_folds']
@@ -34,18 +34,14 @@ def excecuteMLPClassifier(cfg: DictConfig):
     #  logs = mlpc.get_logsDic()
     # print(logs)
     # prediction = ms.makePredictionToImportAsSHP(bestMLPC, x_val,Y_val, cfg['targetColName'])
-    return model, modelName, metrics #, logs
+    return model, metrics #, logs
 
 @hydra.main(version_base=None,config_path=f"config", config_name="configMLPClassifier.yaml")
 def main(cfg: DictConfig):
     #### Set Logging
     logManager = ms.logg_Manager()
     ## Training 
-    model,modelName, metrics = excecuteMLPClassifier(cfg)
-    logManager.update_logs({'model name': modelName})
-    logManager.update_logs(metrics)
-    modelMameToSave = cfg.modelsFolder + modelName + '.pkl'
-    ms.saveModel(model,modelMameToSave)
+    model,_ = excecuteMLPClassifier(cfg,logManager)
 
     # # predictionName = name + "_prediction_" + cfg['pathTrainingDataset']
     # prediction.to_csv(predictionName, index = True, header=True)  

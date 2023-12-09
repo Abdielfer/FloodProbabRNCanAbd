@@ -1,11 +1,13 @@
 ### config/parameters/param.yaml  
-epochs : 11
+epochs : 250
 testSize : 0.2
 batchSize : 100
 random_state: 50
 hidden_layer_sizes: []
 early_stopping: True
 verbose: False
+modelsFolder : C:\Users\abfernan\CrossCanFloodMapping\FloodMappingProjData\HRDTMByAOI\MLP_Models\
+colsToDrop : ['x_coord','y_coord']
 
 ### Training configuration
 init_weight:
@@ -28,16 +30,20 @@ optimizer:
   _partial_: True 
   _target_: torch.optim.Adam
   maximize : False
-  lr: 0.001
+  lr: 0.005
   #weight_decay : 0.1
 
 scheduler:
  _partial_: True 
- _target_ : torch.optim.lr_scheduler.LinearLR
-#  optimizer: None
- start_factor: 1.0
- end_factor : 0.3
- total_iters : 10
+ _target_ : torch.optim.lr_scheduler.ReduceLROnPlateau
+ mode : min
+ patience : 10
+ factor : 0.6
+ threshold : 0.001
 
-kFold: False
+# scheduler = lr_scheduler.LinearLR(optimizer,start_factor: 1.0, end_factor : 0.3, total_iters : 10)
+# scheduler = lr_scheduler.StepLR(optimizer, step_size=30, gamma=0.1)
+# scheduler = lr_scheduler.ReduceLROnPlateau(optimizer, 'min', patience=10)
+
+kFold: True
 n_folds : 5

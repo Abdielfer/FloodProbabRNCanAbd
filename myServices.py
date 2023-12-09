@@ -331,7 +331,7 @@ def splitFilenameAndExtention(file_path):
     name = fpath.stem
     return name, extention 
 
-def importDataSet(csvPath, targetCol: str, colsToDrop:list=None):
+def importDataSet(csvPath, targetCol: str, colsToDrop:list=None)->pd.DataFrame:
     '''
     Import datasets and return         
     @csvPath: DataSetName => The dataset path as *csv file. 
@@ -394,7 +394,6 @@ def makePredictionToImportAsSHP(model, x_test, y_test, targetColName):
     ds_toSHP['y_coord'] = sampleCoordinates['y_coord']
     ds_toSHP['prediction'] = y_hay
     return ds_toSHP
-
 
 
 ##### Logging

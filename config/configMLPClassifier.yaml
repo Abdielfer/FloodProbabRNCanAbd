@@ -5,14 +5,13 @@ defaults:
 
 local: C:\Users\abfernan\CrossCanFloodMapping\FloodProbabRNCanAbd\datasets\
 pathTrainingDataset: FullDatasets_Clean_Class5_Balance.csv
-pathTestDataset: MLPBinary_basin5_Test.csv
+pathTestDataset: MLPBinary_basin1_Test.csv
 clasOfInterest: Metric  # write 'Metric' if binary or class_# if multiclass
 # weightPenalty: 0.01
 targetColName: Labels
 # firstInterval: 'list(np.arange(50,1001,10))' #'[280]' 
 loops: 2
 externalBaseLocation : C:\Users\abfernan\CrossCanFloodMapping\FloodMappingProjData\HRDTMByAOI\
-modelsFolder : C:\Users\abfernan\CrossCanFloodMapping\FloodMappingProjData\HRDTMByAOI\MLP_Models\
 datasetsList : C:\Users\abfernan\CrossCanFloodMapping\FloodMappingProjData\HRDTMByAOI\FullDatasetsList.csv
 
 ### src/config/parameters/paramMLPClassifier.yaml

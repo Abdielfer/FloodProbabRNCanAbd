@@ -350,86 +350,115 @@ class implementingMLPCalssifier():
         return self.logsDic
 
 class MLPModel:
-    def __init__(self,model,loss_fn,optimizer,pathTrainingDataset,trainingParams, scheduler = None, initWeightfunc= None, initWeightParams= None, removeCoordinates = True):
+    def __init__(self,model,modelName,loss_fn,optimizer,pathTrainingDataset,trainingParams, scheduler = None, initWeightfunc= None, initWeightParams= None, removeCoordinates = True, logger:ms.logg_Manager = None):
         self.dataset_path = pathTrainingDataset
         self.model = model
-        self.logs = {}
-        self.trainLosses = []
-        self.valLosses = []
+        self.modelName = modelName
+        self.logger = logger
+        self.logger.update_logs({'model name': modelName})
+
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         print(f' The device : {self.device}')
-        self.colsToDrop=['x_coord','y_coord']
         self.NoCoordinates = removeCoordinates
-
-
+        self.colsToDrop = trainingParams['colsToDrop']
+        
+        ### Load Dataset
+        # Read Labels names
+        self.logger.update_logs({'Data Set': self.dataset_path})
+        data = pd.read_csv(self.dataset_path)
+        labelsName = data.columns[-1]
+        data = None
+        ## Load Dataset
+        self.load_Dataset(labelsName)
+        
         ## Setting Parameters
-        trainingParams
         self.epochs = trainingParams['epochs']
         self.splitProportion = trainingParams['testSize']
         self.batchSize = trainingParams['batchSize']
+        self.saveModelFolder = trainingParams['modelsFolder']
         self.criterion = loss_fn()
         self.initWeightParams = initWeightParams
         self.initWeightFunc = initWeightfunc  
         self.optimizer = optimizer
+        self.optimiserInitialState = optimizer
         if scheduler is not None:
             self.scheduler = scheduler
+            self.schedulerInitialState = scheduler
+        ## Define training values
+        self.presetting_Training(self.X)
 
-    def load_data_asTensors(self):
-        # Load the dataset
-        data = pd.read_csv(self.dataset_path)
-        labelsName = data.columns[-1]
-        data = None
-        # Assuming the last column is the target variable
-        if self.NoCoordinates:
-            self.X, self.Y = ms.importDataSet(self.dataset_path, labelsName, self.colsToDrop)
-        else: 
-            self.X, self.Y = ms.importDataSet(self.dataset_path, labelsName)
-        # listClassCountPercent(self.Y)
-
+    def splitData_asTensor(self):
         # Split the data into training and test sets
         X_train, X_test, y_train, y_test = train_test_split(self.X.values, self.Y.values, test_size= self.splitProportion, random_state=42)
         printDataBalace(X_train, X_test, y_train, y_test)
-
         return torch.tensor(X_train, dtype=torch.float), torch.tensor(X_test, dtype=torch.float), torch.tensor(y_train, dtype=torch.float), torch.tensor(y_test, dtype=torch.float)
 
-    def setTraining(self):
+    def load_Dataset(self,labels):
+        if self.NoCoordinates:
+            self.X, self.Y = ms.importDataSet(self.dataset_path, labels, self.colsToDrop)
+        else: 
+            self.X, self.Y = ms.importDataSet(self.dataset_path, labels)
+
+    def read_split_as_tensor(self, X_train, y_train, X_test,y_test):
+        return torch.tensor(X_train.values, dtype=torch.float), torch.tensor(X_test.values, dtype=torch.float), torch.tensor(y_train.values, dtype=torch.float), torch.tensor(y_test.values, dtype=torch.float)
+        
+    def presetting_Training(self,X_train):
         '''
         Place the necesary information together to set the training.
         '''
-        # Load the data as tensors
-        X_train, X_test, y_train, y_test = self.load_data_asTensors()
-        # Get the input size
         input_size = X_train.shape[1]
         # Define Models's hidden layer sizes
         self.model = self.model(input_size)
+        ### Define Optimizer and scheduler
         self.optimizer  = self.optimizer(self.model.parameters())
-        print(self.optimizer) 
         if self.scheduler is not None:
             self.scheduler = self.scheduler(self.optimizer)
             self.Sched = True    
-        
         ### Init model parameters.
         if self.initWeightFunc  is not None:
                 init_params(self.model, self.initWeightFunc, *self.initWeightParams) 
+        pass
 
-        return X_train, y_train, X_test, y_test
+    def resetTraining(self):
+        #Reset Model params
+        for layer in self.model.children():
+            if hasattr(layer, 'reset_parameters'):
+                layer.reset_parameters()
+        ## Reset optimizer
+        self.optimizer  = self.optimiserInitialState
+        self.optimizer = self.optimizer(self.model.parameters())
+        if self.Sched:
+            self.scheduler = self.schedulerInitialState
+            self.scheduler = self.scheduler(self.optimizer)
 
     def modelTrainer(self, kFold:bool = False, nSplits:int = 1):
         if kFold:
+            self.logger.update_logs({'training Mode': 'KFold'})
+            self.logger.update_logs({'N Folding': nSplits})
             return self.train_KFold(nSplits)
         else:
-            X_train, y_train, X_test, y_test = self.setTraining()
+            self.logger.update_logs({'training Mode': 'Single train'})
+            X_train, X_test, y_train, y_test = self.splitData_asTensor()
           # Convert the training set into torch tensors
-            return self.train(X_train, y_train,X_test, y_test)
-                       
-    def train(self, X_train, y_train, X_test, y_test)->[nn.Sequential,dict]:
+            self.model, trainMetrics =  self.train(X_train,X_test,y_train, y_test)
+            modelName = str(self.modelName +'.pkl')
+            model_Path = self.saveModelFolder + modelName
+            self.logger.update_logs({'model Name': modelName})
+            self.logger.update_logs({'metric': metrics})
+            ms.saveModel(self.model,model_Path)
+            return self.model, trainMetrics
+
+    def train(self, X_train,X_test, y_train, y_test)->[nn.Sequential,dict]:
         train_data = TensorDataset(X_train, y_train)
         train_loader = DataLoader(train_data, batch_size=self.batchSize, shuffle=True)
         # Train the model
         startTime = datetime.now()
         self.model.to(self.device)
+        self.trainLosses = []
+        self.valLosses = []
         # print('Model deivice',  next(self.model.parameters()).device)
         actual_lr = self.optimizer.param_groups[0]["lr"]
+        print(f"Initial Lr : {actual_lr}")
         for e in range(1,self.epochs):
             loopLoss = []
             valLoss = []
@@ -442,9 +471,6 @@ class MLPModel:
                 loss = self.criterion(log_probs,labels.unsqueeze(1))
                 loss.backward()
                 self.optimizer.step()
-                if self.Sched:   
-                    self.scheduler.step()
-                    actual_lr = self.optimizer.param_groups[0]["lr"]
                 loopLoss.append(loss.item())
             self.trainLosses.append(np.mean(loopLoss))
             threshold = 0.5
@@ -464,24 +490,36 @@ class MLPModel:
                 remaining_epochs = self.epochs - e
                 estimated_time = remaining_epochs * avg_time_per_epoch
                 print(f"Elapsed Time after {e} epochs : {elapsed_time} ->> Estimated Time to End: {ms.seconds_to_datetime(estimated_time)}",' ->actual loss %.4f' %(self.trainLosses[-1]), '-> actual lr = %.4f' %(actual_lr))
-                print(' -- Last validation metrics: accScore: %.4f '%(accScore), 'macro_averaged_f1 : %.4f'%(macro_averaged_f1), 'micro_averaged_f1 $.4f:' %(micro_averaged_f1))
-              
+                print('            validation metrics: accScore: %.4f '%(accScore), 'macro_averaged_f1 : %.4f'%(macro_averaged_f1), 'micro_averaged_f1: %.4f' %(micro_averaged_f1))
+            if self.Sched:   
+                self.scheduler.step(loss.item())
+                actual_lr = self.optimizer.param_groups[0]["lr"]      
         ###  Return the final metrics
         metrics = {'accScore':accScore, 'macro_averaged_f1' : macro_averaged_f1, 
                 'micro_averaged_f1' : micro_averaged_f1}
-        print(' Final validation metrics: accScore: %.4f '%(accScore), 'macro_averaged_f1 : %.4f'%(macro_averaged_f1), 'micro_averaged_f1 $.4f:' %(micro_averaged_f1))
+        print('Final validation metrics: accScore: %.4f '%(accScore), 'macro_averaged_f1 : %.4f'%(macro_averaged_f1), 'micro_averaged_f1: %.4f' %(micro_averaged_f1))
         # self.logMLP()
+        self.logger.update_logs({'metric': metrics})
         return self.model, metrics 
 
     def train_KFold(self,nSplits):
         # Define the KFold cross-validator
         kf = KFold(n_splits=nSplits)
+        kf_iter = 1
         # Perform cross-validation
         for train_index, test_index in kf.split(self.X):
-            X_train, X_test = self.X[train_index], self.X[test_index]
+            X_train, X_test = self.X.loc[train_index], self.X.loc[test_index]
             y_train, y_test = self.Y[train_index], self.Y[test_index]
-            self.model, metrics = self.train(self, X_train, y_train, X_test, y_test)
-
+            X_train, y_train, X_test, y_test = self.read_split_as_tensor(X_train, y_train,X_test,y_test) 
+            self.model, metrics = self.train(X_train, y_train, X_test, y_test)
+            modelName = str(self.modelName + '_' + str(kf_iter) + '.pkl')
+            model_Path = self.saveModelFolder + modelName
+            self.logger.update_logs({'model Name': modelName})
+            self.logger.update_logs({'Fold number': kf_iter})
+            self.logger.update_logs({'metric': metrics})
+            ms.saveModel(self.model,model_Path)
+            self.resetTraining() 
+            kf_iter +=1   
         return self.model, metrics
 
     def plotLosses(self):
@@ -494,7 +532,6 @@ class MLPModel:
         plt.ylabel('Loss')
         plt.legend()
         plt.show()
-
 
     def getModel(self):
         return self.model
