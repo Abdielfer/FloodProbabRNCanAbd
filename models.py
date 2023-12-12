@@ -312,7 +312,6 @@ class implementingMLPCalssifier():
         self.logsDic['n_iter'] = self.mlpClassifier.n_iter_
         self.logsDic['lossCurve'] = self.mlpClassifier.loss_curve_
         
-     
     def plotLossBehaviour(self):
         lossList = self.mlpClassifier.loss_curve_
         epochs = np.arange(1,self.mlpClassifier.n_iter_+1)
@@ -349,14 +348,28 @@ class implementingMLPCalssifier():
     def get_logsDic(self):
         return self.logsDic
 
-class MLPModel:
-    def __init__(self,model,modelName,loss_fn,optimizer,pathTrainingDataset,trainingParams, scheduler = None, initWeightfunc= None, initWeightParams= None, removeCoordinates = True, logger:ms.logg_Manager = None):
-        self.dataset_path = pathTrainingDataset
+class MLPModelTrainCycle:
+    def __init__(self,
+                 model,
+                 modelName,
+                 loss_fn,
+                 optimizer,
+                 labels,
+                 pathTrainingDSet,
+                 trainingParams, 
+                 pathValidationDSet = None,
+                 scheduler = None, 
+                 initWeightfunc= None, 
+                 initWeightParams= None, 
+                 removeCoordinates = True, 
+                 logger:ms.logg_Manager = None):
+        
+        self.train_dataset_path = pathTrainingDSet
+        self.validation_dataset_path = pathValidationDSet
         self.model = model
         self.modelName = modelName
         self.logger = logger
-        self.logger.update_logs({'model name': modelName})
-
+        
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         print(f' The device : {self.device}')
         self.NoCoordinates = removeCoordinates
@@ -364,15 +377,15 @@ class MLPModel:
         
         ### Load Dataset
         # Read Labels names
-        self.logger.update_logs({'Data Set': self.dataset_path})
-        data = pd.read_csv(self.dataset_path)
-        labelsName = data.columns[-1]
-        data = None
-        ## Load Dataset
-        self.load_Dataset(labelsName)
+        self.logger.update_logs({'Data Set': self.train_dataset_path})
+        self.labels = labels
+        ## Load Training Dataset
+        self.X, self.Y = self.load_Dataset(self.labels, self.train_dataset_path)
         
         ## Setting Parameters
         self.epochs = trainingParams['epochs']
+        self.logger.update_logs({'Epochs': self.epochs})
+
         self.splitProportion = trainingParams['testSize']
         self.batchSize = trainingParams['batchSize']
         self.saveModelFolder = trainingParams['modelsFolder']
@@ -387,17 +400,18 @@ class MLPModel:
         ## Define training values
         self.presetting_Training(self.X)
 
-    def splitData_asTensor(self):
+    def splitData_asTensor(self,X,Y):
         # Split the data into training and test sets
-        X_train, X_test, y_train, y_test = train_test_split(self.X.values, self.Y.values, test_size= self.splitProportion, random_state=42)
+        X_train, X_test, y_train, y_test = train_test_split(X.values, Y.values, test_size= self.splitProportion, random_state=42)
         printDataBalace(X_train, X_test, y_train, y_test)
         return torch.tensor(X_train, dtype=torch.float), torch.tensor(X_test, dtype=torch.float), torch.tensor(y_train, dtype=torch.float), torch.tensor(y_test, dtype=torch.float)
 
-    def load_Dataset(self,labels):
+    def load_Dataset(self,labels,dataset):
         if self.NoCoordinates:
-            self.X, self.Y = ms.importDataSet(self.dataset_path, labels, self.colsToDrop)
+            X, Y = ms.importDataSet(dataset, labels, self.colsToDrop)
         else: 
-            self.X, self.Y = ms.importDataSet(self.dataset_path, labels)
+            X, Y = ms.importDataSet(dataset, labels)
+        return X, Y
 
     def read_split_as_tensor(self, X_train, y_train, X_test,y_test):
         return torch.tensor(X_train.values, dtype=torch.float), torch.tensor(X_test.values, dtype=torch.float), torch.tensor(y_train.values, dtype=torch.float), torch.tensor(y_test.values, dtype=torch.float)
@@ -420,7 +434,7 @@ class MLPModel:
         pass
 
     def resetTraining(self):
-        #Reset Model params
+        #Reset Model params to run in loop the K-fold validation.
         for layer in self.model.children():
             if hasattr(layer, 'reset_parameters'):
                 layer.reset_parameters()
@@ -438,13 +452,19 @@ class MLPModel:
             return self.train_KFold(nSplits)
         else:
             self.logger.update_logs({'training Mode': 'Single train'})
-            X_train, X_test, y_train, y_test = self.splitData_asTensor()
+            if self.validation_dataset_path is None:
+                X_train, X_test, y_train, y_test = self.splitData_asTensor(self.X,self.Y)
+            else:
+                X_val, y_val = self.load_Dataset(self.labels,self.validation_dataset_path)
+                X_train,X_test,y_train,y_test = self.read_split_as_tensor(self.X,self.Y,X_val, y_val)
+                self.logger.update_logs({'Testing on Validation Dataset': self.validation_dataset_path})
+          
           # Convert the training set into torch tensors
             self.model, trainMetrics =  self.train(X_train,X_test,y_train, y_test)
             modelName = str(self.modelName +'.pkl')
             model_Path = self.saveModelFolder + modelName
             self.logger.update_logs({'model Name': modelName})
-            self.logger.update_logs({'metric': metrics})
+            self.logger.update_logs({'metric': trainMetrics})
             ms.saveModel(self.model,model_Path)
             return self.model, trainMetrics
 
@@ -489,17 +509,17 @@ class MLPModel:
                 avg_time_per_epoch = elapsed_time.total_seconds() / e
                 remaining_epochs = self.epochs - e
                 estimated_time = remaining_epochs * avg_time_per_epoch
-                print(f"Elapsed Time after {e} epochs : {elapsed_time} ->> Estimated Time to End: {ms.seconds_to_datetime(estimated_time)}",' ->actual loss %.4f' %(self.trainLosses[-1]), '-> actual lr = %.4f' %(actual_lr))
-                print('            validation metrics: accScore: %.4f '%(accScore), 'macro_averaged_f1 : %.4f'%(macro_averaged_f1), 'micro_averaged_f1: %.4f' %(micro_averaged_f1))
+                print(f"Elapsed Time after {e} epochs : {elapsed_time} ->> Estimated Time to End: {ms.seconds_to_datetime(estimated_time)}",' ->actual loss %.4f' %(self.trainLosses[-1]), '-> actual lr = %.6f' %(actual_lr))
+                print('            Train metrics: accScore: %.4f '%(accScore), 'macro_averaged_f1 : %.4f'%(macro_averaged_f1), 'micro_averaged_f1: %.4f' %(micro_averaged_f1))
             if self.Sched:   
                 self.scheduler.step(loss.item())
                 actual_lr = self.optimizer.param_groups[0]["lr"]      
         ###  Return the final metrics
         metrics = {'accScore':accScore, 'macro_averaged_f1' : macro_averaged_f1, 
                 'micro_averaged_f1' : micro_averaged_f1}
-        print('Final validation metrics: accScore: %.4f '%(accScore), 'macro_averaged_f1 : %.4f'%(macro_averaged_f1), 'micro_averaged_f1: %.4f' %(micro_averaged_f1))
+        print('Final train metrics: accScore: %.4f '%(accScore), 'macro_averaged_f1 : %.4f'%(macro_averaged_f1), 'micro_averaged_f1: %.4f' %(micro_averaged_f1))
         # self.logMLP()
-        self.logger.update_logs({'metric': metrics})
+        self.logger.update_logs({'Train metric': metrics})
         return self.model, metrics 
 
     def train_KFold(self,nSplits):
@@ -516,11 +536,33 @@ class MLPModel:
             model_Path = self.saveModelFolder + modelName
             self.logger.update_logs({'model Name': modelName})
             self.logger.update_logs({'Fold number': kf_iter})
-            self.logger.update_logs({'metric': metrics})
+            self.logger.update_logs({'Train metric': metrics})
             ms.saveModel(self.model,model_Path)
             self.resetTraining() 
             kf_iter +=1   
         return self.model, metrics
+
+
+
+    def avaluateModel(self, model = None):
+        threshold = 0.5
+        X_val,Y_val = self.load_Dataset(self.labels,self.validation_dataset_path)
+        if model is None:
+            valModel = self.model
+        else: 
+            valModel = model
+        with torch.no_grad():
+            valModel.eval()
+            inputs, labels = X_val.to(self.device), Y_val.to(self.device)
+            output = valModel(inputs)
+            valLoss = self.criterion(output,labels.unsqueeze(1))
+            self.valLosses.append(valLoss.item())
+            y_hat = (output > threshold).float()
+            accScore, macro_averaged_f1, micro_averaged_f1  = computeClassificationMetrics(Y_val.cpu(),y_hat.cpu())
+            metrics = {'accScore':accScore, 'macro_averaged_f1' : macro_averaged_f1, 
+                'micro_averaged_f1' : micro_averaged_f1}
+            self.logger.update_logs({'Validation metric': metrics})
+
 
     def plotLosses(self):
         epochs = range(len(self.trainLosses))
@@ -531,14 +573,17 @@ class MLPModel:
         plt.xlabel('Epochs')
         plt.ylabel('Loss')
         plt.legend()
+        figName = str(self.modelName +'_losses.png')
+        model_Path = self.saveModelFolder + figName
+        plt.savefig(model_Path)
         plt.show()
+
 
     def getModel(self):
         return self.model
     
     def getLosses(self):
         return self.trainLosses
-
 
 
 #### MODELS List
@@ -564,7 +609,27 @@ class MLP_1(nn.Module):
     def forward(self,x):
         return self.model(x)
 
+class MLP_2(nn.Module):
+    def __init__(self, input_size, num_classes:int = 1):
+        super(MLP_2, self).__init__()
+        self.model = nn.Sequential(
+            nn.Linear(input_size, input_size),
+            nn.LeakyReLU(),
+            nn.Linear(input_size, input_size),
+            nn.LeakyReLU(),
+            nn.Linear(input_size, input_size),
+            nn.LeakyReLU(),
+            nn.Linear(input_size, int(input_size/2)),
+            nn.LeakyReLU(),
+            nn.Linear(int(input_size/2), num_classes),
+            nn.Sigmoid(),
+        )
 
+    def get_weights(self):
+        return self.weight
+    
+    def forward(self,x):
+        return self.model(x)
 
 ### Helper functions
 def split(x,y,TestPercent = 0.2):

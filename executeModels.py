@@ -1,35 +1,60 @@
-import pandas as pd
+
 import myServices as ms
 import models as m
 
 import hydra
 from hydra.utils import instantiate
-
 from omegaconf import DictConfig,OmegaConf
-# import logging
+
 
 def excecuteMLPClassifier(cfg: DictConfig,logManager:ms.logg_Manager):
+    ''' 
+    model, modelName, loss_fn,optimizer, labels, pathTrainingDSet,trainingParams, pathValidationDSet = None,scheduler = None, initWeightfunc= None, initWeightParams= None, removeCoordinates = True,logger:ms.logg_Manager = None)
+    '''
+    # MOdel
+    modelChoice = OmegaConf.create(cfg.parameters['model'])
+    model = instantiate(modelChoice)
     modelName = ms.makeNameByTime()
-    pathTrainingDataset = cfg.externalBaseLocation + cfg['pathTrainingDataset']
+    logManager.update_logs({'model name': modelName})    
+    
+    # Loss
+    loss = OmegaConf.create(cfg.parameters['criterion'])
+    loss_fn = instantiate(loss)
+    logManager.update_logs({'loss function': loss})   
+    
+    # Optimizer & Scheduler
+    optimizerOptions = OmegaConf.create(cfg.parameters['optimizer'])
+    optimizer = instantiate(optimizerOptions)
+    logManager.update_logs({'optimizer': optimizerOptions})   
+    
+    schedulOptions = OmegaConf.create(cfg.parameters['scheduler'])
+    scheduler = instantiate(schedulOptions)
+    logManager.update_logs({'schedule': schedulOptions})   
+    
+    # Labels
+    Labels = cfg['targetColName']
+
+    # Datasets
+    pathTrainingDataset = cfg.datasetFolder  + cfg['trainingDataset']
+    pathValidationDataset = cfg.datasetFolder  + cfg['validationDataset']
+    
+    # Parameter initialization
     initWeightFunc = instantiate(OmegaConf.create(cfg.parameters['init_weight']))
     initWeightParams = cfg.parameters['initWeightParams']
     trainingParams = cfg['parameters']  
-    modelChoice = OmegaConf.create(cfg.parameters['model'])
-    model = instantiate(modelChoice)
-    loss = OmegaConf.create(cfg.parameters['criterion'])
-    loss_fn = instantiate(loss)
-    optimizerOptions = OmegaConf.create(cfg.parameters['optimizer'])
-    optimizer = instantiate(optimizerOptions)
-    schedulOptions = OmegaConf.create(cfg.parameters['scheduler'])
-    scheduler = instantiate(schedulOptions)
-    #model,loss_fn,optimizer,pathTrainingDataset,trainingParams, scheduler = None, initWeightfunc= None, initWeightParams= None, removeCoordinates = True
-    mlpc = m.MLPModel(model,modelName, loss_fn,optimizer,pathTrainingDataset,trainingParams,scheduler=scheduler,initWeightfunc=initWeightFunc, initWeightParams= initWeightParams,logger=logManager)
+    
+    # Modeling tool instanciate
+    mlpc = m.MLPModelTrainCycle(model,modelName,loss_fn,optimizer,Labels,pathTrainingDataset,trainingParams,pathValidationDataset,scheduler=scheduler,initWeightfunc=initWeightFunc, initWeightParams= initWeightParams,logger=logManager)
+    
+    ## Excecute Training 
     kFold = cfg.parameters['kFold']
     if kFold:
         nSplits = cfg.parameters['n_folds']
         model,metrics = mlpc.modelTrainer(kFold=True,nSplits=nSplits)
     else:
         model,metrics = mlpc.modelTrainer()
+    
+    # Plot Losses
     mlpc.plotLosses()
     #  logs = mlpc.get_logsDic()
     # print(logs)
@@ -69,7 +94,7 @@ if __name__ == "__main__":
     # DF = pd.read_csv(out,index_col=None)
     # DF = DF[DF.Cilp>=0]
     # print(DF.describe())
-    # DF.to_csv(outClean, index=None)
+    # DF.to_csv(outClean, index=None)456+
 
     # ### Divide dataset by classes
     # csvClass1, csvClass5 = ms.extractFloodClassForMLP(outClean)

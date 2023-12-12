@@ -101,7 +101,32 @@ def createWeightVector(y_vector, dominantValue:float, dominantValuePenalty:float
     return weightVec
 
 ####  Sampling manipulation
-def stratifiedSampling(dataSetName, targetColName):
+
+def importDataSet(csvPath, targetCol: str, colsToDrop:list=None)->pd.DataFrame:
+    '''
+    Import datasets and return         
+    @csvPath: DataSetName => The dataset path as *csv file. 
+    @Output: Features(x) and tragets(y) 
+    ''' 
+    x  = pd.read_csv(csvPath, index_col = None)
+    # print(x.columns)
+    y = x[targetCol]
+    x.drop([targetCol], axis=1, inplace = True)
+    if colsToDrop is not None:
+        print(x.columns)
+        x.drop(colsToDrop, axis=1, inplace = True)
+        # print(x.columns)
+    return x, y
+
+def concatDatasets(datsetList_csv, outPath):
+    outDataSet = pd.DataFrame()
+    for file in datsetList_csv:
+        df = pd.read_csv(file,index_col = None)
+        outDataSet = pd.concat([outDataSet,df], ignore_index=True)
+    outDataSet.to_csv(outPath, index=None)
+    pass
+
+def stratifiedSplit(dataSetName, targetColName):
     '''
     Performe a sampling that preserve classses proportions on both, train and test sets.
     '''
@@ -113,7 +138,6 @@ def stratifiedSampling(dataSetName, targetColName):
         y_train = Y.iloc[train_index]
         X_test = X.iloc[test_index]
         y_test = Y.iloc[test_index]
-    
     return X_train, y_train, X_test, y_test
 
 def randomUndersampling(x_DataSet, y_DataSet, sampling_strategy = 'auto'):
@@ -330,31 +354,6 @@ def splitFilenameAndExtention(file_path):
     extention = fpath.suffix
     name = fpath.stem
     return name, extention 
-
-def importDataSet(csvPath, targetCol: str, colsToDrop:list=None)->pd.DataFrame:
-    '''
-    Import datasets and return         
-    @csvPath: DataSetName => The dataset path as *csv file. 
-    @Output: Features(x) and tragets(y) 
-    ''' 
-    x  = pd.read_csv(csvPath, index_col = None)
-    # print(x.columns)
-    y = x[targetCol]
-    x.drop([targetCol], axis=1, inplace = True)
-    if colsToDrop is not None:
-        # print(x.columns)
-        x.drop(colsToDrop, axis=1, inplace = True)
-        # print(x.columns)
-    return x, y
-
-def concatDatasets(datsetList_csv, outPath):
-    outDataSet = pd.DataFrame()
-    for file in datsetList_csv:
-        df = pd.read_csv(file,index_col = None)
-        outDataSet = pd.concat([outDataSet,df], ignore_index=True)
-    outDataSet.to_csv(outPath, index=None)
-    pass
-
 
 ### Metrics ####  
 def accuracyFromConfusionMatrix(confusion_matrix):

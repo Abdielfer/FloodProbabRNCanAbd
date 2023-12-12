@@ -1,0 +1,48 @@
+local: C:\Users\abfernan\CrossCanFloodMapping\FloodProbabRNCanAbd\datasets\
+pathTrainingDataset: FullDatasets_Clean_Class5_Balance.csv
+pathTestDataset: ''
+clasOfInterest: Metric
+targetColName: Labels
+loops: 2
+externalBaseLocation: C:\Users\abfernan\CrossCanFloodMapping\FloodMappingProjData\HRDTMByAOI\
+datasetsList: C:\Users\abfernan\CrossCanFloodMapping\FloodMappingProjData\HRDTMByAOI\FullDatasetsList.csv
+name: param
+parameters:
+  epochs: 250
+  testSize: 0.2
+  batchSize: 100
+  random_state: 50
+  hidden_layer_sizes: []
+  early_stopping: true
+  verbose: false
+  modelsFolder: C:\Users\abfernan\CrossCanFloodMapping\FloodMappingProjData\HRDTMByAOI\MLP_Models\
+  colsToDrop:
+  - x_coord
+  - y_coord
+  init_weight:
+    _partial_: true
+    _target_: torch.nn.init.normal_
+  initWeightParams:
+  - 0.0
+  - 0.01
+  model:
+    _partial_: true
+    _target_: models.MLP_1
+  criterion:
+    _partial_: true
+    _target_: torch.nn.BCELoss
+    reduction: mean
+  optimizer:
+    _partial_: true
+    _target_: torch.optim.Adam
+    maximize: false
+    lr: 0.005
+  scheduler:
+    _partial_: true
+    _target_: torch.optim.lr_scheduler.ReduceLROnPlateau
+    mode: min
+    patience: 10
+    factor: 0.6
+    threshold: 0.001
+  kFold: true
+  n_folds: 5
