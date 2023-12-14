@@ -624,7 +624,23 @@ class MLP_2(nn.Module):
             nn.Linear(int(input_size/2), num_classes),
             nn.Sigmoid(),
         )
-
+class MLP_3(nn.Module):
+    def __init__(self, input_size, num_classes:int = 1):
+        super(MLP_2, self).__init__()
+        self.model = nn.Sequential(
+            nn.Linear(input_size, input_size*2),
+            nn.LeakyReLU(),
+            nn.Linear(input_size*2, input_size*2),
+            nn.LeakyReLU(),
+            nn.Linear(input_size*2, input_size*2),
+            nn.LeakyReLU(),
+            nn.Linear(input_size*2, input_size),
+            nn.LeakyReLU(),
+            nn.Linear(input_size, int(input_size/2)),
+            nn.LeakyReLU(),
+            nn.Linear(int(input_size/2), num_classes),
+            nn.Sigmoid(),
+        )
     def get_weights(self):
         return self.weight
     
