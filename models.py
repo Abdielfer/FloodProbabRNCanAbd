@@ -388,6 +388,7 @@ class MLPModelTrainCycle:
 
         self.splitProportion = trainingParams['testSize']
         self.batchSize = trainingParams['batchSize']
+        self.logger.update_logs({'Batch Size': self.batchSize})
         self.saveModelFolder = trainingParams['modelsFolder']
         self.criterion = loss_fn()
         self.initWeightParams = initWeightParams
@@ -509,7 +510,7 @@ class MLPModelTrainCycle:
                 avg_time_per_epoch = elapsed_time.total_seconds() / e
                 remaining_epochs = self.epochs - e
                 estimated_time = remaining_epochs * avg_time_per_epoch
-                print(f"Elapsed Time after {e} epochs : {elapsed_time} ->> Estimated Time to End: {ms.seconds_to_datetime(estimated_time)}",' ->actual loss %.4f' %(self.trainLosses[-1]), '-> actual lr = %.6f' %(actual_lr))
+                print(f"Elapsed Time after {e} epochs : {elapsed_time} ->> Estimated Time to End: {ms.seconds_to_datetime(estimated_time)}",' ->actual loss %.4f' %(self.trainLosses[-1]), '-> actual lr = %.8f' %(actual_lr))
                 print('            Train metrics: accScore: %.4f '%(accScore), 'macro_averaged_f1 : %.4f'%(macro_averaged_f1), 'micro_averaged_f1: %.4f' %(micro_averaged_f1))
             if self.Sched:   
                 self.scheduler.step(loss.item())
@@ -624,9 +625,16 @@ class MLP_2(nn.Module):
             nn.Linear(int(input_size/2), num_classes),
             nn.Sigmoid(),
         )
+
+    def get_weights(self):
+            return self.weight
+        
+    def forward(self,x):
+        return self.model(x)
+
 class MLP_3(nn.Module):
     def __init__(self, input_size, num_classes:int = 1):
-        super(MLP_2, self).__init__()
+        super(MLP_3, self).__init__()
         self.model = nn.Sequential(
             nn.Linear(input_size, input_size*2),
             nn.LeakyReLU(),
@@ -635,6 +643,65 @@ class MLP_3(nn.Module):
             nn.Linear(input_size*2, input_size*2),
             nn.LeakyReLU(),
             nn.Linear(input_size*2, input_size),
+            nn.LeakyReLU(),
+            nn.Linear(input_size, int(input_size/2)),
+            nn.LeakyReLU(),
+            nn.Linear(int(input_size/2), num_classes),
+            nn.Sigmoid(),
+        )
+    def get_weights(self):
+        return self.weight
+    
+    def forward(self,x):
+        return self.model(x)
+
+
+class MLP_4(nn.Module):
+    def __init__(self, input_size, num_classes:int = 1):
+        super(MLP_4, self).__init__()
+        self.model = nn.Sequential(
+            nn.Linear(input_size, input_size),
+            nn.LeakyReLU(),
+            nn.Linear(input_size, input_size),
+            nn.LeakyReLU(),
+            nn.Linear(input_size, input_size),
+            nn.LeakyReLU(),
+            nn.Linear(input_size, input_size),
+            nn.LeakyReLU(),
+            nn.Linear(input_size, input_size),
+            nn.LeakyReLU(),
+            nn.Linear(input_size, input_size),
+            nn.LeakyReLU(),
+            nn.Linear(input_size, input_size),
+            nn.LeakyReLU(),
+            nn.Linear(input_size, input_size),
+            nn.LeakyReLU(),
+            nn.Linear(input_size, input_size),
+            nn.LeakyReLU(),
+            nn.Linear(input_size, int(input_size/2)),
+            nn.LeakyReLU(),
+            nn.Linear(int(input_size/2), num_classes),
+            nn.Sigmoid(),
+        )
+
+    def get_weights(self):
+        return self.weight
+    
+    def forward(self,x):
+        return self.model(x)
+
+
+class MLP_5(nn.Module):
+    def __init__(self, input_size, num_classes:int = 1):
+        super(MLP_5, self).__init__()
+        self.model = nn.Sequential(
+            nn.Linear(input_size, input_size*3),
+            nn.LeakyReLU(),
+            nn.Linear(input_size*3, input_size*3),
+            nn.LeakyReLU(),
+            nn.Linear(input_size*3, input_size*3),
+            nn.LeakyReLU(),
+            nn.Linear(input_size*3, input_size),
             nn.LeakyReLU(),
             nn.Linear(input_size, int(input_size/2)),
             nn.LeakyReLU(),

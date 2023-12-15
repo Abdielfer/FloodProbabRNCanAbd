@@ -182,7 +182,17 @@ def DFOperation_removeNegative(DF:pd.DataFrame,colName):
     DF = DF[DF.colName>=0]
     return DF
 
-    
+### Pretreatment
+def standardizeDataSetCol(dataSetPath, colName):
+    '''
+    Perform satandardizartion on a column of a DataFrame
+    '''
+    dataSet = pd.read_csv(dataSetPath, index_col=None)
+    mean = dataSet[colName].mean()
+    std = dataSet[colName].std()
+    column_estandar = (dataSet[colName] - mean) / std
+    return column_estandar,mean,std
+ 
 ### Modifying class domain
 def pseudoClassCreation(dataset, conditionVariable, threshold, pseudoClass, targetColumnName):
     '''

@@ -5,8 +5,8 @@ defaults:
 
 local: C:\Users\abfernan\CrossCanFloodMapping\FloodProbabRNCanAbd\datasets\
 datasetFolder : C:\Users\abfernan\CrossCanFloodMapping\FloodMappingProjData\HRDTMByAOI\A_DatasetsForMLP\StratifiedSampling\
-trainingDataset: class5_Full_Training.csv
-validationDataset: class5_Full_Validation.csv
+trainingDataset: class5_Full_Normalized__Training.csv
+validationDataset: class5_Full_Normalized_Validation.csv
 # weightPenalty: 0.01
 targetColName: Labels
 

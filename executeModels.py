@@ -16,6 +16,7 @@ def excecuteMLPClassifier(cfg: DictConfig,logManager:ms.logg_Manager):
     model = instantiate(modelChoice)
     modelName = ms.makeNameByTime()
     logManager.update_logs({'model name': modelName})    
+    logManager.update_logs({'model': modelChoice})    
     
     # Loss
     loss = OmegaConf.create(cfg.parameters['criterion'])
@@ -72,7 +73,13 @@ def main(cfg: DictConfig):
     # prediction.to_csv(predictionName, index = True, header=True)  
     # logToSave = pd.DataFrame.from_dict(logs, orient='index')
     # logToSave.to_csv(name +'.csv',index = True, header=True) 
-    
+    # DS_list = [r'C:\Users\abfernan\CrossCanFloodMapping\FloodMappingProjData\HRDTMByAOI\A_DatasetsForMLP\StratifiedSampling\class5_Full_Training.csv', r'C:\Users\abfernan\CrossCanFloodMapping\FloodMappingProjData\HRDTMByAOI\A_DatasetsForMLP\StratifiedSampling\class5_Full_Validation.csv']
+    # csv = r'C:\Users\abfernan\CrossCanFloodMapping\FloodMappingProjData\HRDTMByAOI\A_DatasetsForMLP\StratifiedSampling\class1_Full.csv'
+    # colNames = {'RelElev','GMorph','FloodOrd','Slope','d8fllowAcc','HAND','proximity'}
+    # _,meanF8,stdf8 = ms.standardizeDataSetCol(csv, 'd8fllowAcc')
+    # standardizer ={'Col':'d8fllowAcc', 'mean': meanF8, 'std': stdf8}
+    # print(standardizer)
+
 
 if __name__ == "__main__":
     with ms.timeit():
