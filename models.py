@@ -465,13 +465,13 @@ class MLPModelTrainCycle:
             modelName = str(self.modelName +'.pkl')
             model_Path = self.saveModelFolder + modelName
             self.logger.update_logs({'model Name': modelName})
-            self.logger.update_logs({'metric': trainMetrics})
+            self.logger.update_logs({'Test metric': trainMetrics})
             ms.saveModel(self.model,model_Path)
             return self.model, trainMetrics
 
     def train(self, X_train,X_test, y_train, y_test)->[nn.Sequential,dict]:
         train_data = TensorDataset(X_train, y_train)
-        train_loader = DataLoader(train_data, batch_size=self.batchSize, shuffle=True)
+        train_loader = DataLoader(train_data, batch_size=self.batchSize, num_workers=4 ,shuffle=True)
         # Train the model
         startTime = datetime.now()
         self.model.to(self.device)
@@ -511,7 +511,7 @@ class MLPModelTrainCycle:
                 remaining_epochs = self.epochs - e
                 estimated_time = remaining_epochs * avg_time_per_epoch
                 print(f"Elapsed Time after {e} epochs : {elapsed_time} ->> Estimated Time to End: {ms.seconds_to_datetime(estimated_time)}",' ->actual loss %.4f' %(self.trainLosses[-1]), '-> actual lr = %.8f' %(actual_lr))
-                print('            Train metrics: accScore: %.4f '%(accScore), 'macro_averaged_f1 : %.4f'%(macro_averaged_f1), 'micro_averaged_f1: %.4f' %(micro_averaged_f1))
+                print('            Test metrics: accScore: %.4f '%(accScore), 'macro_averaged_f1 : %.4f'%(macro_averaged_f1), 'micro_averaged_f1: %.4f' %(micro_averaged_f1))
             if self.Sched:   
                 self.scheduler.step(loss.item())
                 actual_lr = self.optimizer.param_groups[0]["lr"]      
@@ -713,6 +713,35 @@ class MLP_5(nn.Module):
     
     def forward(self,x):
         return self.model(x)
+
+
+class MLP_6(nn.Module):
+    def __init__(self, input_size, num_classes:int = 1):
+        super(MLP_6, self).__init__()
+        self.model = nn.Sequential(
+            nn.Linear(input_size, input_size*5),
+            nn.LeakyReLU(),
+            nn.Linear(input_size*5, input_size*5),
+            nn.LeakyReLU(),
+            nn.Linear(input_size*5, input_size*2),
+            nn.LeakyReLU(),
+            nn.Linear(input_size*2, input_size),
+            nn.LeakyReLU(),
+            nn.Linear(input_size, int(input_size/2)),
+            nn.LeakyReLU(),
+            nn.Linear(int(input_size/2), num_classes),
+            nn.Sigmoid(),
+        )
+    def get_weights(self):
+        return self.weight
+    
+    def forward(self,x):
+        return self.model(x)
+
+
+
+
+
 
 ### Helper functions
 def split(x,y,TestPercent = 0.2):

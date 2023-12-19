@@ -109,13 +109,12 @@ def importDataSet(csvPath, targetCol: str, colsToDrop:list=None)->pd.DataFrame:
     @Output: Features(x) and tragets(y) 
     ''' 
     x  = pd.read_csv(csvPath, index_col = None)
-    # print(x.columns)
     y = x[targetCol]
     x.drop([targetCol], axis=1, inplace = True)
     if colsToDrop is not None:
         print(x.columns)
         x.drop(colsToDrop, axis=1, inplace = True)
-        # print(x.columns)
+        print(f'Features for training {x.columns}')
     return x, y
 
 def concatDatasets(datsetList_csv, outPath):
