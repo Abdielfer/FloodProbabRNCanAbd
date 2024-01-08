@@ -96,7 +96,7 @@ if __name__ == "__main__":
     # out = ms.addSubstringToName(cfg.datasetsList,'_Concat')
     # ms.concatDatasets(csvList,out)
 
-    # ### Clean Datasets from elevation > 0
+    # ### Clean Datasets from elevation < 0
     # outClean = ms.addSubstringToName(out,'_Clean')
     # DF = pd.read_csv(out,index_col=None)
     # DF = DF[DF.Cilp>=0]
@@ -106,7 +106,7 @@ if __name__ == "__main__":
     # ### Divide dataset by classes
     # csvClass1, csvClass5 = ms.extractFloodClassForMLP(outClean)
     
-    # ### Copmute balance undersampling for Class 1 
+    # ### Compute balance undersampling for Class 1 
     # DF = pd.read_csv(csvClass1,index_col=None)
     # Y = DF['Labels']
     # DF.drop(['Labels'], axis=1, inplace = True)
@@ -117,7 +117,7 @@ if __name__ == "__main__":
     # out = ms.addSubstringToName(csvClass1,'_Balance')
     # x_underSamp.to_csv(out, index=None)
     
-    # ### Copmute balance undersampling for Class 5 
+    # ### Compute balance undersampling for Class 5 
     # DF = pd.read_csv(csvClass5,index_col=None)
     # Y = DF['Labels']
     # DF.drop(['Labels'], axis=1, inplace = True)

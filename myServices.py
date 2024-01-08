@@ -380,9 +380,10 @@ def pritnAccuracy(y_predic, y_val):
     cm = confusion_matrix(y_predic, y_val) 
     print("Accuracy of MLPClassifier : ", accuracyFromConfusionMatrix(cm)) 
 
-            ###########            
-            ### GIS ###
-            ###########
+
+###########            
+### GIS ###
+###########
 
 def makePredictionToImportAsSHP(model, x_test, y_test, targetColName):
     '''
