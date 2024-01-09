@@ -655,7 +655,6 @@ class MLP_3(nn.Module):
     def forward(self,x):
         return self.model(x)
 
-
 class MLP_4(nn.Module):
     def __init__(self, input_size, num_classes:int = 1):
         super(MLP_4, self).__init__()
@@ -690,7 +689,6 @@ class MLP_4(nn.Module):
     def forward(self,x):
         return self.model(x)
 
-
 class MLP_5(nn.Module):
     def __init__(self, input_size, num_classes:int = 1):
         super(MLP_5, self).__init__()
@@ -714,7 +712,6 @@ class MLP_5(nn.Module):
     def forward(self,x):
         return self.model(x)
 
-
 class MLP_6(nn.Module):
     def __init__(self, input_size, num_classes:int = 1):
         super(MLP_6, self).__init__()
@@ -737,10 +734,6 @@ class MLP_6(nn.Module):
     
     def forward(self,x):
         return self.model(x)
-
-
-
-
 
 
 ### Helper functions
