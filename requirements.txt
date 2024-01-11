@@ -10,8 +10,8 @@ imbalanced-learn
 notebook
 numpy
 ogr
-openpyxl
 pandas
+openpyxl
 pillow
 pytorch-lightning
 rasterio

@@ -446,28 +446,22 @@ class MLPModelTrainCycle:
             self.scheduler = self.schedulerInitialState
             self.scheduler = self.scheduler(self.optimizer)
 
-    def modelTrainer(self, kFold:bool = False, nSplits:int = 1):
-        if kFold:
-            self.logger.update_logs({'training Mode': 'KFold'})
-            self.logger.update_logs({'N Folding': nSplits})
-            return self.train_KFold(nSplits)
+    def modelTrainer(self):
+        self.logger.update_logs({'training Mode': 'Single train'})
+        if self.validation_dataset_path is None:
+            X_train, X_test, y_train, y_test = self.splitData_asTensor(self.X,self.Y)
         else:
-            self.logger.update_logs({'training Mode': 'Single train'})
-            if self.validation_dataset_path is None:
-                X_train, X_test, y_train, y_test = self.splitData_asTensor(self.X,self.Y)
-            else:
-                X_val, y_val = self.load_Dataset(self.labels,self.validation_dataset_path)
-                X_train,X_test,y_train,y_test = self.read_split_as_tensor(self.X,self.Y,X_val, y_val)
-                self.logger.update_logs({'Testing on Validation Dataset': self.validation_dataset_path})
-          
-          # Convert the training set into torch tensors
-            self.model, trainMetrics =  self.train(X_train,X_test,y_train, y_test)
-            modelName = str(self.modelName +'.pkl')
-            model_Path = self.saveModelFolder + modelName
-            self.logger.update_logs({'model Name': modelName})
-            self.logger.update_logs({'Test metric': trainMetrics})
-            ms.saveModel(self.model,model_Path)
-            return self.model, trainMetrics
+            X_val, y_val = self.load_Dataset(self.labels,self.validation_dataset_path)
+            X_train,X_test,y_train,y_test = self.read_split_as_tensor(self.X,self.Y,X_val, y_val)
+            self.logger.update_logs({'Testing on Validation Dataset': self.validation_dataset_path})
+        # Convert the training set into torch tensors
+        self.model, trainMetrics =  self.train(X_train,X_test,y_train, y_test)
+        modelName = str(self.modelName +'.pkl')
+        model_Path = self.saveModelFolder + modelName
+        self.logger.update_logs({'model Name': modelName})
+        self.logger.update_logs({'Test metric': trainMetrics})
+        ms.saveModel(self.model,model_Path)
+        return self.model, trainMetrics
 
     def train(self, X_train,X_test, y_train, y_test)->[nn.Sequential,dict]:
         train_data = TensorDataset(X_train, y_train)
@@ -523,27 +517,6 @@ class MLPModelTrainCycle:
         self.logger.update_logs({'Train metric': metrics})
         return self.model, metrics 
 
-    def train_KFold(self,nSplits):
-        # Define the KFold cross-validator
-        kf = KFold(n_splits=nSplits)
-        kf_iter = 1
-        # Perform cross-validation
-        for train_index, test_index in kf.split(self.X):
-            X_train, X_test = self.X.loc[train_index], self.X.loc[test_index]
-            y_train, y_test = self.Y[train_index], self.Y[test_index]
-            X_train, y_train, X_test, y_test = self.read_split_as_tensor(X_train, y_train,X_test,y_test) 
-            self.model, metrics = self.train(X_train, y_train, X_test, y_test)
-            modelName = str(self.modelName + '_' + str(kf_iter) + '.pkl')
-            model_Path = self.saveModelFolder + modelName
-            self.logger.update_logs({'model Name': modelName})
-            self.logger.update_logs({'Fold number': kf_iter})
-            self.logger.update_logs({'Train metric': metrics})
-            ms.saveModel(self.model,model_Path)
-            self.resetTraining() 
-            kf_iter +=1   
-        return self.model, metrics
-
-
 
     def avaluateModel(self, model = None):
         threshold = 0.5
@@ -565,7 +538,7 @@ class MLPModelTrainCycle:
             self.logger.update_logs({'Validation metric': metrics})
 
 
-    def plotLosses(self):
+    def plotLosses(self, showIt:bool=True, saveTo:str=''):
         epochs = range(len(self.trainLosses))
         plt.figure(figsize=(10,5))
         plt.plot(epochs, self.trainLosses, 'r-', label='Training loss')
@@ -575,9 +548,13 @@ class MLPModelTrainCycle:
         plt.ylabel('Loss')
         plt.legend()
         figName = str(self.modelName +'_losses.png')
-        model_Path = self.saveModelFolder + figName
-        plt.savefig(model_Path)
-        plt.show()
+        if saveTo:
+            plot_Path = saveTo + figName 
+        else:
+            plot_Path = self.saveModelFolder + figName
+        plt.savefig(plot_Path)
+        if showIt:
+            plt.show()
 
 
     def getModel(self):

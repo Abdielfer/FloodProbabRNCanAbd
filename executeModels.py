@@ -7,6 +7,7 @@ from hydra.utils import instantiate
 from omegaconf import DictConfig,OmegaConf
 
 
+
 def excecuteMLPClassifier(cfg: DictConfig,logManager:ms.logg_Manager):
     ''' 
     model, modelName, loss_fn,optimizer, labels, pathTrainingDSet,trainingParams, pathValidationDSet = None,scheduler = None, initWeightfunc= None, initWeightParams= None, removeCoordinates = True,logger:ms.logg_Manager = None)
@@ -56,7 +57,9 @@ def excecuteMLPClassifier(cfg: DictConfig,logManager:ms.logg_Manager):
         model,metrics = mlpc.modelTrainer()
     
     # Plot Losses
-    mlpc.plotLosses()
+    orig_cwd = hydra.core.hydra_config.HydraConfig.get().runtime.output_dir
+    print(f"Origin wDir -> {orig_cwd}")
+    mlpc.plotLosses(showIt=False, saveTo = orig_cwd)
     #  logs = mlpc.get_logsDic()
     # print(logs)
     # prediction = ms.makePredictionToImportAsSHP(bestMLPC, x_val,Y_val, cfg['targetColName'])
@@ -64,6 +67,7 @@ def excecuteMLPClassifier(cfg: DictConfig,logManager:ms.logg_Manager):
 
 @hydra.main(version_base=None,config_path=f"config", config_name="configMLPClassifier.yaml")
 def main(cfg: DictConfig):
+    print("-------------------   NEW Training -----------------------")
     #### Set Logging
     logManager = ms.logg_Manager()
     ## Training 

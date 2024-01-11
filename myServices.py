@@ -15,6 +15,14 @@ import logging
 import hydra
 from hydra.core.hydra_config import HydraConfig
 
+# Colorlogs. Not necessary, just fun !!!
+import coloredlogs
+coloredlogs.DEFAULT_FIELD_STYLES = {'asctime': {'color': 28},'levelname': {'bold': True, 'color': 'blue'}, 'name': {'color': 'blue'}, 'programname': {'color': 'cyan'}}
+coloredlogs.DEFAULT_LEVEL_STYLES = {'critical': {'bold': True, 'color': 'red'}, 'debug': {'color': 'green'}, 'error': {'color': 'red'}, 'info': {}, 'notice': {'color': 'magenta'}, 'spam': {'color': 'green', 'faint': True}, 'success': {'bold': True, 'color': 'green'}, 'verbose': {'color': 'blue'}, 'warning': {'color': 'yellow'}}
+coloredlogs.COLOREDLOGS_LEVEL_STYLES='spam=22;debug=28;verbose=34;notice=220;warning=202;success=118,bold;error=124;critical=background=red'
+
+
+
 ### General applications ##
 class timeit(): 
     '''
@@ -101,7 +109,6 @@ def createWeightVector(y_vector, dominantValue:float, dominantValuePenalty:float
     return weightVec
 
 ####  Sampling manipulation
-
 def importDataSet(csvPath, targetCol: str, colsToDrop:list=None)->pd.DataFrame:
     '''
     Import datasets and return         
@@ -112,7 +119,6 @@ def importDataSet(csvPath, targetCol: str, colsToDrop:list=None)->pd.DataFrame:
     y = x[targetCol]
     x.drop([targetCol], axis=1, inplace = True)
     if colsToDrop is not None:
-        print(x.columns)
         x.drop(colsToDrop, axis=1, inplace = True)
         print(f'Features for training {x.columns}')
     return x, y
@@ -308,26 +314,87 @@ def clearTransitFolderContent(path, filetype = '/*'):
         os.remove(f)
     return True
 
-def listFreeFilesInDirByExt(cwd, ext = '.csv'):
+def listFreeFilesInDirByExt(cwd:str, ext = '.tif'):
+    '''
+    @ext = *.tif by default.
+    NOTE:  THIS function list only files that are directly into <cwd> path. 
+    '''
+    cwd = os.path.abspath(cwd)
+    # print(f"Current working directory: {cwd}")
+    file_list = []
+    for (root, dirs, file) in os.walk(cwd):
+        for f in file:
+            # print(f"File: {f}")
+            _,_,extent = get_parenPath_name_ext(f)
+            if extent == ext:
+                file_list.append(f)
+    return file_list
+
+def listFreeFilesInDirByExt_fullPath(cwd:str, ext = '.csv') -> list:
     '''
     @ext = *.csv by default.
     NOTE:  THIS function list only files that are directly into <cwd> path. 
     '''
-    for (root, dirs, file) in os.walk(cwd):
-        file_list = [i for i in file if ext in i]
-        return file_list
+    cwd = os.path.abspath(cwd)
+    # print(f"Current working directory: {cwd}")
+    file_list = []
+    for (root,_, file) in os.walk(cwd, followlinks=True):
+        for f in file:
+            # print(f"Current f: {f}")
+            _,extent = splitFilenameAndExtention(f)
+            # print(f"Current extent: {extent}")
+            if ext == extent:
+                file_list.append(os.path.join(root,f))
+    return file_list
+
+def listFreeFilesInDirBySubstring_fullPath(cwd:str, substring = '') -> list:
+    '''
+    @substring: substring to be verify onto the file name. 
+    NOTE:  THIS function list only files that are directly into <cwd> path. 
+    '''
+    cwd = os.path.abspath(cwd)
+    # print(f"Current working directory: {cwd}")
+    file_list = []
+    for (root,_, file) in os.walk(cwd, followlinks=True):
+        for f in file:
+            if substring.lower() in f.lower():
+                file_list.append(os.path.join(root,f))
+    return file_list
 
 def listALLFilesInDirByExt(cwd, ext = '.csv'):
     '''
     @ext = *.csv by default.
     NOTE:  THIS function list ALL files that are directly into <cwd> path and children folders. 
     '''
-    FILE_LIST = []
-    for (root, dirs, file) in os.walk(cwd):
-        for i in file:
-            if ext in i:
-                FILE_LIST.append(i)
-    return FILE_LIST
+    fullList: list = []
+    for (root, _, _) in os.walk(cwd):
+         fullList.extend(listFreeFilesInDirByExt(root, ext)) 
+    return fullList
+
+def listALLFilesInDirByExt_fullPath(cwd, ext = '.csv'):
+    '''
+    @ext: NOTE <ext> must contain the "." ex: '.csv'; '.tif'; etc...
+    NOTE:  THIS function list ALL files that are directly into <cwd> path and children folders. 
+    '''
+    fullList = []
+    for (root, _, _) in os.walk(cwd):
+        # print(f"Roots {root}")
+        localList = listFreeFilesInDirByExt_fullPath(root, ext)
+        # print(f"Local List len :-->> {len(localList)}")
+        fullList.extend(localList) 
+        return fullList
+
+def listALLFilesInDirBySubstring_fullPath(cwd, substring = '.csv')->list:
+    '''
+    @substring: substring to be verify onto the file name.    NOTE:  THIS function list ALL files that are directly into <cwd> path and children folders. 
+    '''
+    fullList = []
+    for (root, _, _) in os.walk(cwd):
+        # print(f"Roots {root}")
+        localList = listFreeFilesInDirBySubstring_fullPath(root, substring)
+        print(f"Local List len :-->> {len(localList)}")
+        fullList.extend(localList) 
+        return fullList
 
 def createListFromCSVColumn(csv_file_path, col_id:str):  
     '''
@@ -404,9 +471,7 @@ def makePredictionToImportAsSHP(model, x_test, y_test, targetColName):
     ds_toSHP['prediction'] = y_hay
     return ds_toSHP
 
-
 ##### Logging
-
 class logg_Manager:
     '''
     This class creates a logger object that writes logs to both a file and the console. 
@@ -419,20 +484,10 @@ class logg_Manager:
     def __init__(self,log_dict:dict=None):# log_name, 
         self.HydraOutputDir = hydra.core.hydra_config.HydraConfig.get()['runtime']['output_dir']  
         self.logger = logging.getLogger(HydraConfig.get().job.name)
-        logerName = self.logger.name
-        # Log some messages
-        # logpath = os.path.join(self.HydraOutputDir,logerName)
-        # self.logger.setLevel(logging.INFO)  ## Default Level
-        # self.formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-        # self.file_handler = logging.FileHandler(logpath)
-        # self.file_handler.setLevel(logging.DEBUG)
-        # self.file_handler.setFormatter(self.formatter)
-        # self.stream_handler = logging.StreamHandler()
-        # self.stream_handler.setLevel(logging.ERROR)
-        # self.stream_handler.setFormatter(self.formatter)
-        # self.logger.addHandler(self.file_handler)
-        # self.logger.addHandler(self.stream_handler)
+        coloredlogs.install(logger=self.logger)
+        coloredlogs.install(fmt='%(asctime)s,%(levelname)s %(message)s')
         
+
         ### Fill the logger at creation with a dictionary.
         if log_dict is not None:
             for key, value in log_dict.items():
