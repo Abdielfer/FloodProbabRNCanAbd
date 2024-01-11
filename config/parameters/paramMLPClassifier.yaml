@@ -30,7 +30,7 @@ optimizer:
   _partial_: True 
   _target_: torch.optim.Adam
   maximize : False
-  lr: 0.05
+  lr: 0.001
   #weight_decay : 0.1
 
 scheduler:
@@ -38,7 +38,7 @@ scheduler:
  _target_ : torch.optim.lr_scheduler.ReduceLROnPlateau
  mode : min
  patience : 10
- factor : 0.8
+ factor : 0.5
  threshold : 0.001
 
 # scheduler = lr_scheduler.LinearLR(optimizer,start_factor: 1.0, end_factor : 0.3, total_iters : 10)

@@ -1,0 +1,2 @@
+- ++parameters.model._target_=models.MLP_5
+- ++parameters.optimizer.lr=0.002

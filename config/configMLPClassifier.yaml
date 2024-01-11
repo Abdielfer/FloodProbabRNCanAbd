@@ -1,6 +1,7 @@
 ### src/config/config.yaml
 defaults:
   - parameters: paramMLPClassifier
+  # - override hydra/launcher: joblib
   - _self_
  
 local: C:\Users\abfernan\CrossCanFloodMapping\FloodProbabRNCanAbd\datasets\
@@ -16,9 +17,9 @@ hydra:
     mode: MULTIRUN
     sweeper:
         params:
-          ++parameters.model._target_: models.MLP_4 ,models.MLP_5,models.MLP_6
-          ++parameters.optimizer.lr: 0.005, 0.002, 0.0012
-          ++parameters.scheduler.factor: 0.80,0.9
-          ++parameters.batchSize: 50,100
+          ++parameters.model._target_: models.MLP_5 #,models.MLP_6
+          ++parameters.optimizer.lr: 0.005,0.002 #,0.0012
+          # ++parameters.scheduler.factor: 0.80,0.9
+          # ++parameters.batchSize: 50,100
 
            

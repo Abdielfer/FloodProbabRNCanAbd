@@ -1,0 +1,4 @@
+- ++parameters.model._target_=models.MLP_4
+- ++parameters.optimizer.lr=0.0012
+- ++parameters.scheduler.factor=0.9
+- ++parameters.batchSize=50
