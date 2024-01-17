@@ -1,15 +1,20 @@
 ### src/config/config.yaml
 defaults:
-  - parameters: paramMLPClassifier
-  # - override hydra/launcher: joblib
   - _self_
- 
+  - parameters: paramMLPClassifier
+  
 local: C:\Users\abfernan\CrossCanFloodMapping\FloodProbabRNCanAbd\datasets\
-datasetFolder : C:\Users\abfernan\CrossCanFloodMapping\FloodMappingProjData\HRDTMByAOI\A_DatasetsForMLP\StratifiedSampling_RasterizeCombined\
-trainingDataset: class1_Full_Normalized_Training.csv
-validationDataset: class1_Full_Normalized_Validation.csv
+datasetFolder : C:\Users\abfernan\CrossCanFloodMapping\FloodMappingProjData\HRDTMByAOI\A_DatasetsForMLP\RegionalModelingExplorationDatasets\
+trainingDataset: TrainingDataset_RastComb_Normalized_class1.csv
+validationDataset: ValidationSet_RastComb_Normalized_class1.csv
+
 # weightPenalty: 0.01
 targetColName: Labels
+nWorkers : 4
+
+## Evaluate model
+externalModel: None
+
 
 ### Configuration for Multirun. Add all parameters to combine in the <params> dictionary. Follow the sintax:
 ###   ++.++parameters.optimizer.lr: val_1,val_2,...,val_n
@@ -17,9 +22,11 @@ hydra:
     mode: MULTIRUN
     sweeper:
         params:
-          ++parameters.model._target_: models.MLP_5 #,models.MLP_6
-          ++parameters.optimizer.lr: 0.005,0.002 #,0.0012
-          # ++parameters.scheduler.factor: 0.80,0.9
+          # ++parameters.model._target_: models.MLP_5, models.MLP_6
+          ++parameters.optimizer.lr : 0.02, 0.015
+          ++parameters.scheduler.factor : 0.95
+          # ++parameters.scheduler.patience : 3
           # ++parameters.batchSize: 50,100
+          # ++parameters.epochs: 30
 
            

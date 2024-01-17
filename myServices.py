@@ -1,4 +1,5 @@
-import os
+import os,ntpath
+import random
 import glob
 import pathlib
 import shutil
@@ -8,19 +9,23 @@ import pandas as pd
 import numpy as np
 from datetime import datetime
 from sklearn.model_selection import StratifiedShuffleSplit
-from sklearn.metrics import confusion_matrix
 from collections import Counter
 from imblearn.under_sampling import RandomUnderSampler 
 import logging
 import hydra
 from hydra.core.hydra_config import HydraConfig
+from osgeo import gdal,ogr,osr
 
-# Colorlogs. Not necessary, just fun !!!
+
+## Multiprocessing 
+import multiprocessing
+import concurrent.futures
+
+### Colorlogs. Not necessary, just fun !!!
 import coloredlogs
 coloredlogs.DEFAULT_FIELD_STYLES = {'asctime': {'color': 28},'levelname': {'bold': True, 'color': 'blue'}, 'name': {'color': 'blue'}, 'programname': {'color': 'cyan'}}
 coloredlogs.DEFAULT_LEVEL_STYLES = {'critical': {'bold': True, 'color': 'red'}, 'debug': {'color': 'green'}, 'error': {'color': 'red'}, 'info': {}, 'notice': {'color': 'magenta'}, 'spam': {'color': 'green', 'faint': True}, 'success': {'bold': True, 'color': 'green'}, 'verbose': {'color': 'blue'}, 'warning': {'color': 'yellow'}}
 coloredlogs.COLOREDLOGS_LEVEL_STYLES='spam=22;debug=28;verbose=34;notice=220;warning=202;success=118,bold;error=124;critical=background=red'
-
 
 
 ### General applications ##
@@ -431,22 +436,13 @@ def splitFilenameAndExtention(file_path):
     name = fpath.stem
     return name, extention 
 
-### Metrics ####  
-def accuracyFromConfusionMatrix(confusion_matrix):
+def replaceExtention(inPath,newExt: str)->os.path :
     '''
-    Only for binary
+    Just remember to add the poin to the new ext -> '.map'
     '''
-    diagonal_sum = confusion_matrix.trace()
-    sum_of_all_elements = confusion_matrix.sum()
-    return diagonal_sum / sum_of_all_elements
-
-def pritnAccuracy(y_predic, y_val):
-    '''
-    Only for binary
-    '''
-    cm = confusion_matrix(y_predic, y_val) 
-    print("Accuracy of MLPClassifier : ", accuracyFromConfusionMatrix(cm)) 
-
+    dir,fileName = ntpath.split(inPath)
+    _,actualExt = ntpath.splitext(fileName)
+    return os.path.join(dir,ntpath.basename(inPath).replace(actualExt,newExt))
 
 ###########            
 ### GIS ###
@@ -471,6 +467,58 @@ def makePredictionToImportAsSHP(model, x_test, y_test, targetColName):
     ds_toSHP['prediction'] = y_hay
     return ds_toSHP
 
+def buildShapefilePointFromCsvDataframe(csvDataframe:os.path, outShepfile:os.path='', EPGS:int=3979):
+    '''
+    Creates a shapefile of points from a Dataframe <df>. The DataFrame is expected to have a HEADER, and the two first colums with the x_coordinates and y_coordinates respactivelly.
+    @csvDatafame:os.path: Path to the *csv containing the Dataframe with the list of points to add to the Shapefile. 
+    @outShepfile:os.path: Output path to the shapefile (Optional). If Non, the shapefile will have same path and name that csvDataframe.
+    @EPGS: EPGS value of a valid reference system (Optional).(Default = 4326).
+    '''
+    df = pd.read_csv(csvDataframe)
+    #### Create a new shapefile
+    ## Set shapefile path.
+    if outShepfile:
+        outShp = outShepfile
+    else: 
+        outShp = replaceExtention(csvDataframe,'.shp')
+        print(outShp)
+    driver = ogr.GetDriverByName("ESRI Shapefile")
+    ds = driver.CreateDataSource(outShp)
+
+    # Set the spatial reference
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(EPGS)  # WGS84
+
+    # Create a new layer
+    layer = ds.CreateLayer("", srs, ogr.wkbPoint)
+
+    # Add fields
+    for column in df.columns:
+        field = ogr.FieldDefn(column, ogr.OFTReal)
+        field.SetWidth(10)  # Total field width
+        field.SetPrecision(2)  # Width of decimal part
+        layer.CreateField(field)
+
+    # Add points
+    for idx,row in df.iterrows():
+        # Create a new feature
+        feature = ogr.Feature(layer.GetLayerDefn())
+        # Set the attributes
+        for column in df.columns:
+            feature.SetField(column, row[column])
+        # Create a new point geometry
+        point = ogr.Geometry(ogr.wkbPoint)
+        point.AddPoint(row[0], row[1])
+        # Set the feature geometry
+        feature.SetGeometry(point)
+        # Create the feature in the layer
+        layer.CreateFeature(feature)
+        # Dereference the feature
+        feature = None
+
+    # Dereference the data source
+    ds = None
+
 ##### Logging
 class logg_Manager:
     '''
@@ -484,10 +532,8 @@ class logg_Manager:
     def __init__(self,log_dict:dict=None):# log_name, 
         self.HydraOutputDir = hydra.core.hydra_config.HydraConfig.get()['runtime']['output_dir']  
         self.logger = logging.getLogger(HydraConfig.get().job.name)
-        coloredlogs.install(logger=self.logger)
-        coloredlogs.install(fmt='%(asctime)s,%(levelname)s %(message)s')
-        
-
+        # coloredlogs.install(logger=self.logger)
+        # coloredlogs.install(fmt='%(asctime)s,%(levelname)s %(message)s')
         ### Fill the logger at creation with a dictionary.
         if log_dict is not None:
             for key, value in log_dict.items():
@@ -518,3 +564,39 @@ class logg_Manager:
     #     # Add the file handler to the logger
     #     self.logger.addHandler(handler)
 
+#####  Parallelizer
+def parallelizerWithProcess(function, args:list, executors:int = 4):
+    '''
+    Parallelize the <function> in the input to the specified number of <executors>.
+    @function: python function
+    @args: list: list of argument to pas to the function in parallel. 
+    '''
+    with concurrent.futures.ProcessPoolExecutor(executors) as executor:
+        # start_time = time.perf_counter()
+        result = list(executor.map(function,args))
+        # finish_time = time.perf_counter()
+    # print(f"Program finished in {finish_time-start_time} seconds")
+    print(result)
+
+def parallelizerWithThread(function, args:list, executors:int = None):
+    '''
+    Parallelize the <function> in the input to the specified number of <executors>.
+    @function: python function
+    @args: list: list of argument to pas to the function in parallel. 
+    '''
+    with concurrent.futures.ThreadPoolExecutor(executors) as executor:
+            start_time = time.perf_counter()
+            result = list(executor.map(function, args))
+            finish_time = time.perf_counter()
+    print(f"Program finished in {finish_time-start_time} seconds")
+    print(result)
+
+def maxParalelizer(function,args):
+    '''
+    Same as paralelizer, but optimize the pool to the capacity of the current processor.
+    NOTE: To be tested
+    '''
+    # print(args)
+    pool = multiprocessing.Pool()
+    result = pool.map(function,args)
+    print(result)

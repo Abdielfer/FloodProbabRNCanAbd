@@ -1,0 +1,4 @@
+- ++parameters.model._target_=models.MLP_5
+- ++parameters.scheduler.factor=0.95
+- ++parameters.scheduler.patience=10
+- ++parameters.epochs=60

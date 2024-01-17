@@ -1,0 +1,2 @@
+- ++parameters.batchSize=50
+- ++parameters.epochs=60

@@ -1,0 +1,2 @@
+- ++parameters.scheduler.patience=20
+- ++parameters.batchSize=50

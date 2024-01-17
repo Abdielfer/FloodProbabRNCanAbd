@@ -1,18 +1,75 @@
 
 import myServices as ms
 import models as m
+import sys 
 
 import hydra
 from hydra.utils import instantiate
 from omegaconf import DictConfig,OmegaConf
 
+from joblib import Parallel, delayed
+from joblib.externals.loky.backend.context import get_context
 
+def evaluateExternalModels(cfg:DictConfig,logManager:ms.logg_Manager):
+    ''' 
+    
+    '''
+    ## Current wdr
+    orig_cwd = hydra.core.hydra_config.HydraConfig.get().runtime.output_dir
+    print(f"Origin wDir -> {orig_cwd}")
 
-def excecuteMLPClassifier(cfg: DictConfig,logManager:ms.logg_Manager):
+    # Model
+    model = cfg.modelsFolder + cfg.externalModel
+    modelChoice =  ms.loadModel(model) 
+    modelName = ms.makeNameByTime()
+    logManager.update_logs({'model': modelName})       
+    
+    # Loss
+    loss = OmegaConf.create(cfg.parameters['criterion'])
+    loss_fn = instantiate(loss)
+    
+    # Optimizer & Scheduler
+    optimizerOptions = OmegaConf.create(cfg.parameters['optimizer'])
+    optimizer = instantiate(optimizerOptions)
+    
+    schedulOptions = OmegaConf.create(cfg.parameters['scheduler'])
+    scheduler = instantiate(schedulOptions)
+    
+    # Labels
+    Labels = cfg['targetColName']
+
+    # Datasets
+    pathValidationDataset = cfg.datasetFolder  + cfg['validationDataset']
+    
+    # Parameter initialization
+    initWeightFunc = instantiate(OmegaConf.create(cfg.parameters['init_weight']))
+    initWeightParams = cfg.parameters['initWeightParams']
+    trainingParams = cfg['parameters']  
+    
+    # Modeling tool instanciate
+    mlpc = m.MLPModelTrainCycle(model,modelName,loss_fn,optimizer,Labels,trainingParams,pathValidationDataset,scheduler=scheduler,initWeightfunc=initWeightFunc, initWeightParams= initWeightParams,logger=logManager, nWorkers = cfg.nWorkers)
+    
+    ### Evaluate the model.
+    Y_val,y_hat, metrics = mlpc.evaluateModel(model)
+    mlpc.plot_ConfussionMatrix(Y_val,y_hat,showIt=True, saveTo = orig_cwd)
+
+    # Plot Losses
+    # mlpc.plotLosses(showIt= False, saveTo = orig_cwd)
+    # mlpc.plot_ConfussionMatrix(showIt= False, saveTo = orig_cwd)
+    # prediction = ms.makePredictionToImportAsSHP(bestMLPC, x_val,Y_val, cfg['targetColName'])
+    return model,metrics 
+
+    pass
+
+def excecuteMLPClassifier(cfg:DictConfig,logManager:ms.logg_Manager,train:bool = True, evaluate:bool= False, externalModel = None):
     ''' 
     model, modelName, loss_fn,optimizer, labels, pathTrainingDSet,trainingParams, pathValidationDSet = None,scheduler = None, initWeightfunc= None, initWeightParams= None, removeCoordinates = True,logger:ms.logg_Manager = None)
     '''
-    # MOdel
+    ## Current wdr
+    orig_cwd = hydra.core.hydra_config.HydraConfig.get().runtime.output_dir
+    print(f"Origin wDir -> {orig_cwd}")
+
+    # Model
     modelChoice = OmegaConf.create(cfg.parameters['model'])
     model = instantiate(modelChoice)
     modelName = ms.makeNameByTime()
@@ -43,51 +100,35 @@ def excecuteMLPClassifier(cfg: DictConfig,logManager:ms.logg_Manager):
     # Parameter initialization
     initWeightFunc = instantiate(OmegaConf.create(cfg.parameters['init_weight']))
     initWeightParams = cfg.parameters['initWeightParams']
-    trainingParams = cfg['parameters']  
-    
+    trainingParams = cfg['parameters']
+        
     # Modeling tool instanciate
-    mlpc = m.MLPModelTrainCycle(model,modelName,loss_fn,optimizer,Labels,pathTrainingDataset,trainingParams,pathValidationDataset,scheduler=scheduler,initWeightfunc=initWeightFunc, initWeightParams= initWeightParams,logger=logManager)
+    mlpc = m.MLPModelTrainCycle(model,modelName,loss_fn,optimizer,Labels,pathTrainingDataset,trainingParams,pathValidationDataset,scheduler=scheduler,initWeightfunc=initWeightFunc, initWeightParams= initWeightParams,logger=logManager, nWorkers = cfg.nWorkers)
     
     ## Excecute Training 
-    kFold = cfg.parameters['kFold']
-    if kFold:
-        nSplits = cfg.parameters['n_folds']
-        model,metrics = mlpc.modelTrainer(kFold=True,nSplits=nSplits)
-    else:
-        model,metrics = mlpc.modelTrainer()
+    model,metrics = mlpc.modelTrainer()
     
+    ### Evaluate the model.
+    y_val,y_hat,_ = mlpc.evaluateModel()
+    mlpc.plot_ConfussionMatrix(y_val,y_hat,saveTo = orig_cwd)
+
     # Plot Losses
-    orig_cwd = hydra.core.hydra_config.HydraConfig.get().runtime.output_dir
-    print(f"Origin wDir -> {orig_cwd}")
-    mlpc.plotLosses(showIt=False, saveTo = orig_cwd)
-    #  logs = mlpc.get_logsDic()
-    # print(logs)
+    mlpc.plotLosses(showIt= False, saveTo = orig_cwd)
+    # mlpc.plot_ConfussionMatrix(showIt= False, saveTo = orig_cwd)
     # prediction = ms.makePredictionToImportAsSHP(bestMLPC, x_val,Y_val, cfg['targetColName'])
-    return model, metrics #, logs
+    return model,metrics #, logs
 
 @hydra.main(version_base=None,config_path=f"config", config_name="configMLPClassifier.yaml")
 def main(cfg: DictConfig):
     print("-------------------   NEW Training -----------------------")
     #### Set Logging
-    logManager = ms.logg_Manager()
-    ## Training 
-    model,_ = excecuteMLPClassifier(cfg,logManager)
-
-    # # predictionName = name + "_prediction_" + cfg['pathTrainingDataset']
-    # prediction.to_csv(predictionName, index = True, header=True)  
-    # logToSave = pd.DataFrame.from_dict(logs, orient='index')
-    # logToSave.to_csv(name +'.csv',index = True, header=True) 
-    # DS_list = [r'C:\Users\abfernan\CrossCanFloodMapping\FloodMappingProjData\HRDTMByAOI\A_DatasetsForMLP\StratifiedSampling\class5_Full_Training.csv', r'C:\Users\abfernan\CrossCanFloodMapping\FloodMappingProjData\HRDTMByAOI\A_DatasetsForMLP\StratifiedSampling\class5_Full_Validation.csv']
-    # csv = r'C:\Users\abfernan\CrossCanFloodMapping\FloodMappingProjData\HRDTMByAOI\A_DatasetsForMLP\StratifiedSampling\class1_Full.csv'
-    # colNames = {'RelElev','GMorph','FloodOrd','Slope','d8fllowAcc','HAND','proximity'}
-    # _,meanF8,stdf8 = ms.standardizeDataSetCol(csv, 'd8fllowAcc')
-    # standardizer ={'Col':'d8fllowAcc', 'mean': meanF8, 'std': stdf8}
-    # print(standardizer)
-
+    logManager = ms.logg_Manager() 
+    _,_ = excecuteMLPClassifier(cfg,logManager, evaluate=True)
 
 if __name__ == "__main__":
     with ms.timeit():
         main()
+       
         
     #### Extract Dataframes for Class 1 and 5
     # csv = r'C:\Users\abfernan\CrossCanFloodMapping\FloodProbabRNCanAbd\datasets\AL_Lethbridge_FullBasin_Cilp_FullDataset.csv'

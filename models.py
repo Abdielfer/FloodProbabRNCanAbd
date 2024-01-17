@@ -13,7 +13,6 @@ import torch
 from torch import nn
 from torch.utils.data import DataLoader, TensorDataset
 import torch.optim.lr_scheduler as lr_scheduler
-from sklearn.model_selection import KFold
 
 from sklearn.model_selection import train_test_split, GridSearchCV
 from sklearn import metrics 
@@ -23,6 +22,10 @@ from sklearn.ensemble import RandomForestRegressor, RandomForestClassifier
 from sklearn.neural_network import MLPClassifier
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.preprocessing import StandardScaler
+from sklearn.metrics import confusion_matrix
+import seaborn as sns
+
+from joblib.externals.loky.backend.context import get_context
 
 import myServices as ms
 
@@ -362,7 +365,8 @@ class MLPModelTrainCycle:
                  initWeightfunc= None, 
                  initWeightParams= None, 
                  removeCoordinates = True, 
-                 logger:ms.logg_Manager = None):
+                 logger:ms.logg_Manager = None,
+                 nWorkers = None):
         
         self.train_dataset_path = pathTrainingDSet
         self.validation_dataset_path = pathValidationDSet
@@ -374,7 +378,8 @@ class MLPModelTrainCycle:
         print(f' The device : {self.device}')
         self.NoCoordinates = removeCoordinates
         self.colsToDrop = trainingParams['colsToDrop']
-        
+        self.logger.update_logs({'Cols To Drop': self.colsToDrop})
+
         ### Load Dataset
         # Read Labels names
         self.logger.update_logs({'Data Set': self.train_dataset_path})
@@ -395,11 +400,19 @@ class MLPModelTrainCycle:
         self.initWeightFunc = initWeightfunc  
         self.optimizer = optimizer
         self.optimiserInitialState = optimizer
+        if nWorkers:
+            self.nWorkers = nWorkers
+        else: 
+            self.nWorkers = 4
+
         if scheduler is not None:
             self.scheduler = scheduler
             self.schedulerInitialState = scheduler
+        
         ## Define training values
         self.presetting_Training(self.X)
+        self.trainLosses = []
+        self.valLosses = []
 
     def splitData_asTensor(self,X,Y):
         # Split the data into training and test sets
@@ -414,7 +427,7 @@ class MLPModelTrainCycle:
             X, Y = ms.importDataSet(dataset, labels)
         return X, Y
 
-    def read_split_as_tensor(self, X_train, y_train, X_test,y_test):
+    def read_split_as_tensor(self, X_train,y_train,X_test,y_test):
         return torch.tensor(X_train.values, dtype=torch.float), torch.tensor(X_test.values, dtype=torch.float), torch.tensor(y_train.values, dtype=torch.float), torch.tensor(y_test.values, dtype=torch.float)
         
     def presetting_Training(self,X_train):
@@ -433,18 +446,6 @@ class MLPModelTrainCycle:
         if self.initWeightFunc  is not None:
                 init_params(self.model, self.initWeightFunc, *self.initWeightParams) 
         pass
-
-    def resetTraining(self):
-        #Reset Model params to run in loop the K-fold validation.
-        for layer in self.model.children():
-            if hasattr(layer, 'reset_parameters'):
-                layer.reset_parameters()
-        ## Reset optimizer
-        self.optimizer  = self.optimiserInitialState
-        self.optimizer = self.optimizer(self.model.parameters())
-        if self.Sched:
-            self.scheduler = self.schedulerInitialState
-            self.scheduler = self.scheduler(self.optimizer)
 
     def modelTrainer(self):
         self.logger.update_logs({'training Mode': 'Single train'})
@@ -465,12 +466,11 @@ class MLPModelTrainCycle:
 
     def train(self, X_train,X_test, y_train, y_test)->[nn.Sequential,dict]:
         train_data = TensorDataset(X_train, y_train)
-        train_loader = DataLoader(train_data, batch_size=self.batchSize, num_workers=4 ,shuffle=True)
+        train_loader = DataLoader(train_data, batch_size=self.batchSize, 
+                                  num_workers = self.nWorkers, shuffle=True)
         # Train the model
         startTime = datetime.now()
         self.model.to(self.device)
-        self.trainLosses = []
-        self.valLosses = []
         # print('Model deivice',  next(self.model.parameters()).device)
         actual_lr = self.optimizer.param_groups[0]["lr"]
         print(f"Initial Lr : {actual_lr}")
@@ -499,7 +499,7 @@ class MLPModelTrainCycle:
                 y_hat = (output > threshold).float()
                 accScore, macro_averaged_f1, micro_averaged_f1  = computeClassificationMetrics(y_test.cpu(),y_hat.cpu())
             
-            if e%10 ==0:
+            if e%10 ==0:  ## Report every 10 epochs
                 elapsed_time = datetime.now() - startTime
                 avg_time_per_epoch = elapsed_time.total_seconds() / e
                 remaining_epochs = self.epochs - e
@@ -509,61 +509,86 @@ class MLPModelTrainCycle:
             if self.Sched:   
                 self.scheduler.step(loss.item())
                 actual_lr = self.optimizer.param_groups[0]["lr"]      
+        
         ###  Return the final metrics
         metrics = {'accScore':accScore, 'macro_averaged_f1' : macro_averaged_f1, 
                 'micro_averaged_f1' : micro_averaged_f1}
         print('Final train metrics: accScore: %.4f '%(accScore), 'macro_averaged_f1 : %.4f'%(macro_averaged_f1), 'micro_averaged_f1: %.4f' %(micro_averaged_f1))
         # self.logMLP()
-        self.logger.update_logs({'Train metric': metrics})
+        self.logger.update_logs({'Last train metric': metrics})
         return self.model, metrics 
 
-
-    def avaluateModel(self, model = None):
+    def evaluateModel(self, model = None)-> (np.array,np.array,dict):
         threshold = 0.5
-        X_val,Y_val = self.load_Dataset(self.labels,self.validation_dataset_path)
+        X,Y= self.load_Dataset(self.labels,self.validation_dataset_path)
+        # print(f"x val shape = {X.values.shape}")
+        # print(f"Y val shape = {Y.values.shape}")
+
+        X_val,Y_val = torch.tensor(X.values, dtype=torch.float),torch.tensor(Y.values, dtype=torch.float)
+        
         if model is None:
             valModel = self.model
         else: 
             valModel = model
         with torch.no_grad():
-            valModel.eval()
+            valModel.eval().to(self.device)
             inputs, labels = X_val.to(self.device), Y_val.to(self.device)
             output = valModel(inputs)
-            valLoss = self.criterion(output,labels.unsqueeze(1))
-            self.valLosses.append(valLoss.item())
             y_hat = (output > threshold).float()
             accScore, macro_averaged_f1, micro_averaged_f1  = computeClassificationMetrics(Y_val.cpu(),y_hat.cpu())
             metrics = {'accScore':accScore, 'macro_averaged_f1' : macro_averaged_f1, 
                 'micro_averaged_f1' : micro_averaged_f1}
             self.logger.update_logs({'Validation metric': metrics})
-
+        return Y_val,y_hat,metrics
 
     def plotLosses(self, showIt:bool=True, saveTo:str=''):
         epochs = range(len(self.trainLosses))
-        plt.figure(figsize=(10,5))
-        plt.plot(epochs, self.trainLosses, 'r-', label='Training loss')
-        plt.plot(epochs, self.valLosses, 'b-', label='Validation loss')
-        plt.title('Training loss vs Epochs')
-        plt.xlabel('Epochs')
-        plt.ylabel('Loss')
-        plt.legend()
+        fig, ax = plt.subplots(figsize=(15, 10))
+        ax.plot(epochs, self.trainLosses, 'r-', label='Training loss')
+        ax.plot(epochs, self.valLosses, 'b-', label='Validation loss')
+        ax.set_title('Training loss vs Epochs')
+        ax.set_xlabel('Epochs')
+        ax.set_ylabel('Loss')
+        ax.legend()
         figName = str(self.modelName +'_losses.png')
         if saveTo:
             plot_Path = saveTo + figName 
+            print(f"--->> Saving Figure to--->>>  {plot_Path}")
         else:
+            print(f"--->> Saving Figure to --->>>  {plot_Path}")
             plot_Path = self.saveModelFolder + figName
+        fig.savefig(plot_Path)
+        print(f"--->> Figure Should be Saved to --->>>  {plot_Path}")
+        if showIt:
+            fig.show()
+
+    def plot_ConfussionMatrix(self,y_val,y_hat, showIt:bool=False, saveTo:str=''):
+            # Compute confusion matrix
+        cm = confusion_matrix(y_val.cpu(),y_hat.cpu())
+        # Create a heatmap
+        sns.heatmap(cm, annot=True, fmt='d', cmap='Blues')
+        # Add labels to the plot
+        plt.xlabel('Predicted')
+        plt.ylabel('True')
+        figName = str(self.modelName +'_ConfMatrx.png')
+        if saveTo:
+            plot_Path = saveTo + "_" +figName 
+        else:
+            plot_Path = self.saveModelFolder + "_" + figName
         plt.savefig(plot_Path)
+        print(f"--->> Figure Saved to --->>>  {plot_Path}")
         if showIt:
             plt.show()
-
 
     def getModel(self):
         return self.model
     
+    def setModel(self, model):
+        self.model = model
+
     def getLosses(self):
         return self.trainLosses
-
-
+    
 #### MODELS List
 class MLP_1(nn.Module):
     def __init__(self, input_size, num_classes:int = 1):
@@ -804,67 +829,6 @@ def investigateFeatureImportance(bestModel, x_train, printed = True):
             print(featuresInModel)
     return featuresInModel
 
-def roc_auc_score_calculation(y_validation, y_hat):
-        '''
-        Compute one-vs-all for every single class in the dataset
-        From: https://www.kaggle.com/code/nkitgupta/evaluation-metrics-for-multi-class-classification/notebook
-        '''
-        unique_class = y_validation.unique()
-        roc_auc_dict = {}
-        if len(unique_class)<=2:
-            rocBinary = roc_auc_score(y_validation, y_hat, average = "macro")
-            roc_auc_dict['ROC'] = rocBinary
-            return roc_auc_dict   
-        for per_class in unique_class:
-            other_class = [x for x in unique_class if x != per_class]
-            new_y_validation = [0 if x in other_class else 1 for x in y_validation]
-            new_y_hat = [0 if x in other_class else 1 for x in y_hat]
-            roc_auc = roc_auc_score(new_y_validation, new_y_hat, average = "macro")
-            roc_auc_dict[per_class] = roc_auc
-        return roc_auc_dict
-
-def plot_ROC_AUC(y_test, y_hat, y_prob):
-    '''
-    Allows to plot multiclass classification ROC_AUC (One vs Rest), by computing tpr and fpr of each calss respect the rest. 
-    The simplest application is the binary classification.
-    '''
-    unique_class = y_test.unique()
-    unique_class.sort()
-    print("UNIQUE CLASSES: ", unique_class)
-    print("Test Set balance:" )
-    listClassCountPercent(y_test)
-    print("Prediction balance:")
-    listClassCountPercent(y_hat)  
-    fig, axs = plt.subplots(1,figsize=(13,4), sharey=True)
-    plt.rcParams.update({'font.size': 14})
-    plt.ylabel('True Positive Rate', fontsize=16)
-    plt.xlabel('False Positive Rate', fontsize=16)
-    plt.figure(0).clf()
-    roc_auc_dict = {}
-    i = 0
-    if len(unique_class)<=2:  ## Binary case
-            fpr,tpr,thresholds = metrics.roc_curve(y_test, y_prob[:,1], drop_intermediate=False)  ### TODO Results doen't match roc_auc_score..
-            print(thresholds)
-            roc_auc = roc_auc_score(y_test, y_hat, average = "macro")
-            axs.plot(fpr,tpr,label = "Class "+ unique_class[1] + " AUC : " + format(roc_auc,".4f")) 
-            axs.legend()
-    else: 
-        for per_class in unique_class:  # Multiclass
-            y_testInLoop = y_test.copy()
-            other_class = [x for x in unique_class if x != per_class]
-            print(f"actual class: {per_class} vs rest {other_class}")
-            new_y_validation = [0 if x in other_class else 1 for x in y_testInLoop]
-            new_y_hat = [0 if x in other_class else 1 for x in y_hat]
-            print(f"Class {per_class} balance vs rest")
-            listClassCountPercent(new_y_validation)
-            roc_auc = roc_auc_score(new_y_validation, new_y_hat, average = "macro")
-            roc_auc_dict[per_class] = roc_auc
-            fpr, tpr, _ = metrics.roc_curve(new_y_validation, y_prob[:,i],drop_intermediate=False)  ### TODO Results doen't match roc_auc_score..
-            axs.plot(fpr,tpr,label = "Class "+ str(per_class) + " AUC : " + format(roc_auc,".4f")) 
-            axs.legend()
-            i+=1
-    return roc_auc_dict
-
 def createSearshGrid(arg):
     param_grid = {
     'n_estimators': eval(arg['n_estimators']), 
@@ -952,3 +916,127 @@ def init_params(model, init_func, *params, **kwargs):
         for p in model.parameters():
             # if type(p) == (torch.nn.Conv2d or torch.nn.Conv1d) :   # Add a condition as needed. 
             init_func(p, *params)
+
+### Metrics ####
+
+def roc_auc_score_calculation(y_validation, y_hat):
+        '''
+        Compute one-vs-all for every single class in the dataset
+        From: https://www.kaggle.com/code/nkitgupta/evaluation-metrics-for-multi-class-classification/notebook
+        '''
+        unique_class = y_validation.unique()
+        roc_auc_dict = {}
+        if len(unique_class)<=2:
+            rocBinary = roc_auc_score(y_validation, y_hat, average = "macro")
+            roc_auc_dict['ROC'] = rocBinary
+            return roc_auc_dict   
+        for per_class in unique_class:
+            other_class = [x for x in unique_class if x != per_class]
+            new_y_validation = [0 if x in other_class else 1 for x in y_validation]
+            new_y_hat = [0 if x in other_class else 1 for x in y_hat]
+            roc_auc = roc_auc_score(new_y_validation, new_y_hat, average = "macro")
+            roc_auc_dict[per_class] = roc_auc
+        return roc_auc_dict
+
+def plot_ROC_AUC(y_test, y_hat, y_prob):
+    '''
+    Allows to plot multiclass classification ROC_AUC (One vs Rest), by computing tpr and fpr of each calss respect the rest. 
+    The simplest application is the binary classification.
+    '''
+    unique_class = y_test.unique()
+    unique_class.sort()
+    print("UNIQUE CLASSES: ", unique_class)
+    print("Test Set balance:" )
+    listClassCountPercent(y_test)
+    print("Prediction balance:")
+    listClassCountPercent(y_hat)  
+    fig, axs = plt.subplots(1,figsize=(13,4), sharey=True)
+    plt.rcParams.update({'font.size': 14})
+    plt.ylabel('True Positive Rate', fontsize=16)
+    plt.xlabel('False Positive Rate', fontsize=16)
+    plt.figure(0).clf()
+    roc_auc_dict = {}
+    i = 0
+    if len(unique_class)<=2:  ## Binary case
+            fpr,tpr,thresholds = metrics.roc_curve(y_test, y_prob[:,1], drop_intermediate=False)  ### TODO Results doen't match roc_auc_score..
+            print(thresholds)
+            roc_auc = roc_auc_score(y_test, y_hat, average = "macro")
+            axs.plot(fpr,tpr,label = "Class "+ unique_class[1] + " AUC : " + format(roc_auc,".4f")) 
+            axs.legend()
+    else: 
+        for per_class in unique_class:  # Multiclass
+            y_testInLoop = y_test.copy()
+            other_class = [x for x in unique_class if x != per_class]
+            print(f"actual class: {per_class} vs rest {other_class}")
+            new_y_validation = [0 if x in other_class else 1 for x in y_testInLoop]
+            new_y_hat = [0 if x in other_class else 1 for x in y_hat]
+            print(f"Class {per_class} balance vs rest")
+            listClassCountPercent(new_y_validation)
+            roc_auc = roc_auc_score(new_y_validation, new_y_hat, average = "macro")
+            roc_auc_dict[per_class] = roc_auc
+            fpr, tpr, _ = metrics.roc_curve(new_y_validation, y_prob[:,i],drop_intermediate=False)  ### TODO Results doen't match roc_auc_score..
+            axs.plot(fpr,tpr,label = "Class "+ str(per_class) + " AUC : " + format(roc_auc,".4f")) 
+            axs.legend()
+            i+=1
+    return roc_auc_dict
+
+def accuracyFromConfusionMatrix(confusion_matrix):
+    '''
+    Only for binary
+    '''
+    diagonal_sum = confusion_matrix.trace()
+    sum_of_all_elements = confusion_matrix.sum()
+    return diagonal_sum / sum_of_all_elements
+
+def pritnAccuracy(y_predic, y_val):
+    '''
+    Only for binary
+    '''
+    cm = confusion_matrix(y_predic, y_val) 
+    print("Accuracy of MLPClassifier : ", accuracyFromConfusionMatrix(cm)) 
+
+def plot_confusion_matrix(true_labels, predicted_labels):
+    """
+    Function to compute and plot the confusion matrix.
+    Parameters:
+    true_labels (list): List of true labels
+    predicted_labels (list): List of predicted labels
+    """
+    # Compute confusion matrix
+    cm = confusion_matrix(true_labels, predicted_labels)
+    # Create a heatmap
+    sns.heatmap(cm, annot=True, fmt='d', cmap='Blues')
+    # Add labels to the plot
+    plt.xlabel('Predicted')
+    plt.ylabel('True')
+    plt.show()
+
+def evaluateModel(validation_dataset_path, labels:str,colsToDrop:list, model = None)-> np.array:
+        threshold = 0.5
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        print(f' The device : {device}')
+        X,Y =  ms.importDataSet(validation_dataset_path, labels, colsToDrop)
+        X_val,Y_val = torch.tensor(X.values, dtype=torch.float).to(device),torch.tensor(Y.values, dtype=torch.float)
+        with torch.no_grad():
+            model.eval().to(device)
+            output = model(X_val)
+            y_hat = (output > threshold).int().cpu()
+            accScore, macro_averaged_f1, micro_averaged_f1  = computeClassificationMetrics(Y_val,y_hat)
+            metrics = {'accScore':accScore, 'macro_averaged_f1' : macro_averaged_f1, 
+                'micro_averaged_f1' : micro_averaged_f1}
+        return Y_val,y_hat, metrics
+
+def inferenceMLP(validation_dataset_path,colsToDrop:list = None, model = None)-> np.array:
+        threshold = 0.5
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        print(f' The device : {device}')
+        X  = pd.read_csv(validation_dataset_path, index_col = None)
+        if colsToDrop is not None:
+            X.drop(colsToDrop, axis=1, inplace = True)
+            print(f'Features to evaluate {X.columns}')
+        X_val = torch.tensor(X.values, dtype=torch.float).to(device)
+        with torch.no_grad():
+            model.eval().to(device)
+            output = model(X_val)
+            y_hat = (output > threshold).int().cpu()
+        return y_hat

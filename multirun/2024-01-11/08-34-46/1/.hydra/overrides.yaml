@@ -1,2 +1,0 @@
-- ++parameters.model._target_=models.MLP_5
-- ++parameters.batchSize=100
