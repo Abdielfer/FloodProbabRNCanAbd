@@ -1,0 +1,2 @@
+- ++parameters.optimizer.lr=0.1
+- ++parameters.scheduler.factor=0.9

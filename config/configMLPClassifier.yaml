@@ -4,9 +4,9 @@ defaults:
   - parameters: paramMLPClassifier
   
 local: C:\Users\abfernan\CrossCanFloodMapping\FloodProbabRNCanAbd\datasets\
-datasetFolder : C:\Users\abfernan\CrossCanFloodMapping\FloodMappingProjData\HRDTMByAOI\A_DatasetsForMLP\RegionalModelingExplorationDatasets\
-trainingDataset: TrainingDataset_RastComb_Normalized_class1.csv
-validationDataset: ValidationSet_RastComb_Normalized_class1.csv
+datasetFolder : C:\Users\abfernan\CrossCanFloodMapping\FloodMappingProjData\HRDTMByAOI\A_DatasetsForMLP\RegionalModelingExplorationDatasets\RasterMode\
+trainingDataset: TrainingDataset_RastMode_Normalized_class1.csv
+validationDataset: ValidationDataset_RastMode_Normalized_class1.csv
 
 # weightPenalty: 0.01
 targetColName: Labels
@@ -22,11 +22,11 @@ hydra:
     mode: MULTIRUN
     sweeper:
         params:
-          # ++parameters.model._target_: models.MLP_5, models.MLP_6
-          ++parameters.optimizer.lr : 0.02, 0.015
-          ++parameters.scheduler.factor : 0.95
+          ++parameters.model._target_: models.MLP_5
+          ++parameters.optimizer.lr : 0.0005, 0.00025
+          ++parameters.scheduler.factor : 0.97, 0.95
           # ++parameters.scheduler.patience : 3
-          # ++parameters.batchSize: 50,100
-          # ++parameters.epochs: 30
+          ++parameters.batchSize: 50,100
+          # ++parameters.epochs: 12,20
 
            

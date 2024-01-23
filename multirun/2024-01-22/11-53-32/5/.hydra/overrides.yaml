@@ -1,0 +1,6 @@
+- ++parameters.model._target_=models.MLP_5
+- ++parameters.optimizer.lr=0.025
+- ++parameters.scheduler.factor=0.8
+- ++parameters.scheduler.patience=3
+- ++parameters.batchSize=50
+- ++parameters.epochs=20

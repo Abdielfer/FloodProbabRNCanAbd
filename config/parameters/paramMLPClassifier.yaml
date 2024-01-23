@@ -1,5 +1,5 @@
 ### config/parameters/param.yaml  
-epochs : 30
+epochs : 150
 testSize : 0.2
 batchSize : 100
 random_state: 50
@@ -20,7 +20,7 @@ initWeightParams: [0.0,0.01] # {mean: 0.0, std : 0.01}
 
 model:
   _partial_: True 
-  _target_: models.MLP_6
+  _target_: models.MLP_5
 
 criterion:
   _partial_: True 
@@ -31,15 +31,15 @@ optimizer:
   _partial_: True 
   _target_: torch.optim.Adam
   maximize : False
-  lr: 0.02
+  lr: 0.005
   #weight_decay : 0.1
 
 scheduler:
  _partial_: True 
  _target_ : torch.optim.lr_scheduler.ReduceLROnPlateau
  mode : min
- patience : 3
- factor : 0.92
+ patience : 5
+ factor : 0.97
  threshold : 0.001
 
 # scheduler = lr_scheduler.LinearLR(optimizer,start_factor: 1.0, end_factor : 0.3, total_iters : 10)

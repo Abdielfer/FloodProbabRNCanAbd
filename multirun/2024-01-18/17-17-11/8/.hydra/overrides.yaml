@@ -1,0 +1,3 @@
+- ++parameters.optimizer.lr=0.001
+- ++parameters.scheduler.factor=0.75
+- ++parameters.batchSize=50

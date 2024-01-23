@@ -737,6 +737,64 @@ class MLP_6(nn.Module):
     def forward(self,x):
         return self.model(x)
 
+class MLP_7(nn.Module):
+    def __init__(self, input_size, num_classes:int = 1):
+        super(MLP_7, self).__init__()
+        self.model = nn.Sequential(
+            nn.Linear(input_size, input_size*5),
+            nn.LeakyReLU(),
+            nn.Linear(input_size*5, input_size*5),
+            nn.LeakyReLU(),
+            nn.Linear(input_size*5, input_size*5),
+            nn.LeakyReLU(),
+            nn.Linear(input_size*5, input_size*5),
+            nn.LeakyReLU(),
+            nn.Linear(input_size*5, input_size*2),
+            nn.LeakyReLU(),
+            nn.Linear(input_size*2, input_size),
+            nn.LeakyReLU(),
+            nn.Linear(input_size, int(input_size/2)),
+            nn.LeakyReLU(),
+            nn.Linear(int(input_size/2), num_classes),
+            nn.Sigmoid(),
+        )
+    def get_weights(self):
+        return self.weight
+    
+    def forward(self,x):
+        return self.model(x)
+
+
+class MLP_8(nn.Module):
+    def __init__(self, input_size, num_classes:int = 1):
+        super(MLP_8, self).__init__()
+        self.model = nn.Sequential(
+            nn.Linear(input_size, input_size*10),
+            nn.LeakyReLU(),
+            nn.Linear(input_size*10, input_size*10),
+            nn.LeakyReLU(),
+            nn.Linear(input_size*10, input_size*10),
+            nn.LeakyReLU(),
+            nn.Linear(input_size*10, input_size*10),
+            nn.LeakyReLU(),
+            nn.Linear(input_size*10, input_size*5),
+            nn.LeakyReLU(),
+            nn.Linear(input_size*5, input_size*2),
+            nn.LeakyReLU(),
+            nn.Linear(input_size*2, input_size),
+            nn.LeakyReLU(),
+            nn.Linear(input_size, int(input_size/2)),
+            nn.LeakyReLU(),
+            nn.Linear(int(input_size/2), num_classes),
+            nn.Sigmoid(),
+        )
+    def get_weights(self):
+        return self.weight
+    
+    def forward(self,x):
+        return self.model(x)
+
+
 
 ### Helper functions
 def split(x,y,TestPercent = 0.2):

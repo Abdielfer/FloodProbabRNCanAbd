@@ -1,0 +1,2 @@
+- ++parameters.optimizer.lr=0.01
+- ++parameters.batchSize=100

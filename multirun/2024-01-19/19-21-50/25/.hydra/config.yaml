@@ -1,0 +1,44 @@
+local: C:\Users\abfernan\CrossCanFloodMapping\FloodProbabRNCanAbd\datasets\
+datasetFolder: C:\Users\abfernan\CrossCanFloodMapping\FloodMappingProjData\HRDTMByAOI\A_DatasetsForMLP\RegionalModelingExplorationDatasets\
+trainingDataset: TrainingDataset_RastComb_Normalized_class5.csv
+validationDataset: ValidationSet_RastComb_Normalized_class5.csv
+targetColName: Labels
+nWorkers: 4
+externalModel: None
+parameters:
+  epochs: 30
+  testSize: 0.2
+  batchSize: 50
+  random_state: 50
+  hidden_layer_sizes: []
+  early_stopping: true
+  verbose: false
+  modelsFolder: C:\Users\abfernan\CrossCanFloodMapping\FloodMappingProjData\HRDTMByAOI\MLP_Models\
+  colsToDrop:
+  - x_coord
+  - y_coord
+  init_weight:
+    _partial_: true
+    _target_: torch.nn.init.normal_
+  initWeightParams:
+  - 0.0
+  - 0.01
+  model:
+    _partial_: true
+    _target_: models.MLP_7
+  criterion:
+    _partial_: true
+    _target_: torch.nn.BCELoss
+    reduction: mean
+  optimizer:
+    _partial_: true
+    _target_: torch.optim.Adam
+    maximize: false
+    lr: 0.01
+  scheduler:
+    _partial_: true
+    _target_: torch.optim.lr_scheduler.ReduceLROnPlateau
+    mode: min
+    patience: 3
+    factor: 0.8
+    threshold: 0.001
