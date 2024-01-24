@@ -23,7 +23,7 @@ hydra:
     sweeper:
         params:
           ++parameters.model._target_: models.MLP_5
-          ++parameters.optimizer.lr : 0.0005, 0.00025
+          ++parameters.optimizer.lr : 0.00012
           ++parameters.scheduler.factor : 0.97, 0.95
           # ++parameters.scheduler.patience : 3
           ++parameters.batchSize: 50,100
