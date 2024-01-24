@@ -1,0 +1,15 @@
+[2024-01-12 17:21:32,547][executeModels][INFO] - model name - 2401121721
+[2024-01-12 17:21:32,548][executeModels][INFO] - model - {'_partial_': True, '_target_': 'models.MLP_5'}
+[2024-01-12 17:21:32,548][executeModels][INFO] - loss function - {'_partial_': True, '_target_': 'torch.nn.BCELoss', 'reduction': 'mean'}
+[2024-01-12 17:21:32,549][executeModels][INFO] - optimizer - {'_partial_': True, '_target_': 'torch.optim.Adam', 'maximize': False, 'lr': 0.1}
+[2024-01-12 17:21:32,550][executeModels][INFO] - schedule - {'_partial_': True, '_target_': 'torch.optim.lr_scheduler.ReduceLROnPlateau', 'mode': 'min', 'patience': 10, 'factor': 0.85, 'threshold': 0.001}
+[2024-01-12 17:21:34,713][executeModels][INFO] - Cols To Drop - ['x_coord', 'y_coord']
+[2024-01-12 17:21:34,713][executeModels][INFO] - Data Set - C:\Users\abfernan\CrossCanFloodMapping\FloodMappingProjData\HRDTMByAOI\A_DatasetsForMLP\RegionalModelingExplorationDatasets\TrainingDataset_RastComb_Normalized_class5.csv
+[2024-01-12 17:21:34,816][executeModels][INFO] - Epochs - 5
+[2024-01-12 17:21:34,817][executeModels][INFO] - Batch Size - 100
+[2024-01-12 17:21:35,189][executeModels][INFO] - training Mode - Single train
+[2024-01-12 17:21:35,467][executeModels][INFO] - Testing on Validation Dataset - C:\Users\abfernan\CrossCanFloodMapping\FloodMappingProjData\HRDTMByAOI\A_DatasetsForMLP\RegionalModelingExplorationDatasets\ValidationSet_RastComb_Normalized_class5.csv
+[2024-01-12 17:22:18,414][executeModels][INFO] - Train metric - {'accScore': 0.9147492173844346, 'macro_averaged_f1': 0.7305129014356126, 'micro_averaged_f1': 0.9147492173844346}
+[2024-01-12 17:22:18,414][executeModels][INFO] - model Name - 2401121721.pkl
+[2024-01-12 17:22:18,414][executeModels][INFO] - Test metric - {'accScore': 0.9147492173844346, 'macro_averaged_f1': 0.7305129014356126, 'micro_averaged_f1': 0.9147492173844346}
+[2024-01-12 17:22:19,009][executeModels][INFO] - Validation metric - {'accScore': 0.9147492173844346, 'macro_averaged_f1': 0.7305129014356126, 'micro_averaged_f1': 0.9147492173844346}

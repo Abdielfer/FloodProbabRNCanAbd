@@ -1,0 +1,15 @@
+[2024-01-19 20:02:53,644][executeModels][INFO] - model name - 2401192002
+[2024-01-19 20:02:53,644][executeModels][INFO] - model - {'_partial_': True, '_target_': 'models.MLP_5'}
+[2024-01-19 20:02:53,645][executeModels][INFO] - loss function - {'_partial_': True, '_target_': 'torch.nn.BCELoss', 'reduction': 'mean'}
+[2024-01-19 20:02:53,645][executeModels][INFO] - optimizer - {'_partial_': True, '_target_': 'torch.optim.Adam', 'maximize': False, 'lr': 0.01}
+[2024-01-19 20:02:53,646][executeModels][INFO] - schedule - {'_partial_': True, '_target_': 'torch.optim.lr_scheduler.ReduceLROnPlateau', 'mode': 'min', 'patience': 3, 'factor': 0.8, 'threshold': 0.001}
+[2024-01-19 20:02:53,647][executeModels][INFO] - Cols To Drop - ['x_coord', 'y_coord']
+[2024-01-19 20:02:53,647][executeModels][INFO] - Data Set - C:\Users\abfernan\CrossCanFloodMapping\FloodMappingProjData\HRDTMByAOI\A_DatasetsForMLP\RegionalModelingExplorationDatasets\TrainingDataset_RastComb_Normalized_class5.csv
+[2024-01-19 20:02:53,732][executeModels][INFO] - Epochs - 30
+[2024-01-19 20:02:53,732][executeModels][INFO] - Batch Size - 100
+[2024-01-19 20:02:53,733][executeModels][INFO] - training Mode - Single train
+[2024-01-19 20:02:53,992][executeModels][INFO] - Testing on Validation Dataset - C:\Users\abfernan\CrossCanFloodMapping\FloodMappingProjData\HRDTMByAOI\A_DatasetsForMLP\RegionalModelingExplorationDatasets\ValidationSet_RastComb_Normalized_class5.csv
+[2024-01-19 20:08:01,241][executeModels][INFO] - Last train metric - {'accScore': 0.9104954425604613, 'macro_averaged_f1': 0.7382626817615049, 'micro_averaged_f1': 0.9104954425604613}
+[2024-01-19 20:08:01,241][executeModels][INFO] - model Name - 2401192002.pkl
+[2024-01-19 20:08:01,241][executeModels][INFO] - Test metric - {'accScore': 0.9104954425604613, 'macro_averaged_f1': 0.7382626817615049, 'micro_averaged_f1': 0.9104954425604613}
+[2024-01-19 20:08:01,826][executeModels][INFO] - Validation metric - {'accScore': 0.9104954425604613, 'macro_averaged_f1': 0.7382626817615049, 'micro_averaged_f1': 0.9104954425604613}

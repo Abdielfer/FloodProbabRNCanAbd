@@ -1,0 +1,7 @@
+[2023-12-15 08:56:07,905][executeModels][INFO] - model name - 2312150856
+[2023-12-15 08:56:07,905][executeModels][INFO] - model - {'_partial_': True, '_target_': 'models.MLP_5'}
+[2023-12-15 08:56:07,906][executeModels][INFO] - loss function - {'_partial_': True, '_target_': 'torch.nn.BCELoss', 'reduction': 'mean'}
+[2023-12-15 08:56:07,907][executeModels][INFO] - optimizer - {'_partial_': True, '_target_': 'torch.optim.Adam', 'maximize': False, 'lr': 0.05}
+[2023-12-15 08:56:07,909][executeModels][INFO] - schedule - {'_partial_': True, '_target_': 'torch.optim.lr_scheduler.ReduceLROnPlateau', 'mode': 'min', 'patience': 10, 'factor': 0.7, 'threshold': 0.001}
+[2023-12-15 08:56:07,910][executeModels][INFO] - Data Set - C:\Users\abfernan\CrossCanFloodMapping\FloodMappingProjData\HRDTMByAOI\A_DatasetsForMLP\StratifiedSampling\class5_Full_Normalized__Training.csv
+[2023-12-15 08:56:08,058][executeModels][INFO] - Epochs - 500

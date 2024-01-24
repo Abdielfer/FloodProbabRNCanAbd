@@ -1,0 +1,15 @@
+[2024-01-19 21:02:31,000][executeModels][INFO] - model name - 2401192102
+[2024-01-19 21:02:31,000][executeModels][INFO] - model - {'_partial_': True, '_target_': 'models.MLP_7'}
+[2024-01-19 21:02:31,000][executeModels][INFO] - loss function - {'_partial_': True, '_target_': 'torch.nn.BCELoss', 'reduction': 'mean'}
+[2024-01-19 21:02:31,000][executeModels][INFO] - optimizer - {'_partial_': True, '_target_': 'torch.optim.Adam', 'maximize': False, 'lr': 0.01}
+[2024-01-19 21:02:31,000][executeModels][INFO] - schedule - {'_partial_': True, '_target_': 'torch.optim.lr_scheduler.ReduceLROnPlateau', 'mode': 'min', 'patience': 3, 'factor': 0.8, 'threshold': 0.001}
+[2024-01-19 21:02:31,000][executeModels][INFO] - Cols To Drop - ['x_coord', 'y_coord']
+[2024-01-19 21:02:31,000][executeModels][INFO] - Data Set - C:\Users\abfernan\CrossCanFloodMapping\FloodMappingProjData\HRDTMByAOI\A_DatasetsForMLP\RegionalModelingExplorationDatasets\TrainingDataset_RastComb_Normalized_class5.csv
+[2024-01-19 21:02:31,099][executeModels][INFO] - Epochs - 30
+[2024-01-19 21:02:31,099][executeModels][INFO] - Batch Size - 50
+[2024-01-19 21:02:31,100][executeModels][INFO] - training Mode - Single train
+[2024-01-19 21:02:31,359][executeModels][INFO] - Testing on Validation Dataset - C:\Users\abfernan\CrossCanFloodMapping\FloodMappingProjData\HRDTMByAOI\A_DatasetsForMLP\RegionalModelingExplorationDatasets\ValidationSet_RastComb_Normalized_class5.csv
+[2024-01-19 21:08:13,685][executeModels][INFO] - Last train metric - {'accScore': 0.8199218865725882, 'macro_averaged_f1': 0.635151257704947, 'micro_averaged_f1': 0.8199218865725882}
+[2024-01-19 21:08:13,685][executeModels][INFO] - model Name - 2401192102.pkl
+[2024-01-19 21:08:13,685][executeModels][INFO] - Test metric - {'accScore': 0.8199218865725882, 'macro_averaged_f1': 0.635151257704947, 'micro_averaged_f1': 0.8199218865725882}
+[2024-01-19 21:08:14,324][executeModels][INFO] - Validation metric - {'accScore': 0.8199218865725882, 'macro_averaged_f1': 0.635151257704947, 'micro_averaged_f1': 0.8199218865725882}

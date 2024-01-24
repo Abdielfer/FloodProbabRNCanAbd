@@ -1,0 +1,13 @@
+[2024-01-04 10:14:35,283][executeModels][INFO] - model name - 2401041014
+[2024-01-04 10:14:35,283][executeModels][INFO] - model - {'_partial_': True, '_target_': 'models.MLP_6'}
+[2024-01-04 10:14:35,283][executeModels][INFO] - loss function - {'_partial_': True, '_target_': 'torch.nn.BCELoss', 'reduction': 'mean'}
+[2024-01-04 10:14:35,289][executeModels][INFO] - optimizer - {'_partial_': True, '_target_': 'torch.optim.Adam', 'maximize': False, 'lr': 0.0012}
+[2024-01-04 10:14:35,291][executeModels][INFO] - schedule - {'_partial_': True, '_target_': 'torch.optim.lr_scheduler.ReduceLROnPlateau', 'mode': 'min', 'patience': 10, 'factor': 0.85, 'threshold': 0.001}
+[2024-01-04 10:14:35,291][executeModels][INFO] - Data Set - C:\Users\abfernan\CrossCanFloodMapping\FloodMappingProjData\HRDTMByAOI\A_DatasetsForMLP\StratifiedSampling_RasterizedMode\class1_RaterMode_Standard_Training.csv
+[2024-01-04 10:14:35,806][executeModels][INFO] - Epochs - 250
+[2024-01-04 10:14:35,806][executeModels][INFO] - Batch Size - 100
+[2024-01-04 10:14:35,813][executeModels][INFO] - training Mode - Single train
+[2024-01-04 10:14:35,980][executeModels][INFO] - Testing on Validation Dataset - C:\Users\abfernan\CrossCanFloodMapping\FloodMappingProjData\HRDTMByAOI\A_DatasetsForMLP\StratifiedSampling_RasterizedMode\class1_RaterMode_Standard_Validation.csv
+[2024-01-04 12:43:12,735][executeModels][INFO] - Train metric - {'accScore': 0.8650043431607991, 'macro_averaged_f1': 0.8649568557341338, 'micro_averaged_f1': 0.8650043431607991}
+[2024-01-04 12:43:12,735][executeModels][INFO] - model Name - 2401041014.pkl
+[2024-01-04 12:43:12,735][executeModels][INFO] - Test metric - {'accScore': 0.8650043431607991, 'macro_averaged_f1': 0.8649568557341338, 'micro_averaged_f1': 0.8650043431607991}

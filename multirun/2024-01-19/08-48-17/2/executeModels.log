@@ -1,0 +1,9 @@
+[2024-01-19 08:48:18,672][executeModels][INFO] - model name - 2401190848
+[2024-01-19 08:48:18,672][executeModels][INFO] - model - {'_partial_': True, '_target_': 'models.MLP_7'}
+[2024-01-19 08:48:18,673][executeModels][INFO] - loss function - {'_partial_': True, '_target_': 'torch.nn.BCELoss', 'reduction': 'mean'}
+[2024-01-19 08:48:18,674][executeModels][INFO] - optimizer - {'_partial_': True, '_target_': 'torch.optim.Adam', 'maximize': False, 'lr': 0.001}
+[2024-01-19 08:48:18,675][executeModels][INFO] - schedule - {'_partial_': True, '_target_': 'torch.optim.lr_scheduler.ReduceLROnPlateau', 'mode': 'min', 'patience': 5, 'factor': 0.8, 'threshold': 0.001}
+[2024-01-19 08:48:18,676][executeModels][INFO] - Cols To Drop - ['x_coord', 'y_coord']
+[2024-01-19 08:48:18,677][executeModels][INFO] - Data Set - C:\Users\abfernan\CrossCanFloodMapping\FloodMappingProjData\HRDTMByAOI\A_DatasetsForMLP\RegionalModelingExplorationDatasets\TrainingDataset_RastComb_Normalized_class1.csv
+[2024-01-19 08:48:18,931][executeModels][INFO] - Epochs - 60
+[2024-01-19 08:48:18,931][executeModels][INFO] - Batch Size - 100

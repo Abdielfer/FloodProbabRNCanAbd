@@ -1,0 +1,12 @@
+[2023-12-14 15:39:58,978][executeModels][INFO] - model name - 2312141539
+[2023-12-14 15:39:58,978][executeModels][INFO] - model - {'_partial_': True, '_target_': 'models.MLP_4'}
+[2023-12-14 15:39:58,979][executeModels][INFO] - loss function - {'_partial_': True, '_target_': 'torch.nn.BCELoss', 'reduction': 'mean'}
+[2023-12-14 15:39:58,979][executeModels][INFO] - optimizer - {'_partial_': True, '_target_': 'torch.optim.Adam', 'maximize': False, 'lr': 0.0002}
+[2023-12-14 15:39:58,980][executeModels][INFO] - schedule - {'_partial_': True, '_target_': 'torch.optim.lr_scheduler.ReduceLROnPlateau', 'mode': 'min', 'patience': 20, 'factor': 0.96, 'threshold': 0.001}
+[2023-12-14 15:39:58,982][executeModels][INFO] - Data Set - C:\Users\abfernan\CrossCanFloodMapping\FloodMappingProjData\HRDTMByAOI\A_DatasetsForMLP\StratifiedSampling\class5_Full_Training.csv
+[2023-12-14 15:39:59,075][executeModels][INFO] - Epochs - 2000
+[2023-12-14 15:39:59,076][executeModels][INFO] - training Mode - Single train
+[2023-12-14 15:39:59,121][executeModels][INFO] - Testing on Validation Dataset - C:\Users\abfernan\CrossCanFloodMapping\FloodMappingProjData\HRDTMByAOI\A_DatasetsForMLP\StratifiedSampling\class5_Full_Validation.csv
+[2023-12-14 16:09:12,393][executeModels][INFO] - Train metric - {'accScore': 0.8881184407796102, 'macro_averaged_f1': 0.887884650916782, 'micro_averaged_f1': 0.8881184407796102}
+[2023-12-14 16:09:12,394][executeModels][INFO] - model Name - 2312141539.pkl
+[2023-12-14 16:09:12,395][executeModels][INFO] - metric - {'accScore': 0.8881184407796102, 'macro_averaged_f1': 0.887884650916782, 'micro_averaged_f1': 0.8881184407796102}

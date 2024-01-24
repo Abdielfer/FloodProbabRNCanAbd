@@ -1,0 +1,15 @@
+[2024-01-18 14:38:11,496][executeModels][INFO] - model name - 2401181438
+[2024-01-18 14:38:11,496][executeModels][INFO] - model - {'_partial_': True, '_target_': 'models.MLP_6'}
+[2024-01-18 14:38:11,496][executeModels][INFO] - loss function - {'_partial_': True, '_target_': 'torch.nn.BCELoss', 'reduction': 'mean'}
+[2024-01-18 14:38:11,496][executeModels][INFO] - optimizer - {'_partial_': True, '_target_': 'torch.optim.Adam', 'maximize': False, 'lr': 0.01}
+[2024-01-18 14:38:11,509][executeModels][INFO] - schedule - {'_partial_': True, '_target_': 'torch.optim.lr_scheduler.ReduceLROnPlateau', 'mode': 'min', 'patience': 5, 'factor': 0.9, 'threshold': 0.001}
+[2024-01-18 14:38:11,511][executeModels][INFO] - Cols To Drop - ['x_coord', 'y_coord']
+[2024-01-18 14:38:11,511][executeModels][INFO] - Data Set - C:\Users\abfernan\CrossCanFloodMapping\FloodMappingProjData\HRDTMByAOI\A_DatasetsForMLP\RegionalModelingExplorationDatasets\TrainingDataset_RastComb_Normalized_class1.csv
+[2024-01-18 14:38:11,993][executeModels][INFO] - Epochs - 60
+[2024-01-18 14:38:11,993][executeModels][INFO] - Batch Size - 100
+[2024-01-18 14:38:11,993][executeModels][INFO] - training Mode - Single train
+[2024-01-18 14:38:12,587][executeModels][INFO] - Testing on Validation Dataset - C:\Users\abfernan\CrossCanFloodMapping\FloodMappingProjData\HRDTMByAOI\A_DatasetsForMLP\RegionalModelingExplorationDatasets\ValidationSet_RastComb_Normalized_class1.csv
+[2024-01-18 15:01:23,390][executeModels][INFO] - Last train metric - {'accScore': 0.938012897109507, 'macro_averaged_f1': 0.83355239167495, 'micro_averaged_f1': 0.938012897109507}
+[2024-01-18 15:01:23,391][executeModels][INFO] - model Name - 2401181438.pkl
+[2024-01-18 15:01:23,391][executeModels][INFO] - Test metric - {'accScore': 0.938012897109507, 'macro_averaged_f1': 0.83355239167495, 'micro_averaged_f1': 0.938012897109507}
+[2024-01-18 15:01:24,384][executeModels][INFO] - Validation metric - {'accScore': 0.938012897109507, 'macro_averaged_f1': 0.83355239167495, 'micro_averaged_f1': 0.938012897109507}
