@@ -3,7 +3,7 @@ epochs : 150
 testSize : 0.2
 batchSize : 100
 random_state: 50
-hidden_layer_sizes: [16,16,16,8,4] # from [2*input_shape, 2*input_shape, 2*input_shape, input_shape, 4]
+# hidden_layer_sizes: [16,16,16,8,4] # from [2*input_shape, 2*input_shape, 2*input_shape, input_shape, 4]
 early_stopping: True
 solver: 'adam'
 alpha: 0.0001
@@ -12,7 +12,7 @@ learning_rate: adaptive # Literal['constant', 'invscaling', 'adaptive'] = "const
 n_iter_no_change: 10
 verbose: False
 modelsFolder: C:\Users\abfernan\CrossCanFloodMapping\FloodMappingProjData\HRDTMByAOI\MLP_Models\
-colsToDrop : ['x_coord','y_coord']  #,'FloodOrd','d8fllowAcc'
+colsToDrop : ['x_coord','y_coord','Aoi_Id']  #,'FloodOrd','d8fllowAcc'
 
 
 ### Training configuration

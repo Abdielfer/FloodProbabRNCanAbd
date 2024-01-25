@@ -114,13 +114,17 @@ hydra:
   output_subdir: .hydra
   overrides:
     hydra: []
-    task: []
+    task:
+    - ++parameters.model._target_=models.MLP_5
+    - ++parameters.optimizer.lr=0.00012
+    - ++parameters.scheduler.factor=0.97
+    - ++parameters.batchSize=100
   job:
     name: executeModels
     chdir: null
-    override_dirname: ''
-    id: ???
-    num: ???
+    override_dirname: ++parameters.batchSize=100,++parameters.model._target_=models.MLP_5,++parameters.optimizer.lr=0.00012,++parameters.scheduler.factor=0.97
+    id: '1'
+    num: 1
     config_name: configMLPClassifier.yaml
     env_set: {}
     env_copy: []
@@ -146,7 +150,7 @@ hydra:
     - path: ''
       schema: structured
       provider: schema
-    output_dir: ???
+    output_dir: C:\Users\abfernan\CrossCanFloodMapping\FloodProbabRNCanAbd\multirun\2024-01-24\11-44-40\1
     choices:
       parameters: paramMLPClassifier
       hydra/env: default
@@ -159,47 +163,3 @@ hydra:
       hydra/launcher: basic
       hydra/output: default
   verbose: false
-local: C:\Users\abfernan\CrossCanFloodMapping\FloodProbabRNCanAbd\datasets\
-datasetFolder: C:\Users\abfernan\CrossCanFloodMapping\FloodMappingProjData\HRDTMByAOI\A_DatasetsForMLP\RegionalModelingExplorationDatasets\RasterMode\
-trainingDataset: TrainingDataset_RastMode_Normalized_class1.csv
-validationDataset: ValidationDataset_RastMode_Normalized_class1.csv
-targetColName: Labels
-nWorkers: 4
-externalModel: None
-parameters:
-  epochs: 150
-  testSize: 0.2
-  batchSize: 100
-  random_state: 50
-  hidden_layer_sizes: []
-  early_stopping: true
-  verbose: false
-  modelsFolder: C:\Users\abfernan\CrossCanFloodMapping\FloodMappingProjData\HRDTMByAOI\MLP_Models\
-  colsToDrop:
-  - x_coord
-  - y_coord
-  init_weight:
-    _partial_: true
-    _target_: torch.nn.init.normal_
-  initWeightParams:
-  - 0.0
-  - 0.01
-  model:
-    _partial_: true
-    _target_: models.MLP_5
-  criterion:
-    _partial_: true
-    _target_: torch.nn.BCELoss
-    reduction: mean
-  optimizer:
-    _partial_: true
-    _target_: torch.optim.Adam
-    maximize: false
-    lr: 0.005
-  scheduler:
-    _partial_: true
-    _target_: torch.optim.lr_scheduler.ReduceLROnPlateau
-    mode: min
-    patience: 5
-    factor: 0.97
-    threshold: 0.001
