@@ -22,11 +22,11 @@ hydra:
     mode: MULTIRUN
     sweeper:
         params:
-          ++parameters.model._target_: models.MLP_5
+          ++parameters.model._target_: models.MLP_6
           ++parameters.optimizer.lr : 0.00012
           ++parameters.scheduler.factor : 0.97, 0.95
           # ++parameters.scheduler.patience : 3
-          ++parameters.batchSize: 50,100
+          ++parameters.batchSize: 50,20
           # ++parameters.epochs: 12,20
 
            
