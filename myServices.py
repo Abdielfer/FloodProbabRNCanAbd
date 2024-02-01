@@ -84,8 +84,19 @@ def createListFromCSV(csv_file_location: os.path, delim:str =',')->list:
     df = pd.read_csv(csv_file_location, index_col= None, header=None, delimiter=delim)
     out = []
     for i in range(0,df.shape[0]):
-        out.append(df.iloc[i][0])
+        out.append(df.iloc[i])
     return out
+
+def createCSVFromList(pathToSave: os.path, listData:list):
+    '''
+    This function create a *.csv file with one line per <lstData> element. 
+    @pathToSave: path of *.csv file to be writed with name and extention.
+    @listData: list to be writed. 
+    '''
+    with open(pathToSave, 'w') as output:
+        for line in listData:
+            output.write(str(line) + '\n')
+    return True
 
 ## modeling manipulation
 def saveModel(estimator, name):
@@ -192,8 +203,9 @@ def DFOperation_removeNegative(DF:pd.DataFrame,colName):
     DF = DF[DF.colName>=0]
     return DF
 
-### Pretreatment
-def standardizeDataSetCol(dataSetPath, colName):
+
+### Dataset Pretreatment
+def standardizeDataSetCol(dataSetPath, colName:str):
     '''
     Perform satandardizartion on a column of a DataFrame
     '''
@@ -202,7 +214,104 @@ def standardizeDataSetCol(dataSetPath, colName):
     std = dataSet[colName].std()
     column_estandar = (dataSet[colName] - mean) / std
     return column_estandar,mean,std
- 
+
+def computeStandardizer_fromDataSetCol(dataSetPath:os.path, colName:str)->[float,float,float,float]:
+    '''
+    Perform satandardizartion on a column of a DataFrame
+    '''
+    dataSet = pd.read_csv(dataSetPath, index_col=None)
+    min = dataSet[colName].min()
+    max = dataSet[colName].max()
+    mean = dataSet[colName].mean()
+    std = dataSet[colName].std()
+    return mean,std,min,max
+
+def computeStandardizer_fromDataSetCol(dataSetPath:pd.DataFrame,colName:str)->[float,float,float,float]:
+    '''
+    Perform satandardizartion on a column of a DataFrame
+    '''
+    min = dataSetPath[colName].min()
+    max = dataSetPath[colName].max()
+    mean = dataSetPath[colName].mean()
+    std = dataSetPath[colName].std()
+    return mean,std,min,max
+
+def datasetStandardizer_ByListOfColName(datasetSource, datasetPath, colNamesList:list):
+    '''
+    Standardize a list of columns in a dataset in <datasetPath>, from the values obtained from the <datasetSource>. Both Datasets MUST have the same col_name. 
+    (ex. to perform standardization in validation set from the values in the training set.)
+    @datasetSource: path to the main dataset from which extract mean and std of each col from <colNamesList>
+    @datasetPath: path to the dataset to be standar
+    @colNamesList: 
+    '''
+    dataSet = pd.read_csv(datasetPath, index_col=None)
+    outputDataset = dataSet.copy()
+    for col in colNamesList:
+        mean,std,_,_ = computeStandardizer_fromDataSetCol(datasetSource, col)
+        column_estandar = (dataSet[col] - mean) / std
+        outputDataset[col] = column_estandar
+    return outputDataset
+
+def datasetMinMaxScaler_ByListOfColName_inputPath(datasetSource, datasetPath, colNamesList):
+    '''
+    Standardize a list of columns in a dataset in <datasetPath>, from the values obtained from the <datasetSource>. Both Datasets MUST have the same col_name. 
+    (ex. to perform standardization in validation set from the values in the training set.)
+    @datasetSource: path to the main dataset from which extract mean and std at each col from <colNamesList>
+    @datasetPath: path to the dataset to be scaled.
+    @colNamesList: 
+    '''
+    dataSet = pd.read_csv(datasetPath, index_col=None)
+    outputDataset = dataSet.copy()
+    for col in colNamesList:
+        _,_,min,max = computeStandardizer_fromDataSetCol(datasetSource, col)
+        Delta = max-min
+        outputDataset[col] = (dataSet[col] - min) / Delta
+    return outputDataset
+
+def datasetMinMaxScaler_ByListOfColName_inputDataframe(datasetSource:pd.DataFrame, dataSetObjective:pd.DataFrame, colNamesList:list)->pd.DataFrame:
+    '''
+    Standardize a list of columns in a dataset in <datasetPath>, from the values obtained from the <datasetSource>. Both Datasets MUST have the same col_name. 
+    (ex. to perform standardization in validation set from the values in the training set.)
+    @datasetSource: pandas dataframe from which extract mean and std at each col from <colNamesList>
+    @datasetPath: pandas dataframe to be scaled.
+    @colNamesList: List of colunms from the dataframes to by rescaled.
+    '''
+    outputDataset = dataSetObjective.copy()
+    for col in colNamesList:
+        _,_,min,max = computeStandardizer_fromDataSetCol(datasetSource, col)
+        Delta = max-min
+        outputDataset[col] = (outputDataset[col] - min) / Delta
+    return outputDataset
+    
+def extractFloodClassForMLP(csvPath):
+    '''
+    THis function asume the last colum of the dataset are the lables
+    
+    The goal is to create separated Datasets with classes 1 and 5 from the input csv. 
+    The considered rule is: 
+        Class_5: all class 5.
+        Class_1: All classes, since they are inclusive. All class 5 are also class 5. 
+    '''
+    df = pd.read_csv(csvPath,index_col = None)
+    print(df.head())
+    labelsName = df.columns[-1]
+    labels= df.iloc[:,-1]
+    uniqueClasses = pd.unique(labels)
+    if 1 in uniqueClasses:
+        class1_Col = [1 if i!= 0 else 0 for i in labels]
+        df[labelsName] = class1_Col
+        dfOutputC1 = addSubstringToName(csvPath,'_Class1')
+        df.to_csv(dfOutputC1,index=None)
+
+    if 5 in uniqueClasses:
+        class5_Col = [1 if i == 5 else 0 for i in labels]
+        df[labelsName] = class5_Col
+        dfOutputC5 = addSubstringToName(csvPath,'_Class5')
+        df.to_csv(dfOutputC5,index=None)
+    
+    return dfOutputC1,dfOutputC5
+
+
 ### Modifying class domain
 def pseudoClassCreation(dataset, conditionVariable, threshold, pseudoClass, targetColumnName):
     '''
@@ -242,34 +351,6 @@ def makeBinary(dataset,targetColumn,classToKeep:int, replacerClassName:int):
     dataset[targetColumn] = [replacerClassName if repalcer[j] != classToKeep else repalcer[j] for j in range(len(repalcer))]  
     return dataset
 
-### Pretreatment. 
-def extractFloodClassForMLP(csvPath):
-    '''
-    THis function asume the last colum of the dataset are the lables
-    
-    The goal is to create separated Datasets with classes 1 and 5 from the input csv. 
-    The considered rule is: 
-        Class_5: all class 5.
-        Class_1: All classes, since they are inclusive. All class 5 are also class 5. 
-    '''
-    df = pd.read_csv(csvPath,index_col = None)
-    print(df.head())
-    labelsName = df.columns[-1]
-    labels= df.iloc[:,-1]
-    uniqueClasses = pd.unique(labels)
-    if 1 in uniqueClasses:
-        class1_Col = [1 if i!= 0 else 0 for i in labels]
-        df[labelsName] = class1_Col
-        dfOutputC1 = addSubstringToName(csvPath,'_Class1')
-        df.to_csv(dfOutputC1,index=None)
-
-    if 5 in uniqueClasses:
-        class5_Col = [1 if i == 5 else 0 for i in labels]
-        df[labelsName] = class5_Col
-        dfOutputC5 = addSubstringToName(csvPath,'_Class5')
-        df.to_csv(dfOutputC5,index=None)
-    
-    return dfOutputC1,dfOutputC5
 
 ### Configurations And file management
 def importConfig():
@@ -301,8 +382,8 @@ def relocateFile(inputFilePath, outputFilePath):
     shutil.move(inputFilePath, outputFilePath)
     return True
 
-def createTransitFolder(parent_dir_path):
-    path = os.path.join(parent_dir_path, 'TransitDir')
+def createTransitFolder(parent_dir_path, name:str='TransitDir'):
+    path = os.path.join(parent_dir_path, name)
     ensureDirectory(path)
     return path
 
